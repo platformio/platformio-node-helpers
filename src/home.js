@@ -6,10 +6,13 @@
  * the root directory of this source tree.
  */
 
+import { getHomeDir, runPIOCommand } from './core';
+
 import SockJS from 'sockjs-client';
+import fs from 'fs-plus';
 import jsonrpc from 'jsonrpc-lite';
+import path from 'path';
 import request from 'request';
-import spawn from 'cross-spawn';
 import tcpPortUsed from 'tcp-port-used';
 
 
@@ -108,9 +111,9 @@ export async function ensureServerStarted(options) {
   if (await isServerStarted()) {
     return params;
   }
-  spawn('platformio', ['home', '--port', HTTP_PORT, '--no-open']);
+  runPIOCommand(['home', '--port', HTTP_PORT, '--no-open']);
   await new Promise((resolve, reject) => {
-    tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, 10000)
+    tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, 15000)
       .then(() => {
         resolve(true);
       }, (err) => {
@@ -125,4 +128,18 @@ export async function ensureServerStarted(options) {
 
 export function shutdownServer() {
   request.get(`http://${HTTP_HOST}:${HTTP_PORT}?__shutdown__=1`);
+}
+
+export function showAtStartup(caller) {
+  const statePath = path.join(getHomeDir(), 'homestate.json');
+  if (!fs.isFileSync(statePath)) {
+    return true;
+  }
+  try {
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    return !state || !state.storage || !state.storage.showOnStartup || !state.storage.showOnStartup.hasOwnProperty(caller) || state.storage.showOnStartup[caller];
+  } catch (err) {
+    console.error(err);
+    return true;
+  }
 }

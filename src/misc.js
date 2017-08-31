@@ -53,7 +53,7 @@ export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extr
   console.warn(process.env);
 }
 
-export function runCommand(cmd, args, callback, options = {}) {
+export function runCommand(cmd, args, callback=undefined, options = {}) {
   console.info('runCommand', cmd, args, options);
   let completed = false;
   const outputLines = [];
@@ -76,7 +76,7 @@ export function runCommand(cmd, args, callback, options = {}) {
   }
 
   function onExit(code) {
-    if (completed) {
+    if (completed || !callback) {
       return;
     }
     completed = true;

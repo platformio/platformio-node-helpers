@@ -57,9 +57,14 @@ export function getVersion() {
 }
 
 export function runPIOCommand(args, callback, options = {}) {
+  const baseArgs = ['-f'];
+  if (process.env.PLATFORMIO_CALLER) {
+    baseArgs.push('-c');
+    baseArgs.push(process.env.PLATFORMIO_CALLER);
+  }
   runCommand(
     'platformio',
-    ['-f', ...args],
+    [...baseArgs, ...args],
     callback,
     options
   );
