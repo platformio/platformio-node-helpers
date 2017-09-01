@@ -63,10 +63,11 @@ function fileExistsAndSizeMatches(target, contentLength) {
 
 async function _download(source, target) {
   let proxy = null;
-  if (atom) {
+  try {
+    const apmPath = atom.packages.getApmPath();
     proxy = await new Promise((resolve, reject) => {
       runCommand(
-        [atom.packages.getApmPath(), '--no-color', 'config', 'get', 'https-proxy'],
+        [apmPath, '--no-color', 'config', 'get', 'https-proxy'],
         (code, stdout) => {
           if (code !== 0) {
             return reject(null);
@@ -75,9 +76,9 @@ async function _download(source, target) {
         }
       );
     });
-  } else {
+  } catch (err) {
     proxy = (process.env.HTTPS_PROXY && process.env.HTTPS_PROXY.trim()
-      || process.env.HTTP_PROXY && process.env.HTTP_PROXY.trim());
+    || process.env.HTTP_PROXY && process.env.HTTP_PROXY.trim());
   }
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(target);
