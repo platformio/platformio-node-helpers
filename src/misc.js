@@ -50,7 +50,6 @@ export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extr
   if (process.env.Path) {
     process.env.Path = process.env.PATH;
   }
-  console.warn(process.env);
 }
 
 export function runCommand(cmd, args, callback=undefined, options = {}) {
