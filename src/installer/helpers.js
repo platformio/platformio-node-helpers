@@ -67,7 +67,8 @@ async function _download(source, target) {
     const apmPath = atom.packages.getApmPath();
     proxy = await new Promise((resolve, reject) => {
       runCommand(
-        [apmPath, '--no-color', 'config', 'get', 'https-proxy'],
+        apmPath,
+        ['--no-color', 'config', 'get', 'https-proxy'],
         (code, stdout) => {
           if (code !== 0) {
             return reject(null);
