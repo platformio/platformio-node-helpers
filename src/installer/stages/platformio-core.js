@@ -123,12 +123,16 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   cleanVirtualEnvDir() {
-    if (fs.isDirectorySync(core.getEnvDir())) {
-      try {
-        fs.removeSync(core.getEnvDir());
-      } catch (err) {
-        console.error(err);
-      }
+    const envDir = core.getEnvDir();
+    if (!fs.isDirectorySync(envDir)) {
+      return true;
+    }
+    try {
+      fs.removeSync(envDir);
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
     }
   }
 
