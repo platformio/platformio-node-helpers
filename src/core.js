@@ -48,7 +48,11 @@ export function getVersion() {
       ['--version'],
       (code, stdout, stderr) => {
         if (code === 0) {
-          return resolve(stdout.trim().match(/[\d+\.]+.*$/)[0]);
+          try {
+            return resolve(stdout.trim().match(/[\d+\.]+.*$/)[0]);
+          } catch (err) {
+            return reject(err.toString());
+          }
         }
         return reject(stderr);
       }
