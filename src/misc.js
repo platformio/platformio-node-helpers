@@ -14,9 +14,11 @@ import spawn from 'cross-spawn';
 
 
 export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extraVars }) {
-  // Fix for platformio-atom-ide/issues/112
   process.env.PLATFORMIO_CALLER = caller;
-  process.env.LC_ALL = 'en_US.UTF-8';
+  // Fix for platformio-atom-ide/issues/112
+  if (process.platform === 'darwin') {
+    process.env.LC_ALL = 'en_US.UTF-8';
+  }
   if (caller === 'atom') {
     process.env.PLATFORMIO_DISABLE_PROGRESSBAR = 'true';
   }
