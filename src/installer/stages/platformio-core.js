@@ -146,7 +146,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     return new Promise((resolve, reject) => {
       runCommand(
         'conda',
-        ['create', '--yes', '--quiet', 'python=2', '--prefix', core.getEnvDir()],
+        ['create', '--yes', '--quiet', 'python=2', 'pip', '--prefix', core.getEnvDir()],
         (code, stdout, stderr) => {
           if (code === 0) {
             return resolve(stdout);
