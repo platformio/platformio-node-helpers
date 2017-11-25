@@ -22,7 +22,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   static UPGRADE_PIOCORE_TIMEOUT = 86400 * 3 * 1000; // 3 days
 
-  static pythonVersion = '2.7.13';
+  static pythonVersion = '2.7.14';
   static vitrualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-14.0.6.tar.gz';
 
   constructor() {
@@ -60,8 +60,8 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async installPythonForWindows() {
-    // https://www.python.org/ftp/python/2.7.13/python-2.7.13.msi
-    // https://www.python.org/ftp/python/2.7.13/python-2.7.13.amd64.msi
+    // https://www.python.org/ftp/python/2.7.14/python-2.7.14.msi
+    // https://www.python.org/ftp/python/2.7.14/python-2.7.14.amd64.msi
     const pythonArch = process.arch === 'x64' ? '.amd64' : '';
     const msiUrl = `https://www.python.org/ftp/python/${PlatformIOCoreStage.pythonVersion}/python-${PlatformIOCoreStage.pythonVersion}${pythonArch}.msi`;
     const msiInstaller = await download(
