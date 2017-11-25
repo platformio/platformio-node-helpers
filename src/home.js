@@ -113,7 +113,7 @@ export async function ensureServerStarted(options) {
   }
   runPIOCommand(['home', '--port', HTTP_PORT, '--no-open']);
   await new Promise((resolve, reject) => {
-    tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, 15000)
+    tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, 30000)
       .then(() => {
         resolve(true);
       }, (err) => {
