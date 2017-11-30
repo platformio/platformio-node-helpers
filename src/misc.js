@@ -12,6 +12,7 @@ import path from 'path';
 import request from 'request';
 import spawn from 'cross-spawn';
 
+const IS_WINDOWS = process.platform.startsWith('win');
 
 export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extraVars }) {
   process.env.PLATFORMIO_CALLER = caller;
@@ -102,7 +103,6 @@ export function processHTTPRequest(url, callback, options) {
 }
 
 export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = null) {
-  const IS_WINDOWS = process.platform.startsWith('win');
   const candidates = new Set();
   const defaultName = IS_WINDOWS ? 'python.exe' : 'python';
 
@@ -138,13 +138,23 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = n
 }
 
 function isPython2(executable) {
-  const args = ['-c', 'import sys; assert "msys" not in sys.executable.lower(); print ".".join(str(v) for v in sys.version_info[:2])'];
+  const pythonLines = [
+    'import sys',
+    'assert "msys" not in sys.executable.lower()',
+    'assert sys.version_info < (3, 0, 0)'
+  ];
+  if (IS_WINDOWS) {
+    pythonLines.push('assert sys.version_info >= (2, 7, 9)');
+  } else {
+    pythonLines.push('assert sys.version_info >= (2, 7, 6)');
+  }
+  const args = ['-c', pythonLines.join(';')];
   return new Promise(resolve => {
     runCommand(
       executable,
       args,
-      (code, stdout) => {
-        resolve(code === 0 && stdout.startsWith('2.7'));
+      code => {
+        resolve(code === 0);
       }
     );
   });
