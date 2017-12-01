@@ -296,9 +296,14 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async check() {
+    const coreVersion = await core.getVersion();
+
     if (this.params.useBuiltinPIOCore) {
       if (!fs.isDirectorySync(core.getEnvBinDir())) {
         throw new Error('Virtual environment is not created');
+      }
+      else if (semver.lt(PEPverToSemver(coreVersion), '3.5.0-rc.4')) {
+        throw new Error('Force new python environment');
       }
       try {
         await this.autoUpgradePIOCore();
@@ -307,7 +312,6 @@ export default class PlatformIOCoreStage extends BaseStage {
       }
     }
 
-    const coreVersion = await core.getVersion();
     if (semver.lt(PEPverToSemver(coreVersion), this.params.pioCoreMinVersion)) {
       this.params.setUseBuiltinPIOCore(true);
       throw new Error(`Incompatible PIO Core ${coreVersion}`);

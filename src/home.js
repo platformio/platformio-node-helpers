@@ -116,7 +116,7 @@ export async function ensureServerStarted(options) {
     ['home', '--port', HTTP_PORT, '--no-open'],
     (code, stdout, stderr) => {
       if (code !== 0) {
-        console.error('Could not start PIO Home server: ' + stderr.toString());
+        throw new Error('Could not start PIO Home server: ' + stderr.toString());
       }
     }
   );
