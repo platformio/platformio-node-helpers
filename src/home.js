@@ -16,7 +16,7 @@ import request from 'request';
 import tcpPortUsed from 'tcp-port-used';
 
 
-const SERVER_TIMEOUT = 5 * 60; // 5 minutes
+const SERVER_LAUNCH_TIMEOUT = 5 * 60; // 5 minutes
 const HTTP_HOST = '127.0.0.1';
 let HTTP_PORT = 0;
 
@@ -123,7 +123,7 @@ export async function ensureServerStarted(options) {
   );
 
   await new Promise((resolve, reject) => {
-    tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, SERVER_TIMEOUT * 1000)
+    tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000)
       .then(() => {
         resolve(true);
       }, (err) => {
