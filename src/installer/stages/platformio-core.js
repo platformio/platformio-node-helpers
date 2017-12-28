@@ -247,6 +247,20 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
   }
 
+  installPIOHome() {
+    return new Promise(resolve => {
+      core.runPIOCommand(
+        ['home', '--host', '__do_not_start__'],
+        (code, stdout, stderr) => {
+          if (code !== 0) {
+            console.error(stdout, stderr);
+          }
+          resolve(true);
+        }
+      );
+    });
+  }
+
   initState() {
     let state = this.state;
     if (!state || !state.hasOwnProperty('pioCoreChecked') || !state.hasOwnProperty('lastIDEVersion')) {
@@ -318,7 +332,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
 
     this.status = BaseStage.STATUS_SUCCESSED;
-    console.error(`Found PIO Core ${coreVersion}`);
+    console.info(`Found PIO Core ${coreVersion}`);
     return true;
   }
 
@@ -351,6 +365,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
 
     await this.installPIOCore();
+    await this.installPIOHome();
 
     this.status = BaseStage.STATUS_SUCCESSED;
     return true;
