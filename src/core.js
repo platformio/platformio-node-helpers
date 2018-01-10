@@ -41,6 +41,14 @@ export function getEnvBinDir() {
   return path.join(getEnvDir(), IS_WINDOWS ? 'Scripts' : 'bin');
 }
 
+export function getCacheDir() {
+  const dir = path.join(getHomeDir(), '.cache');
+  if (!fs.isDirectorySync(dir)) {
+    fs.makeTreeSync(dir);
+  }
+  return dir;
+}
+
 export function getVersion() {
   return new Promise((resolve, reject) => {
     runCommand(

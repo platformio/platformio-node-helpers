@@ -7,21 +7,11 @@
  */
 
 import fs from 'fs-plus';
-import { getHomeDir } from '../core';
-import path from 'path';
 import request from 'request';
 import { runCommand } from '../misc';
 import tar from 'tar';
 import zlib from 'zlib';
 
-
-export function getCacheDir() {
-  const dir = path.join(getHomeDir(), '.cache');
-  if (!fs.isDirectorySync(dir)) {
-    fs.makeTreeSync(dir);
-  }
-  return dir;
-}
 
 export async function download(source, target, retries = 3) {
   const contentLength = await getContentLength(source);

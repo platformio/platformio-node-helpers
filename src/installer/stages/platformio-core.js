@@ -8,7 +8,7 @@
 
 import * as core from '../../core';
 
-import { PEPverToSemver, download, extractTarGz, getCacheDir } from '../helpers';
+import { PEPverToSemver, download, extractTarGz } from '../helpers';
 import { getPythonExecutable, runCommand } from '../../misc';
 
 import BaseStage from './base';
@@ -23,7 +23,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   static UPGRADE_PIOCORE_TIMEOUT = 86400 * 3 * 1000; // 3 days
 
   static pythonVersion = '2.7.14';
-  static vitrualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-14.0.6.tar.gz';
+  static virtualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-14.0.6.tar.gz';
 
   constructor() {
     super(...arguments);
@@ -66,7 +66,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     const msiUrl = `https://www.python.org/ftp/python/${PlatformIOCoreStage.pythonVersion}/python-${PlatformIOCoreStage.pythonVersion}${pythonArch}.msi`;
     const msiInstaller = await download(
       msiUrl,
-      path.join(getCacheDir(), path.basename(msiUrl))
+      path.join(core.getCacheDir(), path.basename(msiUrl))
     );
     const targetDir = path.join(core.getHomeDir(), 'python27');
     const pythonPath = path.join(targetDir, 'python.exe');
@@ -95,7 +95,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async installPythonFromWindowsMSI(msiInstaller, targetDir, administrative = false) {
-    const logFile = path.join(getCacheDir(), 'python27msi.log');
+    const logFile = path.join(core.getCacheDir(), 'python27msi.log');
     await new Promise((resolve, reject) => {
       runCommand(
         'msiexec.exe',
@@ -176,14 +176,14 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   async createVirtualenvWithDownload(pythonExecutable) {
     const archivePath = await download(
-      PlatformIOCoreStage.vitrualenvUrl,
-      path.join(getCacheDir(), 'virtualenv.tar.gz')
+      PlatformIOCoreStage.virtualenvUrl,
+      path.join(core.getCacheDir(), 'virtualenv.tar.gz')
     );
-    const tmpItem = tmp.dirSync({
-      dir: getCacheDir(),
+    const tmpDir = tmp.dirSync({
+      dir: core.getCacheDir(),
       unsafeCleanup: true
-    });
-    const dstDir = await extractTarGz(archivePath, tmpItem.name);
+    }).name;
+    const dstDir = await extractTarGz(archivePath, tmpDir);
     const virtualenvScript = fs.listTreeSync(dstDir).find(
       item => path.basename(item) === 'virtualenv.py');
     if (!virtualenvScript) {
@@ -195,7 +195,7 @@ export default class PlatformIOCoreStage extends BaseStage {
         [virtualenvScript, core.getEnvDir()],
         (code, stdout, stderr) => {
           try {
-            fs.removeSync(dstDir);
+            fs.removeSync(tmpDir);
           } catch (err) {
             console.error(err);
           }

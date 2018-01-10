@@ -6,11 +6,13 @@
  * the root directory of this source tree.
  */
 
+import { getCacheDir , getEnvBinDir } from './core';
+
 import fs from 'fs-plus';
-import { getEnvBinDir } from './core';
 import path from 'path';
 import request from 'request';
 import spawn from 'cross-spawn';
+import tmp from 'tmp';
 
 const IS_WINDOWS = process.platform.startsWith('win');
 
@@ -57,9 +59,22 @@ export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extr
 
 export function runCommand(cmd, args, callback=undefined, options = {}) {
   console.info('runCommand', cmd, args, options);
-  let completed = false;
   const outputLines = [];
   const errorLines = [];
+  let completed = false;
+  let tmpDir = null;
+
+  if (['pip', 'virtualenv'].includes(path.basename(cmd))) {
+    // Overwrite TMPDIR and avoid issue with ASCII error for Python's PIP
+    const tmpEnv = Object.assign({}, process.env);
+    tmpDir = tmp.dirSync({
+      dir: getCacheDir(),
+      unsafeCleanup: true
+    }).name;
+    tmpEnv.TMPDIR = tmpEnv.TEMP = tmpEnv.TMP = tmpDir;
+    options.spawnOptions = options.spawnOptions || {};
+    options.spawnOptions.env = tmpEnv;
+  }
 
   try {
     const child = spawn(cmd, args, options.spawnOptions);
@@ -82,6 +97,15 @@ export function runCommand(cmd, args, callback=undefined, options = {}) {
       return;
     }
     completed = true;
+
+    if (tmpDir) {
+      try {
+        fs.removeSync(tmpDir);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     const stdout = outputLines.map(x => x.toString()).join('');
     const stderr = errorLines.map(x => x.toString()).join('');
     callback(code, stdout, stderr);
