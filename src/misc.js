@@ -170,7 +170,7 @@ function isPython2(executable) {
   if (IS_WINDOWS) {
     pythonLines.push('assert sys.version_info >= (2, 7, 9)');
   } else {
-    pythonLines.push('assert sys.version_info >= (2, 7, 6)');
+    pythonLines.push('assert sys.version_info >= (2, 7, 5)');
   }
   const args = ['-c', pythonLines.join(';')];
   return new Promise(resolve => {
