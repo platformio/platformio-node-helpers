@@ -6,7 +6,7 @@
  * the root directory of this source tree.
  */
 
-import { getCacheDir , getEnvBinDir } from './core';
+import { getCacheDir , getEnvBinDir, getEnvDir } from './core';
 
 import fs from 'fs-plus';
 import path from 'path';
@@ -39,16 +39,14 @@ export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extr
     }
   }
 
-  const binDir = getEnvBinDir();
   if (useBuiltinPIOCore) { // Insert bin directory into PATH
-    process.env.PATH = binDir + path.delimiter + process.env.PATH;
+    process.env.PATH = [getEnvBinDir(), getEnvDir(), process.env.PATH].join(path.delimiter);
   } else { // Remove bin directory from PATH
-    process.env.PATH = process.env.PATH.replace(binDir + path.delimiter, '');
-    process.env.PATH = process.env.PATH.replace(path.delimiter + binDir, '');
+    process.env.PATH = process.env.PATH.split(path.delimiter).filter(p => !p.includes(getEnvDir())).join(path.delimiter);
   }
 
   if (extraPath && !process.env.PATH.includes(extraPath)) {
-    process.env.PATH = extraPath + path.delimiter + process.env.PATH;
+    process.env.PATH = [extraPath, process.env.PATH].join(path.delimiter);
   }
 
   // copy PATH to Path (Windows issue)
@@ -136,6 +134,9 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = n
 
   if (useBuiltinPIOCore) {
     candidates.add(path.join(getEnvBinDir(), defaultName));
+    if (fs.isFileSync(path.join(getEnvDir(), defaultName))) {
+      candidates.add(path.join(getEnvDir(), defaultName));  // conda
+    }
   }
 
   if (IS_WINDOWS) {
