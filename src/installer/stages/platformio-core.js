@@ -202,7 +202,11 @@ export default class PlatformIOCoreStage extends BaseStage {
           if (code === 0) {
             return resolve(stdout);
           } else {
-            return reject(`Virtualenv Create: ${stderr}`);
+            let userNotification = `Virtualenv Create: ${stderr}`;
+            if (stderr.includes('WindowsError: [Error 5]')) {
+              userNotification = `If you use Antivirus, it can block PlatformIO Installer. Try to disable it for a while.\n\n${userNotification}`;
+            }
+            return reject(userNotification);
           }
         }
       );
