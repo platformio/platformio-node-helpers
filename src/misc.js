@@ -164,7 +164,9 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = n
 
 function isPython2(executable) {
   const pythonLines = [
+    'import platform',
     'import sys',
+    'assert "cygwin" not in platform.system().lower()',
     'assert "msys" not in sys.executable.lower()',
     'assert sys.version_info < (3, 0, 0)'
   ];
