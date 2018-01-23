@@ -99,7 +99,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     await new Promise((resolve, reject) => {
       runCommand(
         'msiexec.exe',
-        [administrative ? '/a' : '/i', msiInstaller, '/qn', '/li', logFile, `TARGETDIR=${targetDir}`],
+        [administrative ? '/a' : '/i', `"${msiInstaller}"`, '/qn', '/li', `"${logFile}"`, `TARGETDIR="${targetDir}"`],
         (code, stdout, stderr) => {
           if (code === 0) {
             return resolve(stdout);
