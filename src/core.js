@@ -14,7 +14,8 @@ import { runCommand } from './misc';
 const IS_WINDOWS = process.platform.startsWith('win');
 
 export function getHomeDir() {
-  const result = process.env.PLATFORMIO_HOME_DIR || path.join(fs.getHomeDirectory() || '~', '.platformio');
+  const userHomeDir = IS_WINDOWS && !process.env.HOME ? process.env.USERPROFILE : process.env.HOME;
+  const result = process.env.PLATFORMIO_HOME_DIR || path.join(userHomeDir || '~', '.platformio');
   if (IS_WINDOWS) {
     // Make sure that all path characters have valid ASCII codes.
     for (const char of result) {
