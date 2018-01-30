@@ -276,7 +276,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     return state;
   }
 
-  async autoUpgradePIOCore() {
+  async autoUpgradePIOCore(currentCoreVersion) {
     const newState = this.initState();
     const now = new Date().getTime();
     if (
@@ -287,7 +287,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       // PIO Core
       await new Promise(resolve => {
         core.runPIOCommand(
-          ['upgrade'],
+          ['upgrade', ...(this.params.useDevelopmentPIOCore && !semver.prerelease(currentCoreVersion)? ['--dev'] : [])],
           (code, stdout, stderr) => {
             if (code !== 0) {
               console.error(stdout, stderr);
@@ -314,23 +314,23 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async check() {
-    const coreVersion = await core.getVersion();
+    const coreVersion = PEPverToSemver(await core.getVersion());
 
     if (this.params.useBuiltinPIOCore) {
       if (!fs.isDirectorySync(core.getEnvBinDir())) {
         throw new Error('Virtual environment is not created');
       }
-      else if (semver.lt(PEPverToSemver(coreVersion), '3.5.0-rc.4')) {
+      else if (semver.lt(coreVersion, '3.5.0-rc.4')) {
         throw new Error('Force new python environment');
       }
       try {
-        await this.autoUpgradePIOCore();
+        await this.autoUpgradePIOCore(coreVersion);
       } catch (err) {
         console.error(err);
       }
     }
 
-    if (semver.lt(PEPverToSemver(coreVersion), this.params.pioCoreMinVersion)) {
+    if (semver.lt(coreVersion, this.params.pioCoreMinVersion)) {
       this.params.setUseBuiltinPIOCore(true);
       throw new Error(`Incompatible PIO Core ${coreVersion}`);
     }

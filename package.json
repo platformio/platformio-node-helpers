@@ -47,7 +47,7 @@
   },
   "homepage": "http://platformio.org",
   "dependencies": {
-    "cross-spawn": "^5.1.0",
+    "cross-spawn": "^6.0.3",
     "fs-plus": "^3.0.1",
     "jsonrpc-lite": "^1.2.4",
     "request": "^2.81.0",
