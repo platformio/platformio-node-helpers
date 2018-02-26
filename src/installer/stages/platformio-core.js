@@ -218,7 +218,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     const args = ['install', '--no-cache-dir', '-U'];
     if (this.params.useDevelopmentPIOCore) {
       cmd = path.join(core.getEnvBinDir(), 'pip');
-      args.push('https://github.com/platformio/platformio/archive/develop.zip');
+      args.push('https://dl.platformio.org/get/platformio-core-develop.zip');
     } else {
       args.push('platformio');
     }
