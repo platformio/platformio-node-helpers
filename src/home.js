@@ -12,6 +12,7 @@ import SockJS from 'sockjs-client';
 import fs from 'fs-plus';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
+import qs from 'querystringify';
 import request from 'request';
 import tcpPortUsed from 'tcp-port-used';
 
@@ -140,16 +141,30 @@ export function shutdownServer() {
   request.get(`http://${HTTP_HOST}:${HTTP_PORT}?__shutdown__=1`);
 }
 
-export function showAtStartup(caller) {
+export function loadState() {
   const statePath = path.join(getHomeDir(), 'homestate.json');
   if (!fs.isFileSync(statePath)) {
-    return true;
+    return null;
   }
   try {
-    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-    return !state || !state.storage || !state.storage.showOnStartup || !state.storage.showOnStartup.hasOwnProperty(caller) || state.storage.showOnStartup[caller];
+    return JSON.parse(fs.readFileSync(statePath, 'utf8'));
   } catch (err) {
     console.error(err);
-    return true;
+    return null;
   }
+}
+
+export function showAtStartup(caller) {
+  const state = loadState();
+  return !state || !state.storage || !state.storage.showOnStartup || !state.storage.showOnStartup.hasOwnProperty(caller) || state.storage.showOnStartup[caller];
+}
+
+export function getFrontendUri(serverHost, serverPort, options) {
+  const state = loadState() || {};
+  const params = {
+    start: options.start || '/',
+    theme: state.storage.theme || options.theme,
+    workspace: state.storage.workspace || options.workspace
+  };
+  return `http://${serverHost}:${serverPort}?${qs.stringify(params)}`;
 }

@@ -50,6 +50,7 @@
     "cross-spawn": "^6.0.3",
     "fs-plus": "^3.0.1",
     "jsonrpc-lite": "^1.2.4",
+    "querystringify": "*",
     "request": "^2.81.0",
     "semver": "^5.4.1",
     "sockjs-client": "^1.1.4",
