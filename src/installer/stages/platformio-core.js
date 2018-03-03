@@ -24,6 +24,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   static pythonVersion = '2.7.14';
   static virtualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-14.0.6.tar.gz';
+  static pioCoreDevelopUrl = 'https://github.com/platformio/platformio/archive/develop.zip';
 
   constructor() {
     super(...arguments);
@@ -217,8 +218,12 @@ export default class PlatformIOCoreStage extends BaseStage {
     let cmd = 'pip';
     const args = ['install', '--no-cache-dir', '-U'];
     if (this.params.useDevelopmentPIOCore) {
+      const pioCoreArchive = await download(
+        PlatformIOCoreStage.pioCoreDevelopUrl,
+        path.join(core.getCacheDir(), 'piocoredevelop.zip')
+      );
       cmd = path.join(core.getEnvBinDir(), 'pip');
-      args.push('https://dl.platformio.org/get/platformio-core-develop.zip');
+      args.push(pioCoreArchive);
     } else {
       args.push('platformio');
     }
