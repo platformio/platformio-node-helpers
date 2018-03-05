@@ -160,11 +160,11 @@ export function showAtStartup(caller) {
 }
 
 export function getFrontendUri(serverHost, serverPort, options) {
-  const state = loadState() || {};
+  const stateStorage = (loadState() || {}).storage || {};
   const params = {
     start: options.start || '/',
-    theme: state.storage.theme || options.theme,
-    workspace: state.storage.workspace || options.workspace
+    theme: stateStorage.theme || options.theme,
+    workspace: stateStorage.workspace || options.workspace
   };
   return `http://${serverHost}:${serverPort}?${qs.stringify(params)}`;
 }
