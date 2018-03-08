@@ -337,6 +337,8 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     if (semver.lt(coreVersion, this.params.pioCoreMinVersion)) {
       this.params.setUseBuiltinPIOCore(true);
+      this.params.useBuiltinPIOCore = true;
+      this.params.useDevelopmentPIOCore = this.params.useDevelopmentPIOCore || semver.prerelease(this.params.pioCoreMinVersion);
       throw new Error(`Incompatible PIO Core ${coreVersion}`);
     }
 
