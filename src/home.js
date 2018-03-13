@@ -170,5 +170,10 @@ export function getFrontendUri(serverHost, serverPort, options) {
     theme: stateStorage.theme || options.theme,
     workspace: stateStorage.workspace || options.workspace
   };
+  Object.keys(params).forEach(key => {
+    if ([undefined, null].includes(params[key])) {
+      delete params[key];
+    }
+  });
   return `http://${serverHost}:${serverPort}?${qs.stringify(params)}`;
 }
