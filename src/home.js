@@ -20,8 +20,13 @@ import tcpPortUsed from 'tcp-port-used';
 const SERVER_LAUNCH_TIMEOUT = 5 * 60; // 5 minutes
 const HTTP_HOST = '127.0.0.1';
 let HTTP_PORT = 0;
+let IDECMDS_LISTENER_STATUS = 0;
 
 function listenIDECommands(callback) {
+  if (IDECMDS_LISTENER_STATUS > 0) {
+    return;
+  }
+
   const reconnect = {
     timer: null,
     delay: 500,  // msec
@@ -36,11 +41,13 @@ function listenIDECommands(callback) {
     const sock = new SockJS(endpoint);
 
     sock.onopen = () => {
+      IDECMDS_LISTENER_STATUS = 1;
       reconnect.retries = 0;
       sock.send(jsonrpc.request(Math.random().toString(), 'ide.listen_commands').toString());
     };
 
     sock.onclose = () => {
+      IDECMDS_LISTENER_STATUS = 0;
       // reconnect.retries++;
       // reconnect.interval = setTimeout(
       //   () => newSocket(endpoint),
@@ -102,7 +109,7 @@ export function isServerStarted() {
   });
 }
 
-export async function ensureServerStarted(options) {
+export async function ensureServerStarted(options={}) {
   if (HTTP_PORT === 0) {
     HTTP_PORT = await findFreePort();
   }
@@ -110,27 +117,24 @@ export async function ensureServerStarted(options) {
     host: HTTP_HOST,
     port: HTTP_PORT
   };
-  if (await isServerStarted()) {
-    return params;
-  }
-
-  runPIOCommand(
-    ['home', '--port', HTTP_PORT, '--no-open'],
-    (code, stdout, stderr) => {
-      if (code !== 0) {
-        throw new Error('Could not start PIO Home server: ' + stderr.toString());
+  if (!(await isServerStarted())) {
+    runPIOCommand(
+      ['home', '--port', HTTP_PORT, '--no-open'],
+      (code, stdout, stderr) => {
+        if (code !== 0) {
+          throw new Error('Could not start PIO Home server: ' + stderr.toString());
+        }
       }
-    }
-  );
-
-  await new Promise((resolve, reject) => {
-    tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000)
-      .then(() => {
-        resolve(true);
-      }, (err) => {
-        reject('Could not start PIO Home server: ' + err.toString());
-      });
-  });
+    );
+    await new Promise((resolve, reject) => {
+      tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000)
+        .then(() => {
+          resolve(true);
+        }, (err) => {
+          reject('Could not start PIO Home server: ' + err.toString());
+        });
+    });
+  }
   if (options.onIDECommand) {
     listenIDECommands(options.onIDECommand);
   }
