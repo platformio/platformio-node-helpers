@@ -256,18 +256,25 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
   }
 
-  installPIOHome() {
-    return new Promise(resolve => {
-      core.runPIOCommand(
-        ['home', '--host', '__do_not_start__'],
-        (code, stdout, stderr) => {
-          if (code !== 0) {
-            console.error(stdout, stderr);
-          }
-          resolve(true);
-        }
-      );
-    });
+  autorunPIOCmds(cmds, when) {
+    if (!cmds) {
+      return;
+    }
+    return Promise.all(
+      cmds
+        .filter(cmd => !cmd.when || cmd.when === when)
+        .map(cmd => new Promise((resolve, reject) => {
+          core.runPIOCommand(
+            cmd.args,
+            (code, stdout, stderr) => {
+              if (code !== 0) {
+                console.error(stdout, stderr);
+              }
+              return (code === 0 || cmd.suppressError) ? resolve(true) : reject(stderr);
+            }
+          );
+        }))
+    );
   }
 
   initState() {
@@ -292,7 +299,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       // PIO Core
       await new Promise(resolve => {
         core.runPIOCommand(
-          ['upgrade', ...(this.params.useDevelopmentPIOCore && !semver.prerelease(currentCoreVersion)? ['--dev'] : [])],
+          ['upgrade', ...(this.params.useDevelopmentPIOCore && !semver.prerelease(currentCoreVersion) ? ['--dev'] : [])],
           (code, stdout, stderr) => {
             if (code !== 0) {
               console.error(stdout, stderr);
@@ -342,6 +349,8 @@ export default class PlatformIOCoreStage extends BaseStage {
       throw new Error(`Incompatible PIO Core ${coreVersion}`);
     }
 
+    await this.autorunPIOCmds(this.params.autorunPIOCmds, 'post-check');
+
     this.status = BaseStage.STATUS_SUCCESSED;
     console.info(`Found PIO Core ${coreVersion}`);
     return true;
@@ -376,7 +385,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
 
     await this.installPIOCore();
-    await this.installPIOHome();
+    await this.autorunPIOCmds(this.params.autorunPIOCmds, 'post-install');
 
     this.status = BaseStage.STATUS_SUCCESSED;
     return true;
