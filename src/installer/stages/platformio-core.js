@@ -262,7 +262,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
     return Promise.all(
       cmds
-        .filter(cmd => !cmd.when || cmd.when === when)
+        .filter(cmd => !cmd.when || cmd.when.includes(when))
         .map(cmd => new Promise((resolve, reject) => {
           core.runPIOCommand(
             cmd.args,
