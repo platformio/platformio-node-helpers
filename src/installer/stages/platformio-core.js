@@ -25,6 +25,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   static pythonVersion = '2.7.14';
   static virtualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-15.2.0.tar.gz';
   static pioCoreDevelopUrl = 'https://github.com/platformio/platformio/archive/develop.zip';
+  static pipUrl = 'https://files.pythonhosted.org/packages/ae/e8/2340d46ecadb1692a1e455f13f75e596d4eab3d11a57446f08259dee8f02/pip-10.0.1.tar.gz';
 
   constructor() {
     super(...arguments);
@@ -218,15 +219,27 @@ export default class PlatformIOCoreStage extends BaseStage {
     let cmd = 'pip';
     const args = ['install', '--no-cache-dir', '-U'];
     if (this.params.useDevelopmentPIOCore) {
-      const pioCoreArchive = await download(
-        PlatformIOCoreStage.pioCoreDevelopUrl,
-        path.join(core.getCacheDir(), 'piocoredevelop.zip')
-      );
       cmd = path.join(core.getEnvBinDir(), 'pip');
-      args.push(pioCoreArchive);
+      args.push(PlatformIOCoreStage.pioCoreDevelopUrl);
     } else {
       args.push('platformio');
     }
+
+    // Try to upgrade PIP to the latest version with updated openSSL
+    const pipArchive = await download(
+      PlatformIOCoreStage.pipUrl,
+      path.join(core.getCacheDir(), path.basename(PlatformIOCoreStage.pipUrl))
+    );
+    await new Promise(resolve => {
+      runCommand(cmd, ['install', '-U', pipArchive], (code, stdout, stderr) => {
+        if (code !== 0) {
+          console.error(stderr);
+        }
+        resolve(true);
+      });
+    });
+
+    // Install PIP packages
     try {
       await new Promise((resolve, reject) => {
         runCommand(cmd, args, (code, stdout, stderr) => {
