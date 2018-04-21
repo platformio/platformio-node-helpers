@@ -23,7 +23,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   static UPGRADE_PIOCORE_TIMEOUT = 86400 * 3 * 1000; // 3 days
 
   static pythonVersion = '2.7.14';
-  static virtualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-14.0.6.tar.gz';
+  static virtualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-15.2.0.tar.gz';
   static pioCoreDevelopUrl = 'https://github.com/platformio/platformio/archive/develop.zip';
 
   constructor() {
