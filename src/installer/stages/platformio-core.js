@@ -160,7 +160,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     });
   }
 
-  createVirtualenvWithUser(pythonExecutable) {
+  createVirtualenvWithLocal(pythonExecutable) {
     return new Promise((resolve, reject) => {
       runCommand(
         'virtualenv',
@@ -215,58 +215,42 @@ export default class PlatformIOCoreStage extends BaseStage {
     });
   }
 
-  async installPIOCore() {
-    let cmd = 'pip';
-    const args = ['install', '--no-cache-dir', '-U'];
-    if (this.params.useDevelopmentPIOCore) {
-      cmd = path.join(core.getEnvBinDir(), 'pip');
-      args.push(PlatformIOCoreStage.pioCoreDevelopUrl);
-    } else {
-      args.push('platformio');
-    }
-
-    // Try to upgrade PIP to the latest version with updated openSSL
+  async upgradePIP(pythonExecutable) {
+    // we use manual downloading to resolve SSL issue with old `pip`
     const pipArchive = await download(
       PlatformIOCoreStage.pipUrl,
       path.join(core.getCacheDir(), path.basename(PlatformIOCoreStage.pipUrl))
     );
-    await new Promise(resolve => {
-      runCommand(cmd, ['install', '-U', pipArchive], (code, stdout, stderr) => {
+    return new Promise(resolve => {
+      runCommand(pythonExecutable, ['-m', 'pip', 'install', '-U', pipArchive], (code, stdout, stderr) => {
         if (code !== 0) {
           console.error(stderr);
         }
         resolve(true);
       });
     });
+  }
 
-    // Install PIP packages
-    try {
-      await new Promise((resolve, reject) => {
-        runCommand(cmd, args, (code, stdout, stderr) => {
-          if (code === 0) {
-            resolve(stdout);
-          } else {
-            reject(`PIP: ${stderr}`);
-          }
-        });
-      });
-    } catch (err) {
-      console.error(err);
-      // Old versions of PIP don't support `--no-cache-dir` option
-      return new Promise((resolve, reject) => {
-        runCommand(
-          cmd,
-          args.filter(arg => arg !== '--no-cache-dir'),
-          (code, stdout, stderr) => {
-            if (code === 0) {
-              resolve(stdout);
-            } else {
-              reject(`PIP: ${stderr}`);
-            }
-          }
-        );
-      });
+  async installPIOCore(pythonExecutable) {
+    // Try to upgrade PIP to the latest version with updated openSSL
+    await this.upgradePIP(pythonExecutable);
+
+    // Install dependecnies
+    const args = ['-m', 'pip', 'install', '-U'];
+    if (this.params.useDevelopmentPIOCore) {
+      args.push(PlatformIOCoreStage.pioCoreDevelopUrl);
+    } else {
+      args.push('platformio');
     }
+    return new Promise((resolve, reject) => {
+      runCommand(pythonExecutable, args, (code, stdout, stderr) => {
+        if (code === 0) {
+          resolve(stdout);
+        } else {
+          reject(`PIP: ${stderr}`);
+        }
+      });
+    });
   }
 
   autorunPIOCmds(cmds, when) {
@@ -381,23 +365,27 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     this.cleanVirtualEnvDir();
 
-    if (await this.isCondaInstalled()) {
+    const isConda = await this.isCondaInstalled();
+    if (isConda) {
       await this.createVirtualenvWithConda();
-    } else {
-      const pythonExecutable = await this.whereIsPython();
-      if (!pythonExecutable) {
-        this.status = BaseStage.STATUS_FAILED;
-        throw new Error('Can not find Python Interpreter');
-      }
+    }
+
+    const pythonExecutable = await this.whereIsPython();
+    if (!pythonExecutable) {
+      this.status = BaseStage.STATUS_FAILED;
+      throw new Error('Can not find Python Interpreter');
+    }
+
+    if (!isConda) {
       try {
-        await this.createVirtualenvWithUser(pythonExecutable);
+        await this.createVirtualenvWithLocal(pythonExecutable);
       } catch (err) {
         console.error(err);
         await this.createVirtualenvWithDownload(pythonExecutable);
       }
     }
 
-    await this.installPIOCore();
+    await this.installPIOCore(pythonExecutable);
     await this.autorunPIOCmds(this.params.autorunPIOCmds, 'post-install');
 
     this.status = BaseStage.STATUS_SUCCESSED;

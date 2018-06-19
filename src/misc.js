@@ -62,7 +62,7 @@ export function runCommand(cmd, args, callback=undefined, options = {}) {
   let completed = false;
   let tmpDir = null;
 
-  if (IS_WINDOWS && ['pip', 'virtualenv'].includes(path.basename(cmd))) {
+  if (IS_WINDOWS && ['pip', 'virtualenv'].some(item => [path.basename(cmd), ...args].includes(item))) {
     // Overwrite TMPDIR and avoid issue with ASCII error for Python's PIP
     const tmpEnv = Object.assign({}, process.env);
     tmpDir = tmp.dirSync({
