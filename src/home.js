@@ -153,7 +153,7 @@ export function loadState() {
   try {
     return JSON.parse(fs.readFileSync(statePath, 'utf8'));
   } catch (err) {
-    console.error(err);
+    console.warn(err);
     return null;
   }
 }

@@ -48,7 +48,7 @@ export default class PlatformIOCoreStage extends BaseStage {
         try {
           return await this.installPythonForWindows();
         } catch (err) {
-          console.error(err);
+          console.warn(err);
         }
       }
 
@@ -77,7 +77,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       try {
         await this.installPythonFromWindowsMSI(msiInstaller, targetDir);
       } catch (err) {
-        console.error(err);
+        console.warn(err);
         await this.installPythonFromWindowsMSI(msiInstaller, targetDir, true);
       }
     }
@@ -133,7 +133,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       fs.removeSync(envDir);
       return true;
     } catch (err) {
-      console.error(err);
+      console.warn(err);
       return false;
     }
   }
@@ -199,7 +199,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           try {
             fs.removeSync(tmpDir);
           } catch (err) {
-            console.error(err);
+            console.warn(err);
           }
           if (code === 0) {
             return resolve(stdout);
@@ -224,7 +224,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     return new Promise(resolve => {
       runCommand(pythonExecutable, ['-m', 'pip', 'install', '-U', pipArchive], (code, stdout, stderr) => {
         if (code !== 0) {
-          console.error(stderr);
+          console.warn(stderr);
         }
         resolve(true);
       });
@@ -265,7 +265,7 @@ export default class PlatformIOCoreStage extends BaseStage {
             cmd.args,
             (code, stdout, stderr) => {
               if (code !== 0) {
-                console.error(stdout, stderr);
+                console.warn(stdout, stderr);
               }
               return (code === 0 || cmd.suppressError) ? resolve(true) : reject(stderr);
             }
@@ -299,7 +299,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           ['upgrade', ...(this.params.useDevelopmentPIOCore && !semver.prerelease(currentCoreVersion) ? ['--dev'] : [])],
           (code, stdout, stderr) => {
             if (code !== 0) {
-              console.error(stdout, stderr);
+              console.warn(stdout, stderr);
             }
             resolve(true);
           }
@@ -311,7 +311,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           ['update', '--core-packages'],
           (code, stdout, stderr) => {
             if (code !== 0) {
-              console.error(stdout, stderr);
+              console.warn(stdout, stderr);
             }
             resolve(true);
           }
@@ -335,7 +335,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       try {
         await this.autoUpgradePIOCore(coreVersion);
       } catch (err) {
-        console.error(err);
+        console.warn(err);
       }
     }
 
@@ -380,7 +380,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       try {
         await this.createVirtualenvWithLocal(pythonExecutable);
       } catch (err) {
-        console.error(err);
+        console.warn(err);
         await this.createVirtualenvWithDownload(pythonExecutable);
       }
     }

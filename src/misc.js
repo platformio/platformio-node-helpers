@@ -100,7 +100,7 @@ export function runCommand(cmd, args, callback=undefined, options = {}) {
       try {
         fs.removeSync(tmpDir);
       } catch (err) {
-        console.error(err);
+        console.warn(err);
       }
     }
 

@@ -29,7 +29,7 @@ export async function download(source, target, retries = 3) {
       }
     } catch (err) {
       lastError = err;
-      console.error(err);
+      console.warn(err);
     }
     retries--;
   }
@@ -45,7 +45,7 @@ function fileExistsAndSizeMatches(target, contentLength) {
     try {
       fs.removeSync(target);
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   }
   return false;
