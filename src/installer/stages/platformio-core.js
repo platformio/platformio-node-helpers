@@ -370,7 +370,8 @@ export default class PlatformIOCoreStage extends BaseStage {
       await this.createVirtualenvWithConda();
     }
 
-    const pythonExecutable = await this.whereIsPython();
+    // Find global Python
+    let pythonExecutable = await this.whereIsPython();
     if (!pythonExecutable) {
       this.status = BaseStage.STATUS_FAILED;
       throw new Error('Can not find Python Interpreter');
@@ -383,6 +384,13 @@ export default class PlatformIOCoreStage extends BaseStage {
         console.warn(err);
         await this.createVirtualenvWithDownload(pythonExecutable);
       }
+    }
+
+    // Find Python in virtualenv
+    pythonExecutable = await this.whereIsPython();
+    if (!pythonExecutable) {
+      this.status = BaseStage.STATUS_FAILED;
+      throw new Error('Can not find Python Interpreter');
     }
 
     await this.installPIOCore(pythonExecutable);
