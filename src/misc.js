@@ -6,7 +6,7 @@
  * the root directory of this source tree.
  */
 
-import { getCacheDir , getEnvBinDir, getEnvDir } from './core';
+import { getCacheDir , getEnvBinDir, getEnvDir, getHomeDir } from './core';
 
 import fs from 'fs-plus';
 import path from 'path';
@@ -124,42 +124,37 @@ export function processHTTPRequest(url, callback, options) {
   });
 }
 
-export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = null) {
-  const candidates = new Set();
-  const defaultName = IS_WINDOWS ? 'python.exe' : 'python';
-
-  if (customDirs) {
-    customDirs.forEach(dir => candidates.add(path.join(dir, defaultName)));
-  }
+export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = undefined) {
+  const exenames = IS_WINDOWS ? ['python.exe'] : ['python2.7', 'python2', 'python'];
+  const locations = customDirs || [];
 
   if (useBuiltinPIOCore) {
-    candidates.add(path.join(getEnvBinDir(), defaultName));
-    if (fs.isFileSync(path.join(getEnvDir(), defaultName))) {
-      candidates.add(path.join(getEnvDir(), defaultName));  // conda
-    }
+    locations.push(getEnvBinDir());
+    locations.push(getEnvDir()); // conda
   }
-
   if (IS_WINDOWS) {
-    candidates.add(defaultName);
-    candidates.add('C:\\Python27\\' + defaultName);
-  } else {
-    candidates.add('python2.7');
-    candidates.add(defaultName);
+    // sometime Python is installed to the root of C drive
+    locations.push('C:\\Python27');
+    // isolated Python 2.7 in PlatformIO Home directory
+    locations.push(path.join(getHomeDir(), 'python27'));
   }
+  // extend with paths from env.PATH
+  process.env.PATH.split(path.delimiter).forEach(item => {
+    if (!locations.includes(item)) {
+      locations.push(item);
+    }
+  });
 
-  for (const item of process.env.PATH.split(path.delimiter)) {
-    if (fs.isFileSync(path.join(item, defaultName))) {
-      candidates.add(path.join(item, defaultName));
+  for (const location of locations) {
+    for (const exename of exenames) {
+      const executable = path.join(location, exename);
+      console.log(executable, fs.isFileSync(executable));
+      if (fs.isFileSync(executable) && (await isPython2(executable))) {
+        return executable;
+      }
     }
   }
-
-  for (const executable of candidates.values()) {
-    if (await isPython2(executable)) {
-      return executable;
-    }
-  }
-
-  return null;
+  return undefined;
 }
 
 function isPython2(executable) {
