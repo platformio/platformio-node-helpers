@@ -58,7 +58,9 @@ export default class PlatformIOCoreStage extends BaseStage {
         return result.pythonExecutable;
       }
     } while (status !== this.params.pythonPrompt.STATUS_ABORT);
-    return null;
+
+    this.status = BaseStage.STATUS_FAILED;
+    throw new Error('Can not find Python Interpreter');
   }
 
   async installPythonForWindows() {
@@ -231,7 +233,9 @@ export default class PlatformIOCoreStage extends BaseStage {
     });
   }
 
-  async installPIOCore(pythonExecutable) {
+  async installPIOCore() {
+    const pythonExecutable = await this.whereIsPython();
+
     // Try to upgrade PIP to the latest version with updated openSSL
     await this.upgradePIP(pythonExecutable);
 
@@ -365,19 +369,11 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     this.cleanVirtualEnvDir();
 
-    const isConda = await this.isCondaInstalled();
-    if (isConda) {
+    if (await this.isCondaInstalled()) {
       await this.createVirtualenvWithConda();
     }
-
-    // Find global Python
-    let pythonExecutable = await this.whereIsPython();
-    if (!pythonExecutable) {
-      this.status = BaseStage.STATUS_FAILED;
-      throw new Error('Can not find Python Interpreter');
-    }
-
-    if (!isConda) {
+    else {
+      const pythonExecutable = await this.whereIsPython();
       try {
         await this.createVirtualenvWithLocal(pythonExecutable);
       } catch (err) {
@@ -386,14 +382,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       }
     }
 
-    // Find Python in virtualenv
-    pythonExecutable = await this.whereIsPython();
-    if (!pythonExecutable) {
-      this.status = BaseStage.STATUS_FAILED;
-      throw new Error('Can not find Python Interpreter');
-    }
-
-    await this.installPIOCore(pythonExecutable);
+    await this.installPIOCore();
     await this.autorunPIOCmds(this.params.autorunPIOCmds, 'post-install');
 
     this.status = BaseStage.STATUS_SUCCESSED;
