@@ -148,7 +148,6 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = u
   for (const location of locations) {
     for (const exename of exenames) {
       const executable = path.join(location, exename);
-      console.log(executable, fs.isFileSync(executable));
       if (fs.isFileSync(executable) && (await isPython2(executable))) {
         return executable;
       }
