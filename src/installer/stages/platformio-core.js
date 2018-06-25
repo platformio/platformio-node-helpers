@@ -147,6 +147,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   createVirtualenvWithConda() {
+    this.cleanVirtualEnvDir();
     return new Promise((resolve, reject) => {
       runCommand(
         'conda',
@@ -162,23 +163,44 @@ export default class PlatformIOCoreStage extends BaseStage {
     });
   }
 
-  createVirtualenvWithLocal(pythonExecutable) {
-    return new Promise((resolve, reject) => {
-      runCommand(
-        'virtualenv',
-        ['-p', pythonExecutable, core.getEnvDir()],
-        (code, stdout, stderr) => {
-          if (code === 0) {
-            return resolve(stdout);
-          } else {
-            return reject(`User's Virtualenv: ${stderr}`);
+  async createVirtualenvWithLocal(pythonExecutable) {
+    let result = undefined;
+    this.cleanVirtualEnvDir();
+    try {
+      result = await new Promise((resolve, reject) => {
+        runCommand(
+          pythonExecutable,
+          ['-m', 'virtualenv', '-p', pythonExecutable, core.getEnvDir()],
+          (code, stdout, stderr) => {
+            if (code === 0) {
+              return resolve(stdout);
+            } else {
+              return reject(`User's Virtualenv: ${stderr}`);
+            }
           }
-        }
-      );
-    });
+        );
+      });
+    } catch (err) {
+      this.cleanVirtualEnvDir();
+      result = await new Promise((resolve, reject) => {
+        runCommand(
+          'virtualenv',
+          ['-p', pythonExecutable, core.getEnvDir()],
+          (code, stdout, stderr) => {
+            if (code === 0) {
+              return resolve(stdout);
+            } else {
+              return reject(`User's Virtualenv: ${stderr}`);
+            }
+          }
+        );
+      });
+    }
+    return result;
   }
 
   async createVirtualenvWithDownload(pythonExecutable) {
+    this.cleanVirtualEnvDir();
     const archivePath = await download(
       PlatformIOCoreStage.virtualenvUrl,
       path.join(core.getCacheDir(), 'virtualenv.tar.gz')
@@ -215,6 +237,41 @@ export default class PlatformIOCoreStage extends BaseStage {
         }
       );
     });
+  }
+
+  installVirtualenvPackage(pythonExecutable) {
+    return new Promise((resolve, reject) => {
+      runCommand(
+        pythonExecutable,
+        ['-m', 'pip', 'install', 'virtualenv'],
+        (code, stdout, stderr) => {
+          if (code === 0) {
+            return resolve(stdout);
+          } else {
+            return reject(`Install Virtualenv globally: ${stderr}`);
+          }
+        }
+      );
+    });
+  }
+
+  async createVirtualenv() {
+    if (await this.isCondaInstalled()) {
+      return await this.createVirtualenvWithConda();
+    }
+    const pythonExecutable = await this.whereIsPython();
+    try {
+      await this.createVirtualenvWithLocal(pythonExecutable);
+    } catch (err) {
+      console.warn(err);
+      try {
+        await this.createVirtualenvWithDownload(pythonExecutable);
+      } catch (err) {
+        console.warn(err);
+        await this.installVirtualenvPackage(pythonExecutable);
+        await this.createVirtualenvWithLocal(pythonExecutable);
+      }
+    }
   }
 
   async upgradePIP(pythonExecutable) {
@@ -367,21 +424,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
     this.status = BaseStage.STATUS_INSTALLING;
 
-    this.cleanVirtualEnvDir();
-
-    if (await this.isCondaInstalled()) {
-      await this.createVirtualenvWithConda();
-    }
-    else {
-      const pythonExecutable = await this.whereIsPython();
-      try {
-        await this.createVirtualenvWithLocal(pythonExecutable);
-      } catch (err) {
-        console.warn(err);
-        await this.createVirtualenvWithDownload(pythonExecutable);
-      }
-    }
-
+    await this.createVirtualenv();
     await this.installPIOCore();
     await this.autorunPIOCmds(this.params.autorunPIOCmds, 'post-install');
 
