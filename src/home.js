@@ -118,15 +118,15 @@ export async function ensureServerStarted(options={}) {
     port: HTTP_PORT
   };
   if (!(await isServerStarted())) {
-    runPIOCommand(
-      ['home', '--port', HTTP_PORT, '--no-open'],
-      (code, stdout, stderr) => {
-        if (code !== 0) {
-          throw new Error('Could not start PIO Home server: ' + stderr.toString());
-        }
-      }
-    );
     await new Promise((resolve, reject) => {
+      runPIOCommand(
+        ['home', '--port', HTTP_PORT, '--no-open'],
+        (code, stdout, stderr) => {
+          if (code !== 0) {
+            return reject(stderr);
+          }
+        }
+      );
       tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000)
         .then(() => {
           resolve(true);
