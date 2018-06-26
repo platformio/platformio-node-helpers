@@ -314,25 +314,18 @@ export default class PlatformIOCoreStage extends BaseStage {
     });
   }
 
-  autorunPIOCmds(cmds, when) {
-    if (!cmds) {
-      return;
-    }
-    return Promise.all(
-      cmds
-        .filter(cmd => !cmd.when || cmd.when.includes(when))
-        .map(cmd => new Promise((resolve, reject) => {
-          core.runPIOCommand(
-            cmd.args,
-            (code, stdout, stderr) => {
-              if (code !== 0) {
-                console.warn(stdout, stderr);
-              }
-              return (code === 0 || cmd.suppressError) ? resolve(true) : reject(stderr);
-            }
-          );
-        }))
-    );
+  installPIOHome() {
+    return new Promise(resolve => {
+      core.runPIOCommand(
+        ['home', '--host', '__do_not_start__'],
+        (code, stdout, stderr) => {
+          if (code !== 0) {
+            console.warn(stdout, stderr);
+          }
+          return resolve(true);
+        }
+      );
+    });
   }
 
   initState() {
@@ -407,8 +400,6 @@ export default class PlatformIOCoreStage extends BaseStage {
       throw new Error(`Incompatible PIO Core ${coreVersion}`);
     }
 
-    await this.autorunPIOCmds(this.params.autorunPIOCmds, 'post-check');
-
     this.status = BaseStage.STATUS_SUCCESSED;
     console.info(`Found PIO Core ${coreVersion}`);
     return true;
@@ -426,7 +417,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     await this.createVirtualenv();
     await this.installPIOCore();
-    await this.autorunPIOCmds(this.params.autorunPIOCmds, 'post-install');
+    await this.installPIOHome();
 
     this.status = BaseStage.STATUS_SUCCESSED;
     return true;
