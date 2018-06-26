@@ -160,7 +160,7 @@ function isPython2(executable) {
   const pythonLines = [
     'import sys',
     'assert sys.platform != "cygwin"',
-    'assert sys.platform.startswith("win") and not any(s in sys.executable.lower() for s in ("msys", "mingw"))',
+    'assert not sys.platform.startswith("win") or not any(s in sys.executable.lower() for s in ("msys", "mingw"))',
     'assert sys.version_info < (3, 0, 0)'
   ];
   if (IS_WINDOWS) {
