@@ -147,7 +147,7 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = u
 
   for (const location of locations) {
     for (const exename of exenames) {
-      const executable = path.join(location, exename);
+      const executable = path.normalize(path.join(location, exename)).replace(/"/g, '');
       if (fs.isFileSync(executable) && (await isPython2(executable))) {
         return executable;
       }
@@ -158,10 +158,9 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = u
 
 function isPython2(executable) {
   const pythonLines = [
-    'import platform',
     'import sys',
-    'assert "cygwin" not in platform.system().lower()',
-    'assert "msys" not in sys.executable.lower()',
+    'assert sys.platform != "cygwin"',
+    'assert sys.platform.startswith("win") and not any(s in sys.executable.lower() for s in ("msys", "mingw"))',
     'assert sys.version_info < (3, 0, 0)'
   ];
   if (IS_WINDOWS) {
