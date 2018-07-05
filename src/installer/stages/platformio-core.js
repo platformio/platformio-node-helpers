@@ -268,8 +268,13 @@ export default class PlatformIOCoreStage extends BaseStage {
         await this.createVirtualenvWithDownload(pythonExecutable);
       } catch (err) {
         console.warn(err);
-        await this.installVirtualenvPackage(pythonExecutable);
-        await this.createVirtualenvWithLocal(pythonExecutable);
+        try {
+          await this.installVirtualenvPackage(pythonExecutable);
+          await this.createVirtualenvWithLocal(pythonExecutable);
+        } catch (err) {
+          console.warn(err);
+          throw new Error('Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv');
+        }
       }
     }
   }
