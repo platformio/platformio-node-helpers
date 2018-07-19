@@ -8,8 +8,8 @@
 
 import * as core from '../../core';
 
+import { IS_WINDOWS, getPythonExecutable, runCommand } from '../../misc';
 import { PEPverToSemver, download, extractTarGz } from '../helpers';
-import { getPythonExecutable, runCommand } from '../../misc';
 
 import BaseStage from './base';
 import fs from 'fs-plus';
@@ -313,6 +313,9 @@ export default class PlatformIOCoreStage extends BaseStage {
         if (code === 0) {
           resolve(stdout);
         } else {
+          if (IS_WINDOWS) {
+            stderr += '\n If you have antivirus software in a system, try to disable it for a while.';
+          }
           reject(`PIP: ${stderr}`);
         }
       });
