@@ -43,7 +43,7 @@ function listenIDECommands(callback) {
     sock.onopen = () => {
       IDECMDS_LISTENER_STATUS = 1;
       reconnect.retries = 0;
-      sock.send(jsonrpc.request(Math.random().toString(), 'ide.listen_commands').toString());
+      sock.send(JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands')));
     };
 
     sock.onclose = () => {
@@ -70,7 +70,7 @@ function listenIDECommands(callback) {
       } catch (err) {
         console.error('Invalid RPC message: ' + err.toString());
       }
-      sock.send(jsonrpc.request(Math.random().toString(), 'ide.listen_commands').toString());
+      sock.send(JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands')));
     };
     return sock;
   }
