@@ -6,12 +6,11 @@
  * the root directory of this source tree.
  */
 
+import { IS_WINDOWS, runCommand } from './misc';
+
 import fs from 'fs-plus';
 import path from 'path';
-import { runCommand } from './misc';
 
-
-const IS_WINDOWS = process.platform.startsWith('win');
 
 export function getHomeDir() {
   const userHomeDir = IS_WINDOWS && !process.env.HOME ? process.env.USERPROFILE : process.env.HOME;

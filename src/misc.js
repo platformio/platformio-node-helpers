@@ -14,7 +14,7 @@ import request from 'request';
 import spawn from 'cross-spawn';
 import tmp from 'tmp';
 
-const IS_WINDOWS = process.platform.startsWith('win');
+export const IS_WINDOWS = process.platform.startsWith('win');
 
 export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extraVars }) {
   process.env.PLATFORMIO_CALLER = caller;
