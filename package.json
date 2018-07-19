@@ -49,7 +49,7 @@
   "dependencies": {
     "cross-spawn": "^6.0.3",
     "fs-plus": "^3.0.1",
-    "jsonrpc-lite": "^2.0.0",
+    "jsonrpc-lite": "^1.0.0",
     "querystringify": "*",
     "request": "^2.81.0",
     "semver": "^5.4.1",
