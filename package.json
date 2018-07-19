@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "webpack --env build",
+    "publish": "webpack --env build && yarn publish",
     "dev": "webpack --progress --colors --watch --env dev",
     "lint": "eslint --ext js src || exit 0"
   },
