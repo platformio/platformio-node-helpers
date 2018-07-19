@@ -35,7 +35,7 @@ export default class BaseStage {
   }
 
   get stateKey() {
-    return this.constructor.name;
+    return this.name.toLocaleLowerCase().replace(/\s+/g, '-');
   }
 
   get state() {
