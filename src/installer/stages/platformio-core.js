@@ -367,18 +367,6 @@ export default class PlatformIOCoreStage extends BaseStage {
           }
         );
       });
-      // PIO Core Packages
-      await new Promise(resolve => {
-        core.runPIOCommand(
-          ['update', '--core-packages'],
-          (code, stdout, stderr) => {
-            if (code !== 0) {
-              console.warn(stdout, stderr);
-            }
-            resolve(true);
-          }
-        );
-      });
     }
     newState.lastIDEVersion = process.env.PLATFORMIO_IDE;
     this.state = newState;
