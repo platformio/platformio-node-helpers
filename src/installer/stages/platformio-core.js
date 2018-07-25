@@ -20,7 +20,7 @@ import tmp from 'tmp';
 
 export default class PlatformIOCoreStage extends BaseStage {
 
-  static UPGRADE_PIOCORE_TIMEOUT = 86400 * 3 * 1000; // 3 days
+  static UPGRADE_PIOCORE_TIMEOUT = 86400 * 7 * 1000; // 7 days
 
   static pythonVersion = '2.7.15';
   static virtualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-16.0.0.tar.gz';
