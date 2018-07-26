@@ -25,7 +25,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   static pythonVersion = '2.7.15';
   static virtualenvUrl = 'https://pypi.python.org/packages/source/v/virtualenv/virtualenv-16.0.0.tar.gz';
   static pioCoreDevelopUrl = 'https://github.com/platformio/platformio/archive/develop.zip';
-  static pipUrl = 'https://files.pythonhosted.org/packages/ae/e8/2340d46ecadb1692a1e455f13f75e596d4eab3d11a57446f08259dee8f02/pip-10.0.1.tar.gz';
+  static pipUrl = 'https://files.pythonhosted.org/packages/69/81/52b68d0a4de760a2f1979b0931ba7889202f302072cc7a0d614211bc7579/pip-18.0.tar.gz';
 
   constructor() {
     super(...arguments);
