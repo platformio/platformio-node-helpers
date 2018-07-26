@@ -10,6 +10,7 @@ import { getCacheDir , getEnvBinDir, getEnvDir, getHomeDir } from './core';
 
 import fs from 'fs-plus';
 import path from 'path';
+import qs from 'querystringify';
 import request from 'request';
 import spawn from 'cross-spawn';
 import tmp from 'tmp';
@@ -178,4 +179,20 @@ function isPython2(executable) {
       }
     );
   });
+}
+
+export function getErrorReportUrl(title, description) {
+  const errorToUrls = [
+    ['_remove_dead_weakref', 'https://github.com/platformio/platformio-vscode-ide/issues/142'],
+    ["Could not install 'tool-pioplus'", 'https://github.com/platformio/platformio-vscode-ide/issues/131'],
+    ['http://bit.ly/pio-core-virtualenv', 'https://github.com/platformio/platformio-vscode-ide/issues/154'],
+    ['Could not start PIO Home server: Error: timeout', 'https://github.com/platformio/platformio-vscode-ide/issues/205']
+  ];
+  for (const item of errorToUrls) {
+    if (description.includes(item[0])) {
+      return item[1];
+    }
+  }
+  return `https://github.com/platformio/platformio-vscode-ide/issues/new?${qs.stringify(
+    { title: encodeURIComponent(title), body: encodeURIComponent(description) })}`;
 }
