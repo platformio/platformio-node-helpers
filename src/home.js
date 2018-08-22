@@ -142,7 +142,10 @@ export async function ensureServerStarted(options={}) {
 }
 
 export function shutdownServer() {
-  request.get(`http://${HTTP_HOST}:${HTTP_PORT}?__shutdown__=1`);
+  if (!HTTP_PORT) {
+    return;
+  }
+  return request.get(`http://${HTTP_HOST}:${HTTP_PORT}?__shutdown__=1`);
 }
 
 export function loadState() {
