@@ -196,3 +196,17 @@ export function getErrorReportUrl(title, description) {
   return `https://github.com/platformio/platformio-vscode-ide/issues/new?${qs.stringify(
     { title: encodeURIComponent(title), body: encodeURIComponent(description) })}`;
 }
+
+export function isPIOProject(dir) {
+  return fs.isFileSync(path.join(dir, 'platformio.ini'));
+}
+
+export function arrayRemove(array, element) {
+  return array.splice(array.indexOf(element), 1);
+}
+
+export function disposeSubscriptions(subscriptions) {
+  while (subscriptions.length) {
+    subscriptions.pop().dispose();
+  }
+}
