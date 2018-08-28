@@ -11,15 +11,25 @@ import * as home from './home';
 import * as misc from './misc';
 import BaseStage from './installer/stages/base';
 import PlatformIOCoreStage from './installer/stages/platformio-core';
+import ProjectIndexer from './project/indexer';
+import ProjectObserver from './project/observer';
+import ProjectTasks from './project/tasks';
 
 const installer = {
   BaseStage,
   PlatformIOCoreStage
 };
 
+const project = {
+  ProjectIndexer,
+  ProjectObserver,
+  ProjectTasks
+};
+
 export {
   core,
   home,
   installer,
+  project,
   misc
 };
