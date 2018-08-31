@@ -44,7 +44,7 @@ import { runPIOCommand }  from '../core';
         this._inProgress = true;
         try {
           await new Promise((resolve, reject) => {
-            runPIOCommand(['init', '--ide', 'vscode', '--project-dir', this.projectDir], (code, stdout, stderr) => {
+            runPIOCommand(['init', '--ide', this.options.ide, '--project-dir', this.projectDir], (code, stdout, stderr) => {
               if (code === 0) {
                 resolve();
               } else {
