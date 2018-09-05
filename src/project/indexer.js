@@ -137,5 +137,11 @@ import { runPIOCommand }  from '../core';
     dispose() {
       disposeSubscriptions(this.dirWatchSubscriptions);
       disposeSubscriptions(this.subscriptions);
+      if (this._rebuildTimeout) {
+        clearTimeout(this._rebuildTimeout);
+      }
+      if (this._updateDirWatchersTimeout) {
+        clearTimeout(this._updateDirWatchersTimeout);
+      }
     }
  }
