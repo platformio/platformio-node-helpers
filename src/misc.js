@@ -134,8 +134,6 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = u
     locations.push(getEnvDir()); // conda
   }
   if (IS_WINDOWS) {
-    // sometime Python is installed to the root of C drive
-    locations.push('C:\\Python27');
     // isolated Python 2.7 in PlatformIO Home directory
     locations.push(path.join(getHomeDir(), 'python27'));
   }
