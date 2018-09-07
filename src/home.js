@@ -84,8 +84,8 @@ async function findFreePort() {
   while (port < 9000) {
     inUse = await new Promise(resolve => {
       tcpPortUsed.check(port, HTTP_HOST)
-        .then(inUse => {
-          resolve(inUse);
+        .then(result => {
+          resolve(result);
         }, () => {
           return resolve(false);
         });
@@ -101,8 +101,8 @@ async function findFreePort() {
 export function isServerStarted() {
   return new Promise(resolve => {
     tcpPortUsed.check(HTTP_PORT, HTTP_HOST)
-      .then(inUse => {
-        resolve(inUse);
+      .then(result => {
+        resolve(result);
       }, () => {
         return resolve(false);
       });
@@ -110,6 +110,23 @@ export function isServerStarted() {
 }
 
 export async function ensureServerStarted(options={}) {
+  const maxAttempts = 3;
+  let attemptNums = 0;
+  let lastError = undefined;
+  while (attemptNums < maxAttempts) {
+    try {
+      return await _ensureServerStarted(options);
+    } catch (err) {
+      lastError = err;
+      console.warn(err);
+      HTTP_PORT = 0;
+    }
+    attemptNums++;
+  }
+  throw lastError;
+}
+
+async function _ensureServerStarted(options={}) {
   if (HTTP_PORT === 0) {
     HTTP_PORT = await findFreePort();
   }
@@ -123,6 +140,7 @@ export async function ensureServerStarted(options={}) {
         ['home', '--port', HTTP_PORT, '--no-open'],
         (code, stdout, stderr) => {
           if (code !== 0) {
+            HTTP_PORT = 0;
             return reject(stderr);
           }
         }
