@@ -191,7 +191,7 @@ export function getErrorReportUrl(title, description) {
       return item[1];
     }
   }
-  return `https://github.com/platformio/platformio-vscode-ide/issues/new?${qs.stringify(
+  return `https://github.com/platformio/platformio-${process.env.PLATFORMIO_CALLER || 'vscode'}-ide/issues/new?${qs.stringify(
     { title: encodeURIComponent(title), body: encodeURIComponent(description) })}`;
 }
 
