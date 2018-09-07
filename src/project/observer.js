@@ -16,7 +16,7 @@ export default class ProjectObserver {
     this._indexers = [];
   }
 
-  update(projectDirs) {
+  async update(projectDirs) {
     // remove non-existing
     this._indexers = this._indexers.filter(item => {
       if (projectDirs.includes(item.projectDir)) {
@@ -31,8 +31,8 @@ export default class ProjectObserver {
         continue;
       }
       const indexer = new ProjectIndexer(projectDir, this.options);
-      indexer.rebuild();
       this._indexers.push(indexer);
+      await indexer.rebuild();
     }
   }
 
