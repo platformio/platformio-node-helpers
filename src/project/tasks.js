@@ -37,15 +37,18 @@ export default class ProjectTasks {
     },
     {
       name: 'Upload and Monitor',
-      args: ['run', '--target', 'upload', '--target', 'monitor']
+      args: ['run', '--target', 'upload', '--target', 'monitor'],
+      filter: (data) => !data.platform.includes('riscv_gap')
     },
     {
       name: 'Upload using Programmer',
-      args: ['run', '--target', 'program']
+      args: ['run', '--target', 'program'],
+      filter: (data) => data.platform.includes('atmelavr')
     },
     {
       name: 'Upload File System image',
-      args: ['run', '--target', 'uploadfs']
+      args: ['run', '--target', 'uploadfs'],
+      filter: (data) => data.platform.includes('espressif') || data.platform.includes('riscv_gap')
     },
     {
       name: 'Monitor',
@@ -69,16 +72,6 @@ export default class ProjectTasks {
   constructor(projectDir, ide) {
     this.projectDir = projectDir;
     this.ide = ide;
-  }
-
-  taskCompatibleWithPlatform(task, platform) {
-    if (task.args.includes('program') && !platform.includes('atmelavr')) {
-      return false;
-    }
-    else if (task.args.includes('uploadfs') && !platform.includes('espressif')) {
-      return false;
-    }
-    return true;
   }
 
   async getTasks() {
@@ -115,7 +108,7 @@ export default class ProjectTasks {
 
     // base tasks
     ProjectTasks.baseTasks.forEach(task => {
-      if (projectData.some(data => this.taskCompatibleWithPlatform(task, data.platform))) {
+      if (!task.filter || projectData.some(data => task.filter(data))) {
         result.push(new TaskItem(task.name, task.description, task.args.slice(0)));
       }
     });
@@ -124,7 +117,7 @@ export default class ProjectTasks {
     if (projectData.length > 1) {
       projectData.forEach(data => {
         ProjectTasks.baseTasks.forEach(task => {
-          if (this.taskCompatibleWithPlatform(task, data.platform)) {
+          if (!task.filter || task.filter(data)) {
             result.push(new TaskItem(task.name, task.description, [...task.args.slice(0), '--environment', data.env]));
           }
         });
