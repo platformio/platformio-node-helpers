@@ -10,7 +10,7 @@ import fs from 'fs-plus';
 import ini from 'ini';
 import path from 'path';
 
-export default class ProjectTasks {
+export class ProjectTasks {
 
   static ENV_NAME_PREFIX = 'env:';
 
@@ -133,7 +133,7 @@ export default class ProjectTasks {
 }
 
 
-class TaskItem {
+export class TaskItem {
 
   constructor(name, description, args) {
     this.name = name;
