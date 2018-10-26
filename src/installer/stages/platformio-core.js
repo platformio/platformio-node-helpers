@@ -262,7 +262,6 @@ export default class PlatformIOCoreStage extends BaseStage {
     try {
       await this.createVirtualenvWithLocal(pythonExecutable);
     } catch (err) {
-      misc.reportError(err);
       console.warn(err);
       try {
         await this.createVirtualenvWithDownload(pythonExecutable);
