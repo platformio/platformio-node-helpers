@@ -47,6 +47,7 @@
   },
   "homepage": "http://platformio.org",
   "dependencies": {
+    "@sentry/node": "^4.2.3",
     "cross-spawn": "^6.0.3",
     "fs-plus": "^3.0.1",
     "ini": "^1.3.5",

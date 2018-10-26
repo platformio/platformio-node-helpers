@@ -10,6 +10,7 @@ import { getCacheDir , getEnvBinDir, getEnvDir, getHomeDir } from './core';
 
 import fs from 'fs-plus';
 import path from 'path';
+import os from 'os';
 import qs from 'querystringify';
 import request from 'request';
 import spawn from 'cross-spawn';
@@ -207,4 +208,25 @@ export function disposeSubscriptions(subscriptions) {
   while (subscriptions.length) {
     subscriptions.pop().dispose();
   }
+}
+
+export function reportError(err, tags) {
+  // Hook for Webpack: include dependencies for Sentry
+  require("@sentry/core");
+  require("@sentry/hub");
+  require("@sentry/minimal");
+  require("@sentry/types");
+  require("@sentry/utils");
+  // End hook for Webpack
+  const Sentry = require("@sentry/node");
+  Sentry.init({
+    dsn: 'https://2c83f4457e234ddf9b3476d079fb8334@sentry.io/1309781',
+    release: PACKAGE_VERSION,
+    serverName: `${os.type()}, ${os.release()}, ${os.arch()}`,
+    defaultIntegrations: false
+  });
+  Sentry.withScope(scope => {
+    Object.entries(tags || {}).forEach(([key, value]) => scope.setTag(key, value));
+    Sentry.captureException(err);
+  });  
 }

@@ -8,10 +8,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const webpack = require('webpack');
 
-const externals = Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8')).dependencies);
-externals.push('path');
-externals.push('zlib');
+const packageConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
 
 module.exports = {
   mode: 'production',
@@ -24,7 +23,7 @@ module.exports = {
     umdNamedDefine: true
   },
   target: 'node',
-  externals: externals,
+  externals: Object.keys(packageConfig.dependencies).filter(key => !key.includes('sentry')),
   module: {
     rules: [
       {
@@ -34,6 +33,11 @@ module.exports = {
       }
     ]
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      PACKAGE_VERSION: JSON.stringify(packageConfig.version)
+    }),
+  ],
   resolve: {
     modules: [path.resolve('./node_modules'), path.resolve('./src')],
     extensions: ['.json', '.js']
