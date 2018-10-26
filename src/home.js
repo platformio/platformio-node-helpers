@@ -143,7 +143,7 @@ async function _ensureServerStarted(options={}) {
         (code, stdout, stderr) => {
           if (code !== 0) {
             HTTP_PORT = 0;
-            return reject(stderr);
+            return reject(new Error(stderr));
           }
         }
       );
@@ -151,7 +151,7 @@ async function _ensureServerStarted(options={}) {
         .then(() => {
           resolve(true);
         }, (err) => {
-          reject('Could not start PIO Home server: ' + err.toString());
+          reject(new Error('Could not start PIO Home server: ' + err.toString()));
         });
     });
   }

@@ -110,7 +110,7 @@ export default class PlatformIOCoreStage extends BaseStage {
             if (fs.isFileSync(logFile)) {
               stderr = fs.readFileSync(logFile).toString();
             }
-            return reject(`MSI Python2.7: ${stderr}`);
+            return reject(new Error(`MSI Python2.7: ${stderr}`));
           }
         },
         {
@@ -155,7 +155,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           if (code === 0) {
             return resolve(stdout);
           } else {
-            return reject(`Conda Virtualenv: ${stderr}`);
+            return reject(new Error(`Conda Virtualenv: ${stderr}`));
           }
         }
       );
@@ -174,7 +174,7 @@ export default class PlatformIOCoreStage extends BaseStage {
             if (code === 0) {
               return resolve(stdout);
             } else {
-              return reject(`User's Virtualenv: ${stderr}`);
+              return reject(new Error(`User's Virtualenv: ${stderr}`));
             }
           }
         );
@@ -189,7 +189,7 @@ export default class PlatformIOCoreStage extends BaseStage {
             if (code === 0) {
               return resolve(stdout);
             } else {
-              return reject(`User's Virtualenv: ${stderr}`);
+              return reject(new Error(`User's Virtualenv: ${stderr}`));
             }
           }
         );
@@ -231,7 +231,7 @@ export default class PlatformIOCoreStage extends BaseStage {
             if (stderr.includes('WindowsError: [Error 5]')) {
               userNotification = `If you use Antivirus, it can block PlatformIO Installer. Try to disable it for a while.\n\n${userNotification}`;
             }
-            return reject(userNotification);
+            return reject(new Error(userNotification));
           }
         }
       );
@@ -247,7 +247,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           if (code === 0) {
             return resolve(stdout);
           } else {
-            return reject(`Install Virtualenv globally: ${stderr}`);
+            return reject(new Error(`Install Virtualenv globally: ${stderr}`));
           }
         }
       );
@@ -262,6 +262,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     try {
       await this.createVirtualenvWithLocal(pythonExecutable);
     } catch (err) {
+      misc.reportError(err);
       console.warn(err);
       try {
         await this.createVirtualenvWithDownload(pythonExecutable);
@@ -317,7 +318,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           if (misc.IS_WINDOWS) {
             stderr += '\n If you have antivirus software in a system, try to disable it for a while.';
           }
-          reject(`PIP: ${stderr}`);
+          reject(new Error(`PIP: ${stderr}`));
         }
       });
     });

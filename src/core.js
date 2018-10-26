@@ -62,7 +62,7 @@ export function getVersion() {
             return reject(err.toString());
           }
         }
-        return reject(stderr);
+        return reject(new Error(stderr));
       }
     );
   });

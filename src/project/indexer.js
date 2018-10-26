@@ -48,7 +48,7 @@ import { runPIOCommand }  from '../core';
               if (code === 0) {
                 resolve();
               } else {
-                reject(stderr);
+                reject(new Error(stderr));
               }
             });
           });
@@ -122,7 +122,7 @@ import { runPIOCommand }  from '../core';
             if (code === 0) {
               resolve(stdout.toString().trim().split(':'));
             } else {
-              reject(stderr);
+              reject(new Error(stderr));
             }
           },
           {

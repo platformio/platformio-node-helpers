@@ -228,6 +228,6 @@ export function reportError(err, tags=undefined) {
   Sentry.withScope(scope => {
     Object.entries(tags || {}).forEach(([key, value]) => scope.setTag(key, value));
     scope.setTag('caller', process.env.PLATFORMIO_CALLER);
-    Sentry.captureException(err);
+    Sentry.captureException(err instanceof Error ? err : new Error(err));
   });  
 }
