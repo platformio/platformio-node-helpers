@@ -10,7 +10,8 @@ module.exports = {
     "escape": false,
     "navigator": false,
     "unescape": false,
-    "window": false
+    "window": false,
+    "PACKAGE_VERSION": false
   },
   "plugins": [
     "import"

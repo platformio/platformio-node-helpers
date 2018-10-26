@@ -13,6 +13,7 @@ import fs from 'fs-plus';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
+import { reportError } from './misc';
 import request from 'request';
 import tcpPortUsed from 'tcp-port-used';
 
@@ -123,6 +124,7 @@ export async function ensureServerStarted(options={}) {
     }
     attemptNums++;
   }
+  reportError(lastError);
   throw lastError;
 }
 

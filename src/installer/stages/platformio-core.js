@@ -7,9 +7,8 @@
  */
 
 import * as core from '../../core';
-
-import { IS_WINDOWS, getPythonExecutable, runCommand } from '../../misc';
-import { PEPverToSemver, download, extractTarGz } from '../helpers';
+import * as helpers from '../helpers';
+import * as misc from '../../misc';
 
 import BaseStage from './base';
 import fs from 'fs-plus';
@@ -39,7 +38,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   async whereIsPython() {
     let status = this.params.pythonPrompt.STATUS_TRY_AGAIN;
     do {
-      const pythonExecutable = await getPythonExecutable(this.params.useBuiltinPIOCore);
+      const pythonExecutable = await misc.getPythonExecutable(this.params.useBuiltinPIOCore);
       if (pythonExecutable) {
         return pythonExecutable;
       }
@@ -68,7 +67,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     // https://www.python.org/ftp/python/2.7.14/python-2.7.14.amd64.msi
     const pythonArch = process.arch === 'x64' ? '.amd64' : '';
     const msiUrl = `https://www.python.org/ftp/python/${PlatformIOCoreStage.pythonVersion}/python-${PlatformIOCoreStage.pythonVersion}${pythonArch}.msi`;
-    const msiInstaller = await download(
+    const msiInstaller = await helpers.download(
       msiUrl,
       path.join(core.getCacheDir(), path.basename(msiUrl))
     );
@@ -90,7 +89,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     // install virtualenv
     return new Promise(resolve => {
-      runCommand(
+      misc.runCommand(
         'pip',
         ['install', 'virtualenv'],
         () => resolve(pythonPath)
@@ -101,7 +100,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   async installPythonFromWindowsMSI(msiInstaller, targetDir, administrative = false) {
     const logFile = path.join(core.getCacheDir(), 'python27msi.log');
     await new Promise((resolve, reject) => {
-      runCommand(
+      misc.runCommand(
         'msiexec.exe',
         [administrative ? '/a' : '/i', `"${msiInstaller}"`, '/qn', '/li', `"${logFile}"`, `TARGETDIR="${targetDir}"`],
         (code, stdout, stderr) => {
@@ -142,14 +141,14 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   isCondaInstalled() {
     return new Promise(resolve => {
-      runCommand('conda', ['--version'], code => resolve(code === 0));
+      misc.runCommand('conda', ['--version'], code => resolve(code === 0));
     });
   }
 
   createVirtualenvWithConda() {
     this.cleanVirtualEnvDir();
     return new Promise((resolve, reject) => {
-      runCommand(
+      misc.runCommand(
         'conda',
         ['create', '--yes', '--quiet', 'python=2', 'pip', '--prefix', core.getEnvDir()],
         (code, stdout, stderr) => {
@@ -168,7 +167,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     this.cleanVirtualEnvDir();
     try {
       result = await new Promise((resolve, reject) => {
-        runCommand(
+        misc.runCommand(
           pythonExecutable,
           ['-m', 'virtualenv', '-p', pythonExecutable, core.getEnvDir()],
           (code, stdout, stderr) => {
@@ -183,7 +182,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     } catch (err) {
       this.cleanVirtualEnvDir();
       result = await new Promise((resolve, reject) => {
-        runCommand(
+        misc.runCommand(
           'virtualenv',
           ['-p', pythonExecutable, core.getEnvDir()],
           (code, stdout, stderr) => {
@@ -201,7 +200,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   async createVirtualenvWithDownload(pythonExecutable) {
     this.cleanVirtualEnvDir();
-    const archivePath = await download(
+    const archivePath = await helpers.download(
       PlatformIOCoreStage.virtualenvUrl,
       path.join(core.getCacheDir(), 'virtualenv.tar.gz')
     );
@@ -209,14 +208,14 @@ export default class PlatformIOCoreStage extends BaseStage {
       dir: core.getCacheDir(),
       unsafeCleanup: true
     }).name;
-    const dstDir = await extractTarGz(archivePath, tmpDir);
+    const dstDir = await helpers.extractTarGz(archivePath, tmpDir);
     const virtualenvScript = fs.listTreeSync(dstDir).find(
       item => path.basename(item) === 'virtualenv.py');
     if (!virtualenvScript) {
       throw new Error('Can not find virtualenv.py script');
     }
     return new Promise((resolve, reject) => {
-      runCommand(
+      misc.runCommand(
         pythonExecutable,
         [virtualenvScript, core.getEnvDir()],
         (code, stdout, stderr) => {
@@ -241,7 +240,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   installVirtualenvPackage(pythonExecutable) {
     return new Promise((resolve, reject) => {
-      runCommand(
+      misc.runCommand(
         pythonExecutable,
         ['-m', 'pip', 'install', 'virtualenv'],
         (code, stdout, stderr) => {
@@ -267,11 +266,13 @@ export default class PlatformIOCoreStage extends BaseStage {
       try {
         await this.createVirtualenvWithDownload(pythonExecutable);
       } catch (err) {
+        misc.reportError(err);
         console.warn(err);
         try {
           await this.installVirtualenvPackage(pythonExecutable);
           await this.createVirtualenvWithLocal(pythonExecutable);
         } catch (err) {
+          misc.reportError(err);
           console.warn(err);
           throw new Error('Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv');
         }
@@ -281,12 +282,12 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   async upgradePIP(pythonExecutable) {
     // we use manual downloading to resolve SSL issue with old `pip`
-    const pipArchive = await download(
+    const pipArchive = await helpers.download(
       PlatformIOCoreStage.pipUrl,
       path.join(core.getCacheDir(), path.basename(PlatformIOCoreStage.pipUrl))
     );
     return new Promise(resolve => {
-      runCommand(pythonExecutable, ['-m', 'pip', 'install', '-U', pipArchive], (code, stdout, stderr) => {
+      misc.runCommand(pythonExecutable, ['-m', 'pip', 'install', '-U', pipArchive], (code, stdout, stderr) => {
         if (code !== 0) {
           console.warn(stderr);
         }
@@ -309,11 +310,11 @@ export default class PlatformIOCoreStage extends BaseStage {
       args.push('platformio');
     }
     return new Promise((resolve, reject) => {
-      runCommand(pythonExecutable, args, (code, stdout, stderr) => {
+      misc.runCommand(pythonExecutable, args, (code, stdout, stderr) => {
         if (code === 0) {
           resolve(stdout);
         } else {
-          if (IS_WINDOWS) {
+          if (misc.IS_WINDOWS) {
             stderr += '\n If you have antivirus software in a system, try to disable it for a while.';
           }
           reject(`PIP: ${stderr}`);
@@ -373,7 +374,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async check() {
-    const coreVersion = PEPverToSemver(await core.getVersion());
+    const coreVersion = helpers.PEPverToSemver(await core.getVersion());
 
     if (this.params.useBuiltinPIOCore) {
       if (!fs.isDirectorySync(core.getEnvBinDir())) {

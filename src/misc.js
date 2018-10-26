@@ -9,8 +9,8 @@
 import { getCacheDir , getEnvBinDir, getEnvDir, getHomeDir } from './core';
 
 import fs from 'fs-plus';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 import qs from 'querystringify';
 import request from 'request';
 import spawn from 'cross-spawn';
@@ -210,15 +210,15 @@ export function disposeSubscriptions(subscriptions) {
   }
 }
 
-export function reportError(err, tags) {
+export function reportError(err, tags=undefined) {
   // Hook for Webpack: include dependencies for Sentry
-  require("@sentry/core");
-  require("@sentry/hub");
-  require("@sentry/minimal");
-  require("@sentry/types");
-  require("@sentry/utils");
+  require('@sentry/core');
+  require('@sentry/hub');
+  require('@sentry/minimal');
+  require('@sentry/types');
+  require('@sentry/utils');
   // End hook for Webpack
-  const Sentry = require("@sentry/node");
+  const Sentry = require('@sentry/node');
   Sentry.init({
     dsn: 'https://2c83f4457e234ddf9b3476d079fb8334@sentry.io/1309781',
     release: PACKAGE_VERSION,
@@ -227,6 +227,7 @@ export function reportError(err, tags) {
   });
   Sentry.withScope(scope => {
     Object.entries(tags || {}).forEach(([key, value]) => scope.setTag(key, value));
+    scope.setTag('caller', process.env.PLATFORMIO_CALLER);
     Sentry.captureException(err);
   });  
 }
