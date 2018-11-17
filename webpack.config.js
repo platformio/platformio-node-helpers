@@ -23,7 +23,7 @@ module.exports = {
     umdNamedDefine: true
   },
   target: 'node',
-  externals: Object.keys(packageConfig.dependencies),
+  externals: Object.keys(packageConfig.dependencies).filter(key => key !== 'ws'),
   module: {
     rules: [
       {
