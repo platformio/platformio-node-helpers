@@ -23,7 +23,7 @@ module.exports = {
     umdNamedDefine: true
   },
   target: 'node',
-  externals: Object.keys(packageConfig.dependencies).filter(key => !key.includes('sentry')),
+  externals: Object.keys(packageConfig.dependencies),
   module: {
     rules: [
       {

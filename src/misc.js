@@ -209,24 +209,26 @@ export function disposeSubscriptions(subscriptions) {
   }
 }
 
-export function reportError(err, tags=undefined) {
-  // Hook for Webpack: include dependencies for Sentry
-  require('@sentry/core');
-  require('@sentry/hub');
-  require('@sentry/minimal');
-  require('@sentry/types');
-  require('@sentry/utils');
-  // End hook for Webpack
-  const Sentry = require('@sentry/node');
-  Sentry.init({
-    dsn: 'https://2c83f4457e234ddf9b3476d079fb8334@sentry.io/1309781',
-    release: PACKAGE_VERSION,
-    serverName: `${os.type()}, ${os.release()}, ${os.arch()}`,
-    defaultIntegrations: false
+function uuid() {
+  const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+}
+
+export function reportError(err) {
+  const data = {
+    v: 1,
+    tid: 'UA-1768265-13',
+    cid: uuid(),
+    cd1: process.env.PLATFORMIO_CALLER,
+    aid: 'node.helpers',
+    av: PACKAGE_VERSION,
+    an: `${os.type()}, ${os.release()}, ${os.arch()}`,
+    t: 'exception',
+    exd: err.toString(),
+    exf: 1
+  };
+  request.post('https://www.google-analytics.com/collect', {
+    body: data,
+    json: true
   });
-  Sentry.withScope(scope => {
-    Object.entries(tags || {}).forEach(([key, value]) => scope.setTag(key, value));
-    scope.setTag('caller', process.env.PLATFORMIO_CALLER);
-    Sentry.captureException(err instanceof Error ? err : new Error(err));
-  });  
 }
