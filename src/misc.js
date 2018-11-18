@@ -219,7 +219,6 @@ export function reportError(err) {
     v: 1,
     tid: 'UA-1768265-13',
     cid: uuid(),
-    cd1: process.env.PLATFORMIO_CALLER,
     aid: 'node.helpers',
     av: PACKAGE_VERSION,
     an: `${os.type()}, ${os.release()}, ${os.arch()}`,
@@ -227,8 +226,10 @@ export function reportError(err) {
     exd: err.toString(),
     exf: 1
   };
+  if (process.env.PLATFORMIO_CALLER) {
+    data['cd1'] = process.env.PLATFORMIO_CALLER;
+  }
   request.post('https://www.google-analytics.com/collect', {
-    body: data,
-    json: true
+    body: qs.stringify(data)
   });
 }
