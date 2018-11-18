@@ -16,20 +16,21 @@ module.exports = {
   mode: 'production',
   entry: __dirname + '/src/index.js',
   output: {
-    path: __dirname + '/lib',
+    path: path.join(__dirname, 'dist'),
     filename: 'index.js',
     library: 'platformio-node-helpers',
     libraryTarget: 'umd',
     umdNamedDefine: true
   },
+  devtool: 'source-map',
   target: 'node',
-  externals: Object.keys(packageConfig.dependencies).filter(key => key !== 'ws'),
+  externals: Object.keys(packageConfig.dependencies),
   module: {
     rules: [
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        exclude: /(node_modules|bower_components|public)/
+        exclude: /node_modules/
       }
     ]
   },
@@ -40,6 +41,6 @@ module.exports = {
   ],
   resolve: {
     modules: [path.resolve('./node_modules'), path.resolve('./src')],
-    extensions: ['.json', '.js']
+    extensions: ['.js']
   }
 };

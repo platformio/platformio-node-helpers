@@ -1,14 +1,15 @@
 {
-  "presets": ["env"],
+  "presets": [
+    [
+      "env",
+      {
+        "targets": {
+          "node": "8"
+        }
+      }
+    ]
+  ],
   "plugins": [
-    ["transform-runtime", {
-      "helpers": false,
-      "polyfill": false,
-      "regenerator": true
-    }],
-    "add-module-exports",
-    "transform-async-to-generator",
-    "transform-class-properties",
-    "transform-object-rest-spread"
+    "transform-class-properties"
   ]
 }
