@@ -162,9 +162,10 @@ export default class PlatformIOCoreStage extends BaseStage {
     });
   }
 
-  async createVirtualenvWithLocal(pythonExecutable) {
+  async createVirtualenvWithLocal() {
     let result = undefined;
     this.cleanVirtualEnvDir();
+    const pythonExecutable = await this.whereIsPython();
     try {
       result = await new Promise((resolve, reject) => {
         misc.runCommand(
@@ -198,7 +199,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     return result;
   }
 
-  async createVirtualenvWithDownload(pythonExecutable) {
+  async createVirtualenvWithDownload() {
     this.cleanVirtualEnvDir();
     const archivePath = await helpers.download(
       PlatformIOCoreStage.virtualenvUrl,
@@ -214,6 +215,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     if (!virtualenvScript) {
       throw new Error('Can not find virtualenv.py script');
     }
+    const pythonExecutable = await this.whereIsPython();
     return new Promise((resolve, reject) => {
       misc.runCommand(
         pythonExecutable,
@@ -227,7 +229,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           if (code === 0) {
             return resolve(stdout);
           } else {
-            let userNotification = `Virtualenv Create: ${stderr}`;
+            let userNotification = `Virtualenv Create: ${stderr}\n${stdout}`;
             if (stderr.includes('WindowsError: [Error 5]')) {
               userNotification = `If you use Antivirus, it can block PlatformIO Installer. Try to disable it for a while.\n\n${userNotification}`;
             }
@@ -238,7 +240,8 @@ export default class PlatformIOCoreStage extends BaseStage {
     });
   }
 
-  installVirtualenvPackage(pythonExecutable) {
+  async installVirtualenvPackage() {
+    const pythonExecutable = await this.whereIsPython();
     return new Promise((resolve, reject) => {
       misc.runCommand(
         pythonExecutable,
@@ -258,23 +261,22 @@ export default class PlatformIOCoreStage extends BaseStage {
     if (await this.isCondaInstalled()) {
       return await this.createVirtualenvWithConda();
     }
-    const pythonExecutable = await this.whereIsPython();
     try {
-      await this.createVirtualenvWithLocal(pythonExecutable);
+      await this.createVirtualenvWithLocal();
     } catch (err) {
       console.warn(err);
       try {
-        await this.createVirtualenvWithDownload(pythonExecutable);
+        await this.createVirtualenvWithDownload();
       } catch (err) {
         misc.reportError(err);
         console.warn(err);
         try {
-          await this.installVirtualenvPackage(pythonExecutable);
-          await this.createVirtualenvWithLocal(pythonExecutable);
+          await this.installVirtualenvPackage();
+          await this.createVirtualenvWithLocal();
         } catch (err) {
           misc.reportError(err);
           console.warn(err);
-          throw new Error('Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv');
+          throw new Error(`Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv \n ${err.toString()}`);
         }
       }
     }
