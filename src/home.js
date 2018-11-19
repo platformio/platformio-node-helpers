@@ -7,13 +7,13 @@
  */
 
 import { getHomeDir, runPIOCommand } from './core';
+import { reportError, sleep } from './misc';
 
 import SockJS from 'sockjs-client';
 import fs from 'fs-plus';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
-import { reportError } from './misc';
 import request from 'request';
 import semver from 'semver';
 import tcpPortUsed from 'tcp-port-used';
@@ -22,6 +22,8 @@ import ws from 'ws';
 
 const SERVER_LAUNCH_TIMEOUT = 5 * 60; // 5 minutes
 const HTTP_HOST = '127.0.0.1';
+const HTTP_PORT_BEGIN = 8010;
+const HTTP_PORT_END = 8100;
 let HTTP_PORT = 0;
 let IDECMDS_LISTENER_STATUS = 0;
 
@@ -103,9 +105,9 @@ async function listenIDECommands(callback) {
 }
 
 async function findFreePort() {
-  let port = 8010;
+  let port = HTTP_PORT_BEGIN;
   let inUse = false;
-  while (port < 9000) {
+  while (port < HTTP_PORT_END) {
     inUse = await new Promise(resolve => {
       tcpPortUsed.check(port, HTTP_HOST)
         .then(result => {
@@ -137,6 +139,7 @@ export async function ensureServerStarted(options={}) {
   const maxAttempts = 3;
   let attemptNums = 0;
   let lastError = undefined;
+  let _port = 0;
   while (attemptNums < maxAttempts) {
     try {
       return await _ensureServerStarted(options);
@@ -144,6 +147,13 @@ export async function ensureServerStarted(options={}) {
       lastError = err;
       console.warn(err);
       HTTP_PORT = 0;
+      // stop all PIO Home servers
+      _port = HTTP_PORT_BEGIN;
+      while (_port < HTTP_PORT_END) {
+        request.get(`http://${HTTP_HOST}:${_port}?__shutdown__=1`).on('error', () => {});
+        _port++;
+      }
+      await sleep(2000); // wait for 2 secs while server stops
     }
     attemptNums++;
   }

@@ -18,6 +18,10 @@ import tmp from 'tmp';
 
 export const IS_WINDOWS = process.platform.startsWith('win');
 
+export function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extraVars }) {
   process.env.PLATFORMIO_CALLER = caller;
   // Fix for platformio-atom-ide/issues/112
