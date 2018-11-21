@@ -317,7 +317,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           resolve(stdout);
         } else {
           if (misc.IS_WINDOWS) {
-            stderr += '\n If you have antivirus software in a system, try to disable it for a while.';
+            stderr = `If you have antivirus/firewall/defender software in a system, try to disable it for a while. \n ${stderr}`;
           }
           reject(new Error(`PIP: ${stderr}`));
         }
