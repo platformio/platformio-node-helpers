@@ -155,9 +155,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           if (code === 0) {
             return resolve(stdout);
           } else {
-            const err = new Error(`Conda Virtualenv: ${stderr}`);
-            misc.reportError(err);
-            return reject(err);
+            return reject(new Error(`Conda Virtualenv: ${stderr}`));
           }
         }
       );
@@ -269,16 +267,15 @@ export default class PlatformIOCoreStage extends BaseStage {
       console.warn(err);
       try {
         await this.createVirtualenvWithDownload();
-      } catch (err) {
-        misc.reportError(err);
-        console.warn(err);
+      } catch (errDl) {
+        console.warn(errDl);
         try {
           await this.installVirtualenvPackage();
           await this.createVirtualenvWithLocal();
-        } catch (err) {
-          misc.reportError(err);
-          console.warn(err);
-          throw new Error(`Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv \n ${err.toString()}`);
+        } catch (errPkg) {
+          misc.reportError(errDl);
+          console.warn(errPkg);
+          throw new Error(`Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv \n ${errDl.toString()}`);
         }
       }
     }
@@ -321,7 +318,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           if (misc.IS_WINDOWS) {
             stderr = `If you have antivirus/firewall/defender software in a system, try to disable it for a while. \n ${stderr}`;
           }
-          reject(new Error(`PIP: ${stderr}`));
+          return reject(new Error(`PIP Core: ${stderr}`));
         }
       });
     });
@@ -416,9 +413,14 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
     this.status = BaseStage.STATUS_INSTALLING;
 
-    await this.createVirtualenv();
-    await this.installPIOCore();
-    await this.installPIOHome();
+    try {
+      await this.createVirtualenv();
+      await this.installPIOCore();
+      await this.installPIOHome();
+    } catch (err) {
+      misc.reportError(err);
+      throw err;
+    }
 
     this.status = BaseStage.STATUS_SUCCESSED;
     return true;
