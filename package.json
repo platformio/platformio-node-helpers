@@ -65,7 +65,7 @@
     "@babel/plugin-proposal-class-properties": "^7.1.0",
     "@babel/plugin-transform-classes": "^7.1.0",
     "@types/node": "^8",
-    "babel-eslint": "^8.0.2",
+    "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.4",
     "babel-preset-env": "^1.7.0",
     "eslint": "^5.1.0",
