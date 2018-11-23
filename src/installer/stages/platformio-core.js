@@ -155,7 +155,9 @@ export default class PlatformIOCoreStage extends BaseStage {
           if (code === 0) {
             return resolve(stdout);
           } else {
-            return reject(new Error(`Conda Virtualenv: ${stderr}`));
+            const err = new Error(`Conda Virtualenv: ${stderr}`);
+            misc.reportError(err);
+            return reject(err);
           }
         }
       );
