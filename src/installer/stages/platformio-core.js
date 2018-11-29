@@ -287,12 +287,9 @@ export default class PlatformIOCoreStage extends BaseStage {
       PlatformIOCoreStage.pipUrl,
       path.join(core.getCacheDir(), path.basename(PlatformIOCoreStage.pipUrl))
     );
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       misc.runCommand(pythonExecutable, ['-m', 'pip', 'install', '-U', pipArchive], (code, stdout, stderr) => {
-        if (code !== 0) {
-          console.warn(stderr);
-        }
-        resolve(true);
+        return code === 0 ? resolve(stdout) : reject(stderr);
       });
     });
   }
@@ -301,7 +298,12 @@ export default class PlatformIOCoreStage extends BaseStage {
     const pythonExecutable = await this.whereIsPython();
 
     // Try to upgrade PIP to the latest version with updated openSSL
-    await this.upgradePIP(pythonExecutable);
+    try {
+      await this.upgradePIP(pythonExecutable);
+    } catch (err) {
+      console.warn(err);
+      misc.reportError(new Error(`Upgrade PIP: ${err.toString()}`));
+    }
 
     // Install dependecnies
     const args = ['-m', 'pip', 'install', '-U'];
