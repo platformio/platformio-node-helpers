@@ -9,13 +9,11 @@
 import { getHomeDir, runPIOCommand } from './core';
 import { reportError, sleep } from './misc';
 
-import SockJS from 'sockjs-client';
 import fs from 'fs-plus';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
 import request from 'request';
-import semver from 'semver';
 import tcpPortUsed from 'tcp-port-used';
 import ws from 'ws';
 
@@ -44,7 +42,7 @@ export function getFrontendUri(serverHost, serverPort, options) {
 }
 
 
-async function getFrontendVersion(serverHost, serverPort) {
+export async function getFrontendVersion(serverHost, serverPort) {
   if (HTTP_PORT === 0) {
     return undefined;
   }
@@ -67,15 +65,7 @@ async function listenIDECommands(callback) {
   if (IDECMDS_LISTENER_STATUS > 0) {
     return;
   }
-
-  const frontendVersion = await getFrontendVersion(HTTP_HOST, HTTP_PORT);
-  let sock = null; 
-  if (!frontendVersion || semver.lt(frontendVersion, '2.0.0')) {
-    sock = new SockJS(`http://${HTTP_HOST}:${HTTP_PORT}/wsrpc`);
-  } else {
-    sock = new ws(`ws://${HTTP_HOST}:${HTTP_PORT}/wsrpc`, { perMessageDeflate: false });
-  }
-
+  const sock = new ws(`ws://${HTTP_HOST}:${HTTP_PORT}/wsrpc`, { perMessageDeflate: false });
   sock.onopen = () => {
     IDECMDS_LISTENER_STATUS = 1;
     sock.send(JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands')));

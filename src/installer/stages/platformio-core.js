@@ -305,7 +305,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       misc.reportError(new Error(`Upgrade PIP: ${err.toString()}`));
     }
 
-    // Install dependecnies
+    // Install dependencies
     const args = ['-m', 'pip', 'install', '-U'];
     if (this.params.useDevelopmentPIOCore) {
       args.push(PlatformIOCoreStage.pioCoreDevelopUrl);
