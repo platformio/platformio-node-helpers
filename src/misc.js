@@ -162,9 +162,10 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = u
 
 function isPython2(executable) {
   const pythonLines = [
-    'import sys',
+    'import os, sys',
     'assert sys.platform != "cygwin"',
-    'assert not sys.platform.startswith("win") or not any(s in sys.executable.lower() for s in ("msys", "mingw"))',
+    'assert not sys.platform.startswith("win") or not any(s in sys.executable.lower() for s in ("msys", "mingw", "emacs"))',
+    'assert not sys.platform.startswith("win") or os.path.isdir(os.path.join(sys.prefix, "Scripts"))',
     'assert sys.version_info < (3, 0, 0)'
   ];
   if (IS_WINDOWS) {
