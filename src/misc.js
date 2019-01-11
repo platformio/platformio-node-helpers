@@ -68,6 +68,11 @@ export function runCommand(cmd, args, callback=undefined, options = {}) {
   let completed = false;
   let tmpDir = null;
 
+  options.spawnOptions = options.spawnOptions || {};
+  if (!options.spawnOptions.cwd && fs.isDirectorySync(getEnvBinDir())) {
+    options.spawnOptions.cwd = getEnvBinDir();
+  }
+
   if (IS_WINDOWS && ['pip', 'virtualenv'].some(item => [path.basename(cmd), ...args].includes(item))) {
     // Overwrite TMPDIR and avoid issue with ASCII error for Python's PIP
     const tmpEnv = Object.assign({}, process.env);
@@ -76,8 +81,8 @@ export function runCommand(cmd, args, callback=undefined, options = {}) {
       unsafeCleanup: true
     }).name;
     tmpEnv.TMPDIR = tmpEnv.TEMP = tmpEnv.TMP = tmpDir;
-    options.spawnOptions = options.spawnOptions || {};
     options.spawnOptions.env = tmpEnv;
+    options.spawnOptions.cwd = tmpDir;
   }
 
   try {
