@@ -13,24 +13,29 @@ import path from 'path';
 
 
 export function getHomeDir() {
-  const userHomeDir = IS_WINDOWS && !process.env.HOME ? process.env.USERPROFILE : process.env.HOME;
-  const result = process.env.PLATFORMIO_HOME_DIR || path.join(userHomeDir || '~', '.platformio');
-  if (IS_WINDOWS) {
-    // Make sure that all path characters have valid ASCII codes.
-    for (const char of result) {
-      if (char.charCodeAt(0) > 127) {
-        // If they don't, put the pio home directory into the root of the disk.
-        const homeDirPathFormat = path.parse(result);
-        return path.format({
-          root: homeDirPathFormat.root,
-          dir: homeDirPathFormat.root,
-          base: '.platformio',
-          name: '.platformio'
-        });
-      }
+  let userHomeDir = IS_WINDOWS && !process.env.HOME ? process.env.USERPROFILE : process.env.HOME;
+  userHomeDir = process.env.PLATFORMIO_HOME_DIR || path.join(userHomeDir || '~', '.platformio');
+  if (!IS_WINDOWS) {
+    return userHomeDir;
+  }
+  const homeDirPathFormat = path.parse(userHomeDir);
+  const rootDir = path.format({
+    root: homeDirPathFormat.root,
+    dir: homeDirPathFormat.root,
+    base: '.platformio',
+    name: '.platformio'
+  });
+  if (fs.isDirectorySync(rootDir)) {
+    return rootDir;
+  }
+  // Make sure that all path characters have valid ASCII codes.
+  for (const char of userHomeDir) {
+    if (char.charCodeAt(0) > 127) {
+      // If they don't, put the pio home directory into the root of the disk.
+      return rootDir;
     }
   }
-  return result;
+  return userHomeDir;
 }
 
 export function getEnvDir() {
