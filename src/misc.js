@@ -157,7 +157,7 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = u
   for (const location of locations) {
     for (const exename of exenames) {
       const executable = path.normalize(path.join(location, exename)).replace(/"/g, '');
-      if (fs.isFileSync(executable) && (await isCompatiblePython(executable, useBuiltinPIOCore))) {
+      if (fs.isFileSync(executable) && (await isCompatiblePython(executable))) {
         return executable;
       }
     }
@@ -165,7 +165,7 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = u
   return undefined;
 }
 
-function isCompatiblePython(executable, allowPY3) {
+function isCompatiblePython(executable, allowPY3 = false) {
   const pythonLines = [
     'import os, sys',
     'assert sys.platform != "cygwin"',
