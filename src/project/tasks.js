@@ -24,6 +24,14 @@ export class ProjectTasks {
       args: ['run', '--target', 'upload']
     },
     {
+      name: 'Set Fuses',
+      args: ['run', '--target', 'fuses']
+    },
+    {
+      name: 'Upload and Set Fuses',
+      args: ['run', '--target', 'fuses', '--target', 'upload']
+    },
+    {
       name: 'Clean',
       args: ['run', '--target', 'clean']
     },
@@ -44,6 +52,10 @@ export class ProjectTasks {
       name: 'Upload using Programmer',
       args: ['run', '--target', 'program'],
       filter: (data) => data.platform.includes('atmelavr')
+    },
+    {
+      name: 'Upload using Programmer and Set Fuses',
+      args: ['run', '--target', 'fuses', '--target', 'program']
     },
     {
       name: 'Upload File System image',
