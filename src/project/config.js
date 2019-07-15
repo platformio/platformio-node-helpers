@@ -62,7 +62,7 @@ export default class ProjectConfig {
       var mSection = line.match(this.reSection);
       if (mSection) {
         section = mSection[1];
-        if (!(section in this._data)) {
+        if (!this._data[section]) {
           this._data[section] = {};
         }
         option = null;
@@ -89,7 +89,7 @@ export default class ProjectConfig {
   }
 
   getraw(section, option) {
-    if (!(section in this._data)) {
+    if (!this._data[section]) {
       throw `NoSectionError: ${section}`;
     }
     var value = null;

@@ -124,7 +124,7 @@ export function runCommand(cmd, args, callback=undefined, options = {}) {
 export function processHTTPRequest(url, callback, options) {
   options = options || {};
   options.url = url;
-  if (!options.hasOwnProperty('headers')) {
+  if (!options.headers) {
     options.headers = {
       'User-Agent': 'PlatformIO'
     };

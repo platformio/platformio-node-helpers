@@ -92,7 +92,7 @@ function getContentLength(url) {
     request.head({
       url
     }, (err, response) => {
-      if (err || response.statusCode !== 200 || !response.headers.hasOwnProperty('content-length')) {
+      if (err || response.statusCode !== 200 || !response.headers['content-length']) {
         resolve(-1);
       }
       resolve(parseInt(response.headers['content-length']));

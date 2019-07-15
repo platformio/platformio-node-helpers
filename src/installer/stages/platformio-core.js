@@ -167,7 +167,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     const venvCmdOptions = [
       [pythonExecutable, '-m', 'venv', core.getEnvDir()],
       [pythonExecutable, '-m', 'virtualenv', '-p', pythonExecutable, core.getEnvDir()],
-      ['virtualenv', '-p', pythonExecutable, core.getEnvDir()]
+      ['virtualenv', '-p', pythonExecutable, core.getEnvDir()],
       [pythonExecutable, '-m', 'virtualenv', core.getEnvDir()],
       ['virtualenv', core.getEnvDir()]
     ];
@@ -335,7 +335,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   initState() {
     let state = this.state;
-    if (!state || !state.hasOwnProperty('pioCoreChecked') || !state.hasOwnProperty('lastIDEVersion')) {
+    if (!state || !state.pioCoreChecked || !state.lastIDEVersion) {
       state = {
         pioCoreChecked: 0,
         lastIDEVersion: null

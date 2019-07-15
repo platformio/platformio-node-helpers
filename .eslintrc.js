@@ -78,6 +78,9 @@ module.exports = {
       {
         "allowEmptyCatch": true
       }
+    ],
+    "require-atomic-updates": [
+      "off"
     ]
   },
 };

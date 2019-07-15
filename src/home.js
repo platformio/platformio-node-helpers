@@ -206,5 +206,5 @@ export function loadState() {
 
 export function showAtStartup(caller) {
   const state = loadState();
-  return !state || !state.storage || !state.storage.showOnStartup || !state.storage.showOnStartup.hasOwnProperty(caller) || state.storage.showOnStartup[caller];
+  return !state || !state.storage || !state.storage.showOnStartup || !(caller in state.storage.showOnStartup) || state.storage.showOnStartup[caller];
 }
