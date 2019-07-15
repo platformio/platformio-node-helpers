@@ -39,6 +39,9 @@ export function getHomeDir() {
 }
 
 export function getEnvDir() {
+  if ('PLATFORMIO_PENV_DIR' in process.env) {
+    return process.env['PLATFORMIO_PENV_DIR'];
+  }
   return path.join(getHomeDir(), 'penv');
 }
 
