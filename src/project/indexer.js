@@ -110,9 +110,12 @@ import { runPIOCommand }  from '../core';
         ProjectIndexer.PythonExecutable = await getPythonExecutable(this.options.useBuiltinPIOCore);
       }
       const scriptLines = [
-        'from os.path import join',
-        'from platformio import util',
-        'print(":".join([join(util.get_home_dir(), "lib"), util.get_projectlib_dir(), util.get_projectlibdeps_dir()]))'
+        'import os',
+        'from platformio.project import helpers',
+        'libdeps_dir = helpers.get_project_libdeps_dir()',
+        'watch_dirs = [helpers.get_project_global_lib_dir(), helpers.get_project_lib_dir(), libdeps_dir]',
+        'watch_dirs.extend(os.path.join(libdeps_dir, d) for d in (os.listdir(libdeps_dir) if os.path.isdir(libdeps_dir) else []) if os.path.isdir(os.path.join(libdeps_dir, d)))',
+        'print(":".join(watch_dirs))'
       ];
       return new Promise((resolve, reject) => {
         runCommand(
