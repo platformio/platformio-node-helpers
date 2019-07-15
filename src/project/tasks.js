@@ -43,6 +43,21 @@ export class ProjectTasks {
       filter: (data) => data.platform.includes('atmelavr')
     },
     {
+      name: 'Set Fuses',
+      args: ['run', '--target', 'fuses'],
+      filter: (data) => data.platform.includes('atmelavr')
+    },
+    {
+      name: 'Upload and Set Fuses',
+      args: ['run', '--target', 'fuses', '--target', 'upload'],
+      filter: (data) => data.platform.includes('atmelavr')
+    },   
+    {
+      name: 'Upload using Programmer and Set Fuses',
+      args: ['run', '--target', 'fuses', '--target', 'program'],
+      filter: (data) => data.platform.includes('atmelavr')
+    },      
+    {
       name: 'Upload File System image',
       args: ['run', '--target', 'uploadfs'],
       filter: (data) => data.platform.includes('espressif') || data.platform.includes('riscv_gap')
