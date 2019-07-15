@@ -56,7 +56,7 @@ export async function getFrontendVersion(serverHost, serverPort) {
       } catch (err) {
       }
       return resolve(undefined);
-    });  
+    });
   });
 }
 
@@ -153,7 +153,7 @@ export async function ensureServerStarted(options={}) {
 
 async function _ensureServerStarted(options={}) {
   if (HTTP_PORT === 0) {
-    HTTP_PORT = await findFreePort();
+    HTTP_PORT = options.port || await findFreePort();
   }
   const params = {
     host: HTTP_HOST,
