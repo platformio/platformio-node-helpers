@@ -163,40 +163,33 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async createVirtualenvWithLocal() {
-    let result = undefined;
-    this.cleanVirtualEnvDir();
     const pythonExecutable = await this.whereIsPython();
-    try {
-      result = await new Promise((resolve, reject) => {
-        misc.runCommand(
-          pythonExecutable,
-          ['-m', 'virtualenv', '-p', pythonExecutable, core.getEnvDir()],
-          (code, stdout, stderr) => {
-            if (code === 0) {
-              return resolve(stdout);
-            } else {
-              return reject(new Error(`User's Virtualenv: ${stderr}`));
-            }
-          }
-        );
-      });
-    } catch (err) {
+    const venvCmdOptions = [
+      [pythonExecutable, '-m', 'venv', core.getEnvDir()],
+      [pythonExecutable, '-m', 'virtualenv', '-p', pythonExecutable, core.getEnvDir()],
+      ['virtualenv', '-p', pythonExecutable, core.getEnvDir()]
+      [pythonExecutable, '-m', 'virtualenv', core.getEnvDir()],
+      ['virtualenv', core.getEnvDir()]
+    ];
+    let lastError = null;
+    for (const cmdOptions of venvCmdOptions) {
       this.cleanVirtualEnvDir();
-      result = await new Promise((resolve, reject) => {
-        misc.runCommand(
-          'virtualenv',
-          ['-p', pythonExecutable, core.getEnvDir()],
-          (code, stdout, stderr) => {
-            if (code === 0) {
-              return resolve(stdout);
-            } else {
-              return reject(new Error(`User's Virtualenv: ${stderr}`));
+      try {
+        return await new Promise((resolve, reject) => {
+          misc.runCommand(
+            cmdOptions[0], cmdOptions.slice(1),
+            (code, stdout, stderr) => {
+              return code === 0 ? resolve(stdout) : reject(new Error(`User's Virtualenv: ${stderr}`));
             }
-          }
-        );
-      });
+          );
+        });
+      } catch (err) {
+        console.warn(err);
+        lastError = err;
+      }
     }
-    return result;
+
+    throw lastError;
   }
 
   async createVirtualenvWithDownload() {

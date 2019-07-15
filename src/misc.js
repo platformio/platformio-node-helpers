@@ -136,7 +136,7 @@ export function processHTTPRequest(url, callback, options) {
 }
 
 export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = undefined) {
-  const exenames = IS_WINDOWS ? ['python.exe'] : ['python2.7', 'python2', 'python'];
+  const exenames = IS_WINDOWS ? ['python.exe'] : ['python', 'python3', 'python2'];
   const locations = customDirs || [];
 
   if (useBuiltinPIOCore) {
@@ -165,22 +165,16 @@ export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = u
   return undefined;
 }
 
-function isCompatiblePython(executable, allowPY3 = false) {
+function isCompatiblePython(executable) {
   const pythonLines = [
     'import os, sys',
     'assert sys.platform != "cygwin"',
     'assert not sys.platform.startswith("win") or not any(s in sys.executable.lower() for s in ("msys", "mingw", "emacs"))',
-    'assert not sys.platform.startswith("win") or os.path.isdir(os.path.join(sys.prefix, "Scripts"))'
+    'assert not sys.platform.startswith("win") or os.path.isdir(os.path.join(sys.prefix, "Scripts"))',
+    'assert sys.version_info >= (2, 7, 5) or sys.version_info >= (3, 5)'
   ];
   if (IS_WINDOWS) {
     pythonLines.push('assert sys.version_info >= (2, 7, 9)');
-  } else {
-    pythonLines.push('assert sys.version_info >= (2, 7, 5)');
-  }
-  if (allowPY3) {
-    pythonLines.push('assert sys.version_info.major == 2 or sys.version_info >= (3, 5)');
-  } else {
-    pythonLines.push('assert sys.version_info < (3, 0, 0)');
   }
   const args = ['-c', pythonLines.join(';')];
   return new Promise(resolve => {
