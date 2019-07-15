@@ -63,6 +63,12 @@ export class ProjectTasks {
       filter: (data) => data.platform.includes('espressif') || data.platform.includes('riscv_gap')
     },
     {
+      name: 'Erase Flash',
+      args: ['run', '--target', 'erase'],
+      filter: (data) => data.platform.includes('espressif') || data.platform.includes('nordicnrf')
+    },    
+  
+    {
       name: 'Monitor',
       args: ['device', 'monitor']
     },
