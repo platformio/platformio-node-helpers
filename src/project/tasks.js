@@ -6,13 +6,10 @@
  * the root directory of this source tree.
  */
 
-import fs from 'fs-plus';
-import ini from 'ini';
+import ProjectConfig from './config';
 import path from 'path';
 
 export class ProjectTasks {
-
-  static ENV_NAME_PREFIX = 'env:';
 
   static baseTasks = [
     {
@@ -78,34 +75,31 @@ export class ProjectTasks {
     if (!this.projectDir) {
       return [];
     }
-    const result = [];
-    let projectConf = undefined;
-    try {
-      const content = await new Promise((resolve, reject) => {
-        fs.readFile(
-          path.join(this.projectDir, 'platformio.ini'),
-          'utf-8',
-          (err, data) => err ? reject(err) : resolve(data)
-        );
-      });
-      projectConf = ini.parse(content);
-    } catch (err) {
-      console.warn(`Could not parse "platformio.ini" file in ${this.projectDir}`);
-      return result;
-    }
-
     const projectData = [];
-    for (const section of Object.keys(projectConf)) {
-      const platform = projectConf[section].platform;
-      if (!platform || !section.startsWith(ProjectTasks.ENV_NAME_PREFIX)) {
-        continue;
-      }
-      projectData.push({
-        env: section.slice(ProjectTasks.ENV_NAME_PREFIX.length),
-        platform
-      });
-    }
 
+    const prevCWD = process.cwd();
+    process.chdir(this.projectDir);
+    try {
+      const config = new ProjectConfig(path.join(this.projectDir, 'platformio.ini'));
+      for (const env of config.envs()) {
+        const platform = config.get(`env:${env}`, 'platform');
+        if (!platform) {
+          continue;
+        }
+        projectData.push({
+          env,
+          platform
+        });
+      }      
+    } catch (err) {
+      console.warn(`Could not parse "platformio.ini" file in ${this.projectDir}: ${err}`);
+      return [];
+    }
+    // restore original CWD
+    process.chdir(prevCWD);
+    
+    const result = [];
+    
     // base tasks
     ProjectTasks.baseTasks.forEach(task => {
       if (!task.filter || projectData.some(data => task.filter(data))) {
