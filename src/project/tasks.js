@@ -21,16 +21,8 @@ export class ProjectTasks {
       args: ['run', '--target', 'upload']
     },
     {
-      name: 'Clean',
-      args: ['run', '--target', 'clean']
-    },
-    {
-      name: 'Verbose Build',
-      args: ['run', '--verbose']
-    },
-    {
-      name: 'Verbose Upload',
-      args: ['run', '--verbose', '--target', 'upload']
+      name: 'Monitor',
+      args: ['device', 'monitor']
     },
     {
       name: 'Upload and Monitor',
@@ -51,12 +43,12 @@ export class ProjectTasks {
       name: 'Upload and Set Fuses',
       args: ['run', '--target', 'fuses', '--target', 'upload'],
       filter: (data) => data.platform.includes('atmelavr')
-    },   
+    },
     {
       name: 'Upload using Programmer and Set Fuses',
       args: ['run', '--target', 'fuses', '--target', 'program'],
       filter: (data) => data.platform.includes('atmelavr')
-    },      
+    },
     {
       name: 'Upload File System image',
       args: ['run', '--target', 'uploadfs'],
@@ -66,25 +58,48 @@ export class ProjectTasks {
       name: 'Erase Flash',
       args: ['run', '--target', 'erase'],
       filter: (data) => data.platform.includes('espressif') || data.platform.includes('nordicnrf')
-    },    
-  
+    },
     {
-      name: 'Monitor',
-      args: ['device', 'monitor']
+      name: 'Devices',
+      args: ['device', 'list']
     },
     {
       name: 'Test',
       args: ['test']
     },
     {
-      name: 'Remote',
-      args: ['remote', 'run', '--target', 'upload']
-    },
-    {
       name: 'Pre-Debug',
       description: 'build in debug mode',
       args: ['debug']
     },
+    {
+      name: 'Clean',
+      args: ['run', '--target', 'clean']
+    },
+    {
+      name: 'Verbose Build',
+      args: ['run', '--verbose']
+    },
+    {
+      name: 'Verbose Upload',
+      args: ['run', '--verbose', '--target', 'upload']
+    },
+    {
+      name: 'Remote Upload',
+      args: ['remote', 'run', '--target', 'upload']
+    },
+    {
+      name: 'Remote Monitor',
+      args: ['remote', 'device', 'monitor']
+    },
+    {
+      name: 'Remote Devices',
+      args: ['remote', 'device', 'list']
+    },
+    {
+      name: 'Remote Test',
+      args: ['remote', 'test']
+    }
   ];
 
   constructor(projectDir, ide) {
@@ -111,16 +126,16 @@ export class ProjectTasks {
           env,
           platform
         });
-      }      
+      }
     } catch (err) {
       console.warn(`Could not parse "platformio.ini" file in ${this.projectDir}: ${err}`);
       return [];
     }
     // restore original CWD
     process.chdir(prevCWD);
-    
+
     const result = [];
-    
+
     // base tasks
     ProjectTasks.baseTasks.forEach(task => {
       if (!task.filter || projectData.some(data => task.filter(data))) {
