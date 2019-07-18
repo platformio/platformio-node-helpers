@@ -26,7 +26,7 @@ export default class ProjectConfig {
     if ((typeof items) == 'string') {
       items = items.split(items.includes('\n') ? '\n' : ', ');
     }
-    for (var item of items) {
+    for (let item of items) {
       item = item.trim();
       if (item) {
         result.push(item);
@@ -49,9 +49,9 @@ export default class ProjectConfig {
       return;
     }
     this._parsed.push(path);
-    var section = null;
-    var option = null;
-    for (var line of fs.readFileSync(path, 'utf-8').split(this.reLines)) {
+    let section = null;
+    let option = null;
+    for (let line of fs.readFileSync(path, 'utf-8').split(this.reLines)) {
       // Remove comments
       line = line.replace(this.reComment, '');
       if (!line) {
@@ -59,7 +59,7 @@ export default class ProjectConfig {
       }
 
       // Section
-      var mSection = line.match(this.reSection);
+      let mSection = line.match(this.reSection);
       if (mSection) {
         section = mSection[1];
         if (!this._data[section]) {
@@ -70,7 +70,7 @@ export default class ProjectConfig {
       }
 
       // Option and value
-      var mOptionValue = line.match(this.reOptionValue);
+      let mOptionValue = line.match(this.reOptionValue);
       if (section && mOptionValue) {
         option = mOptionValue[1].trim();
         this._data[section][option] = mOptionValue[2].trim();
@@ -78,7 +78,7 @@ export default class ProjectConfig {
       }
 
       // Multi-line value
-      var mMultiLineValue = line.match(this.reMultiLineValue);
+      let mMultiLineValue = line.match(this.reMultiLineValue);
       if (option && mMultiLineValue) {
         this._data[section][option] += '\n' + mMultiLineValue[0];
       }
@@ -92,7 +92,7 @@ export default class ProjectConfig {
     if (!this._data[section]) {
       throw `NoSectionError: ${section}`;
     }
-    var value = null;
+    let value = null;
     if (option in this._data[section]) {
       value = this._data[section][option];
     }
