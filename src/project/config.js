@@ -127,7 +127,7 @@ export default class ProjectConfig {
   get(section, option, default_ = undefined) {
     try {
       return this.getraw(section, option);
-    } catch {
+    } catch (err) {
       return default_;
     }
   }
