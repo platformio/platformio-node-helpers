@@ -9,11 +9,13 @@
 import { getHomeDir, runPIOCommand } from './core';
 import { reportError, sleep } from './misc';
 
+import { PEPverToSemver } from './installer/helpers';
 import fs from 'fs-plus';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
 import request from 'request';
+import semver from 'semver';
 import tcpPortUsed from 'tcp-port-used';
 import ws from 'ws';
 
@@ -22,6 +24,7 @@ const SERVER_LAUNCH_TIMEOUT = 5 * 60; // 5 minutes
 const HTTP_HOST = '127.0.0.1';
 const HTTP_PORT_BEGIN = 8010;
 const HTTP_PORT_END = 8100;
+const SESSION_ID = Math.round(Math.random() * 1000000);
 let HTTP_PORT = 0;
 let IDECMDS_LISTENER_STATUS = 0;
 
@@ -31,7 +34,8 @@ export function getFrontendUri(serverHost, serverPort, options) {
   const params = {
     start: options.start || '/',
     theme: stateStorage.theme || options.theme,
-    workspace: stateStorage.workspace || options.workspace
+    workspace: stateStorage.workspace || options.workspace,
+    sid: SESSION_ID
   };
   Object.keys(params).forEach(key => {
     if ([undefined, null].includes(params[key])) {
@@ -65,10 +69,12 @@ async function listenIDECommands(callback) {
   if (IDECMDS_LISTENER_STATUS > 0) {
     return;
   }
+  let coreVersion = '0.0.0';
+  const coreVersionMsgId = Math.random().toString();
   const sock = new ws(`ws://${HTTP_HOST}:${HTTP_PORT}/wsrpc`, { perMessageDeflate: false });
   sock.onopen = () => {
     IDECMDS_LISTENER_STATUS = 1;
-    sock.send(JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands')));
+    sock.send(JSON.stringify(jsonrpc.request(coreVersionMsgId, 'core.version')));
   };
 
   sock.onclose = () => {
@@ -80,7 +86,11 @@ async function listenIDECommands(callback) {
       const result = jsonrpc.parse(event.data);
       switch (result.type) {
         case 'success':
-          callback(result.payload.result.method, result.payload.result.params);
+          if (result.payload.id === coreVersionMsgId) {
+            coreVersion = PEPverToSemver(result.payload.result);
+          } else {
+            callback(result.payload.result.method, result.payload.result.params);
+          }
           break;
 
         case 'error':
@@ -90,7 +100,14 @@ async function listenIDECommands(callback) {
     } catch (err) {
       console.error('Invalid RPC message: ' + err.toString());
     }
-    sock.send(JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands')));
+
+    let data = null;
+    if (semver.gte(coreVersion, '4.0.1-b.3')) {
+      data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands', [SESSION_ID]);
+    } else {
+      data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands');
+    }
+    sock.send(JSON.stringify(data));
   };
 }
 
