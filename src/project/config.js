@@ -59,7 +59,7 @@ export default class ProjectConfig {
       }
 
       // Section
-      let mSection = line.match(this.reSection);
+      const mSection = line.match(this.reSection);
       if (mSection) {
         section = mSection[1];
         if (!this._data[section]) {
@@ -70,7 +70,7 @@ export default class ProjectConfig {
       }
 
       // Option and value
-      let mOptionValue = line.match(this.reOptionValue);
+      const mOptionValue = line.match(this.reOptionValue);
       if (section && mOptionValue) {
         option = mOptionValue[1].trim();
         this._data[section][option] = mOptionValue[2].trim();
@@ -78,7 +78,7 @@ export default class ProjectConfig {
       }
 
       // Multi-line value
-      let mMultiLineValue = line.match(this.reMultiLineValue);
+      const mMultiLineValue = line.match(this.reMultiLineValue);
       if (option && mMultiLineValue) {
         this._data[section][option] += '\n' + mMultiLineValue[0];
       }
