@@ -14,79 +14,96 @@ export class ProjectTasks {
   static baseTasks = [
     {
       name: 'Build',
-      args: ['run']
+      args: ['run'],
+      multienv: true
     },
     {
       name: 'Upload',
-      args: ['run', '--target', 'upload']
+      args: ['run', '--target', 'upload'],
+      multienv: true
     },
     {
       name: 'Monitor',
-      args: ['device', 'monitor']
+      args: ['device', 'monitor'],
+      multienv: true
     },
     {
       name: 'Upload and Monitor',
       args: ['run', '--target', 'upload', '--target', 'monitor'],
+      multienv: true,
       filter: (data) => !data.platform.includes('riscv_gap')
     },
     {
       name: 'Upload using Programmer',
       args: ['run', '--target', 'program'],
+      multienv: true,
       filter: (data) => data.platform.includes('atmelavr')
     },
     {
       name: 'Set Fuses',
       args: ['run', '--target', 'fuses'],
+      multienv: true,
       filter: (data) => data.platform.includes('atmelavr')
     },
     {
       name: 'Upload and Set Fuses',
       args: ['run', '--target', 'fuses', '--target', 'upload'],
+      multienv: true,
       filter: (data) => data.platform.includes('atmelavr')
     },
     {
       name: 'Upload using Programmer and Set Fuses',
       args: ['run', '--target', 'fuses', '--target', 'program'],
+      multienv: true,
       filter: (data) => data.platform.includes('atmelavr')
     },
     {
       name: 'Upload File System image',
       args: ['run', '--target', 'uploadfs'],
+      multienv: true,
       filter: (data) => data.platform.includes('espressif') || data.platform.includes('riscv_gap')
     },
     {
       name: 'Erase Flash',
       args: ['run', '--target', 'erase'],
+      multienv: true,
       filter: (data) => data.platform.includes('espressif') || data.platform.includes('nordicnrf')
     },
     {
       name: 'Devices',
-      args: ['device', 'list']
+      args: ['device', 'list'],
+
     },
     {
       name: 'Test',
-      args: ['test']
+      args: ['test'],
+      multienv: true
     },
     {
       name: 'Pre-Debug',
       description: 'build in debug mode',
-      args: ['debug']
+      args: ['debug'],
+      multienv: true
     },
     {
       name: 'Clean',
-      args: ['run', '--target', 'clean']
+      args: ['run', '--target', 'clean'],
+      multienv: true
     },
     {
       name: 'Verbose Build',
-      args: ['run', '--verbose']
+      args: ['run', '--verbose'],
+      multienv: true
     },
     {
       name: 'Verbose Upload',
-      args: ['run', '--verbose', '--target', 'upload']
+      args: ['run', '--verbose', '--target', 'upload'],
+      multienv: true
     },
     {
       name: 'Remote Upload',
-      args: ['remote', 'run', '--target', 'upload']
+      args: ['remote', 'run', '--target', 'upload'],
+      multienv: true
     },
     {
       name: 'Remote Monitor',
@@ -98,7 +115,8 @@ export class ProjectTasks {
     },
     {
       name: 'Remote Test',
-      args: ['remote', 'test']
+      args: ['remote', 'test'],
+      multienv: true
     }
   ];
 
@@ -111,7 +129,7 @@ export class ProjectTasks {
     if (!this.projectDir) {
       return [];
     }
-    const projectData = [];
+    const projectEnvs = [];
 
     const prevCWD = process.cwd();
     process.chdir(this.projectDir);
@@ -122,7 +140,7 @@ export class ProjectTasks {
         if (!platform) {
           continue;
         }
-        projectData.push({
+        projectEnvs.push({
           env,
           platform
         });
@@ -138,21 +156,19 @@ export class ProjectTasks {
 
     // base tasks
     ProjectTasks.baseTasks.forEach(task => {
-      if (!task.filter || projectData.some(data => task.filter(data))) {
+      if (!task.filter || projectEnvs.some(data => task.filter(data))) {
         result.push(new TaskItem(task.name, task.description, task.args.slice(0)));
       }
     });
 
-    // project environment tasks
-    if (projectData.length > 1) {
-      projectData.forEach(data => {
-        ProjectTasks.baseTasks.forEach(task => {
-          if (!task.filter || task.filter(data)) {
-            result.push(new TaskItem(task.name, task.description, [...task.args.slice(0), '--environment', data.env]));
-          }
-        });
+    // multi environment tasks
+    projectEnvs.forEach(data => {
+      ProjectTasks.baseTasks.forEach(task => {
+        if (task.multienv && (!task.filter || task.filter(data))) {
+          result.push(new TaskItem(task.name, task.description, [...task.args.slice(0), '--environment', data.env]));
+        }
       });
-    }
+    });
 
     // Misc tasks
     result.push(new TaskItem('Update project libraries', undefined, ['lib', 'update']));
