@@ -192,7 +192,9 @@ export function getErrorReportUrl(title, description) {
   const errorToUrls = [
     ['_remove_dead_weakref', 'https://github.com/platformio/platformio-vscode-ide/issues/142'],
     ['WindowsError: [Error 5]', 'https://github.com/platformio/platformio-vscode-ide/issues/884'],
-    ['Could not start PIO Home server: Error: timeout', 'https://github.com/platformio/platformio-vscode-ide/issues/205']
+    ['Could not start PIO Home server: Error: timeout', 'https://github.com/platformio/platformio-vscode-ide/issues/205'],
+    ['Failed to download file', 'https://github.com/platformio/platformio-vscode-ide/issues/386'],
+    ['Conda Virtualenv', 'https://github.com/platformio/platformio-vscode-ide/issues/914'],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
