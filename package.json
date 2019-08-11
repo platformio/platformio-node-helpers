@@ -1,6 +1,6 @@
 {
   "name": "platformio-node-helpers",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "description": "Collection of Node.JS helpers for PlatformIO",
   "main": "dist/index.js",
   "scripts": {
