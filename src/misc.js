@@ -202,7 +202,7 @@ export function getErrorReportUrl(title, description) {
     }
   }
   return `https://github.com/platformio/platformio-${process.env.PLATFORMIO_CALLER || 'vscode'}-ide/issues/new?${qs.stringify(
-    { title, body: description })}`;
+    { title, body: description, labels: 'auto' })}`;
 }
 
 export function isPIOProject(dir) {
