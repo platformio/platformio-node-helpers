@@ -162,13 +162,15 @@ export class ProjectTasks {
     });
 
     // multi environment tasks
-    projectEnvs.forEach(data => {
-      ProjectTasks.baseTasks.forEach(task => {
-        if (task.multienv && (!task.filter || task.filter(data))) {
-          result.push(new TaskItem(task.name, task.description, [...task.args.slice(0), '--environment', data.env]));
-        }
+    if (projectEnvs.length > 1) {
+      projectEnvs.forEach(data => {
+        ProjectTasks.baseTasks.forEach(task => {
+          if (task.multienv && (!task.filter || task.filter(data))) {
+            result.push(new TaskItem(task.name, task.description, [...task.args.slice(0), '--environment', data.env]));
+          }
+        });
       });
-    });
+    }
 
     // Misc tasks
     result.push(new TaskItem('Update project libraries', undefined, ['lib', 'update']));
