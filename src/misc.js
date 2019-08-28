@@ -195,6 +195,7 @@ export function getErrorReportUrl(title, description) {
     ['Could not start PIO Home server: Error: timeout', 'https://github.com/platformio/platformio-vscode-ide/issues/205'],
     ['Failed to download file', 'https://github.com/platformio/platformio-vscode-ide/issues/386'],
     ['Conda Virtualenv', 'https://github.com/platformio/platformio-vscode-ide/issues/914'],
+    ['ModuleNotFoundError: No module named \'distutils', 'https://github.com/platformio/platformio-vscode-ide/issues/907'],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
