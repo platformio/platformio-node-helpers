@@ -171,7 +171,7 @@ function isCompatiblePython(executable) {
     'assert sys.platform != "cygwin"',
     'assert not sys.platform.startswith("win") or not any(s in sys.executable.lower() for s in ("msys", "mingw", "emacs"))',
     'assert not sys.platform.startswith("win") or os.path.isdir(os.path.join(sys.prefix, "Scripts"))',
-    'assert sys.version_info >= (2, 7, 5) or sys.version_info >= (3, 5)'
+    'assert (sys.version_info >= (2, 7, 5) and sys.version_info < (3,)) or sys.version_info >= (3, 5)'
   ];
   if (IS_WINDOWS) {
     pythonLines.push('assert sys.version_info >= (2, 7, 9)');
