@@ -10,20 +10,19 @@ import fs from 'fs';
 import glob from 'glob';
 
 export default class ProjectConfig {
-
   reLines = /[\r\n]+/g;
   reComment = /(^\s*;|\s+;|^\s*#).+/;
   reSection = /^\[([^\]]+)\]/;
   reOptionValue = /^([^=]+)=(.*)/;
-  reMultiLineValue = /^\s+(.*)/
-  reInterpolation = /\$\{([^\.\}]+)\.([^\}]+)\}/g
+  reMultiLineValue = /^\s+(.*)/;
+  reInterpolation = /\$\{([^\.\}]+)\.([^\}]+)\}/g;
 
   static parse_multi_values(items) {
     const result = [];
     if (!items) {
       return result;
     }
-    if ((typeof items) == 'string') {
+    if (typeof items == 'string') {
       items = items.split(items.includes('\n') ? '\n' : ', ');
     }
     for (let item of items) {
@@ -84,8 +83,9 @@ export default class ProjectConfig {
       }
     }
 
-    this.getlist('platformio', 'extra_configs').forEach(
-      pattern => glob.sync(pattern).forEach(item => this.read(item)));
+    this.getlist('platformio', 'extra_configs').forEach(pattern =>
+      glob.sync(pattern).forEach(item => this.read(item))
+    );
   }
 
   getraw(section, option) {
@@ -95,8 +95,7 @@ export default class ProjectConfig {
     let value = null;
     if (option in this._data[section]) {
       value = this._data[section][option];
-    }
-    else if (section.startsWith('env:')) {
+    } else if (section.startsWith('env:')) {
       value = this.get('env', option);
     } else {
       throw `NoOptionError: ${section} -> ${option}`;
@@ -104,7 +103,9 @@ export default class ProjectConfig {
     if (!value.includes('${') || !value.includes('}')) {
       return value;
     }
-    return value.replace(this.reInterpolation, (_, section, option) => this._reInterpolationHandler(section, option));
+    return value.replace(this.reInterpolation, (_, section, option) =>
+      this._reInterpolationHandler(section, option)
+    );
   }
 
   _reInterpolationHandler(section, option) {
@@ -133,9 +134,6 @@ export default class ProjectConfig {
   }
 
   getlist(section, option, default_ = undefined) {
-    return ProjectConfig.parse_multi_values(
-      this.get(section, option, default_)
-    );
+    return ProjectConfig.parse_multi_values(this.get(section, option, default_));
   }
-
 }

@@ -10,7 +10,7 @@ import * as core from './core';
 import * as home from './home';
 import * as misc from './misc';
 
-import { ProjectTasks, TaskItem} from './project/tasks';
+import { ProjectTasks, TaskItem } from './project/tasks';
 
 import BaseStage from './installer/stages/base';
 import PlatformIOCoreStage from './installer/stages/platformio-core';
@@ -29,10 +29,4 @@ const project = {
   TaskItem
 };
 
-export {
-  core,
-  home,
-  installer,
-  project,
-  misc
-};
+export { core, home, installer, project, misc };

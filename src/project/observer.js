@@ -10,7 +10,6 @@ import ProjectIndexer from './indexer';
 import { disposeSubscriptions } from '../misc';
 
 export default class ProjectObserver {
-
   constructor(options) {
     this.options = options;
     this._indexers = [];
@@ -43,5 +42,4 @@ export default class ProjectObserver {
   dispose() {
     disposeSubscriptions(this._indexers);
   }
-
 }

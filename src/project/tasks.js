@@ -10,7 +10,6 @@ import ProjectConfig from './config';
 import path from 'path';
 
 export class ProjectTasks {
-
   static baseTasks = [
     {
       name: 'Build',
@@ -31,48 +30,49 @@ export class ProjectTasks {
       name: 'Upload and Monitor',
       args: ['run', '--target', 'upload', '--target', 'monitor'],
       multienv: true,
-      filter: (data) => !data.platform.includes('riscv_gap')
+      filter: data => !data.platform.includes('riscv_gap')
     },
     {
       name: 'Upload using Programmer',
       args: ['run', '--target', 'program'],
       multienv: true,
-      filter: (data) => data.platform.includes('atmelavr')
+      filter: data => data.platform.includes('atmelavr')
     },
     {
       name: 'Set Fuses',
       args: ['run', '--target', 'fuses'],
       multienv: true,
-      filter: (data) => data.platform.includes('atmelavr')
+      filter: data => data.platform.includes('atmelavr')
     },
     {
       name: 'Upload and Set Fuses',
       args: ['run', '--target', 'fuses', '--target', 'upload'],
       multienv: true,
-      filter: (data) => data.platform.includes('atmelavr')
+      filter: data => data.platform.includes('atmelavr')
     },
     {
       name: 'Upload using Programmer and Set Fuses',
       args: ['run', '--target', 'fuses', '--target', 'program'],
       multienv: true,
-      filter: (data) => data.platform.includes('atmelavr')
+      filter: data => data.platform.includes('atmelavr')
     },
     {
       name: 'Upload File System image',
       args: ['run', '--target', 'uploadfs'],
       multienv: true,
-      filter: (data) => data.platform.includes('espressif') || data.platform.includes('riscv_gap')
+      filter: data =>
+        data.platform.includes('espressif') || data.platform.includes('riscv_gap')
     },
     {
       name: 'Erase Flash',
       args: ['run', '--target', 'erase'],
       multienv: true,
-      filter: (data) => data.platform.includes('espressif') || data.platform.includes('nordicnrf')
+      filter: data =>
+        data.platform.includes('espressif') || data.platform.includes('nordicnrf')
     },
     {
       name: 'Devices',
-      args: ['device', 'list'],
-
+      args: ['device', 'list']
     },
     {
       name: 'Test',
@@ -146,7 +146,9 @@ export class ProjectTasks {
         });
       }
     } catch (err) {
-      console.warn(`Could not parse "platformio.ini" file in ${this.projectDir}: ${err}`);
+      console.warn(
+        `Could not parse "platformio.ini" file in ${this.projectDir}: ${err}`
+      );
       return [];
     }
     // restore original CWD
@@ -166,7 +168,13 @@ export class ProjectTasks {
       projectEnvs.forEach(data => {
         ProjectTasks.baseTasks.forEach(task => {
           if (task.multienv && (!task.filter || task.filter(data))) {
-            result.push(new TaskItem(task.name, task.description, [...task.args.slice(0), '--environment', data.env]));
+            result.push(
+              new TaskItem(task.name, task.description, [
+                ...task.args.slice(0),
+                '--environment',
+                data.env
+              ])
+            );
           }
         });
       });
@@ -174,15 +182,15 @@ export class ProjectTasks {
 
     // Misc tasks
     result.push(new TaskItem('Update project libraries', undefined, ['lib', 'update']));
-    result.push(new TaskItem('Rebuild IntelliSense Index', undefined, ['init', '--ide', this.ide]));
+    result.push(
+      new TaskItem('Rebuild IntelliSense Index', undefined, ['init', '--ide', this.ide])
+    );
 
     return result;
   }
 }
 
-
 export class TaskItem {
-
   constructor(name, description, args) {
     this.name = name;
     this.description = description;

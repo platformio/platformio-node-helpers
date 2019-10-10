@@ -7,7 +7,6 @@
  */
 
 export default class BaseStage {
-
   static STATUS_CHECKING = 0;
   static STATUS_INSTALLING = 1;
   static STATUS_SUCCESSED = 2;
@@ -55,5 +54,4 @@ export default class BaseStage {
   }
 
   destroy() {}
-
 }

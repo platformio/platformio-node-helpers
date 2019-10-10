@@ -12,7 +12,6 @@ import { runCommand } from '../misc';
 import tar from 'tar';
 import zlib from 'zlib';
 
-
 export async function download(source, target, retries = 3) {
   const contentLength = await getContentLength(source);
 
@@ -68,18 +67,20 @@ async function _download(source, target) {
       );
     });
   } catch (err) {
-    proxy = (process.env.HTTPS_PROXY && process.env.HTTPS_PROXY.trim()
-    || process.env.HTTP_PROXY && process.env.HTTP_PROXY.trim());
+    proxy =
+      (process.env.HTTPS_PROXY && process.env.HTTPS_PROXY.trim()) ||
+      (process.env.HTTP_PROXY && process.env.HTTP_PROXY.trim());
   }
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(target);
     const options = {
-      url: source,
+      url: source
     };
     if (proxy) {
       options.proxy = proxy;
     }
-    request.get(options)
+    request
+      .get(options)
       .on('error', err => reject(err))
       .pipe(file);
     file.on('error', err => reject(err));
@@ -89,14 +90,17 @@ async function _download(source, target) {
 
 function getContentLength(url) {
   return new Promise(resolve => {
-    request.head({
-      url
-    }, (err, response) => {
-      if (err || response.statusCode !== 200 || !response.headers['content-length']) {
-        resolve(-1);
+    request.head(
+      {
+        url
+      },
+      (err, response) => {
+        if (err || response.statusCode !== 200 || !response.headers['content-length']) {
+          resolve(-1);
+        }
+        resolve(parseInt(response.headers['content-length']));
       }
-      resolve(parseInt(response.headers['content-length']));
-    });
+    );
   });
 }
 
@@ -105,9 +109,11 @@ export function extractTarGz(source, destination) {
     fs.createReadStream(source)
       .pipe(zlib.createGunzip())
       .on('error', err => reject(err))
-      .pipe(tar.extract({
-        cwd: destination
-      }))
+      .pipe(
+        tar.extract({
+          cwd: destination
+        })
+      )
       .on('error', err => reject(err))
       .on('close', () => resolve(destination));
   });

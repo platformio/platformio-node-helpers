@@ -11,10 +11,11 @@ import { IS_WINDOWS, runCommand } from './misc';
 import fs from 'fs-plus';
 import path from 'path';
 
-
 export function getHomeDir() {
-  let userHomeDir = IS_WINDOWS && !process.env.HOME ? process.env.USERPROFILE : process.env.HOME;
-  userHomeDir = process.env.PLATFORMIO_HOME_DIR || path.join(userHomeDir || '~', '.platformio');
+  let userHomeDir =
+    IS_WINDOWS && !process.env.HOME ? process.env.USERPROFILE : process.env.HOME;
+  userHomeDir =
+    process.env.PLATFORMIO_HOME_DIR || path.join(userHomeDir || '~', '.platformio');
   if (!IS_WINDOWS) {
     return userHomeDir;
   }
@@ -59,20 +60,16 @@ export function getCacheDir() {
 
 export function getVersion() {
   return new Promise((resolve, reject) => {
-    runCommand(
-      'platformio',
-      ['--version'],
-      (code, stdout, stderr) => {
-        if (code === 0) {
-          try {
-            return resolve(stdout.trim().match(/[\d+\.]+.*$/)[0]);
-          } catch (err) {
-            return reject(err.toString());
-          }
+    runCommand('platformio', ['--version'], (code, stdout, stderr) => {
+      if (code === 0) {
+        try {
+          return resolve(stdout.trim().match(/[\d+\.]+.*$/)[0]);
+        } catch (err) {
+          return reject(err.toString());
         }
-        return reject(new Error(stderr));
       }
-    );
+      return reject(new Error(stderr));
+    });
   });
 }
 
@@ -82,10 +79,5 @@ export function runPIOCommand(args, callback, options = {}) {
     baseArgs.push('-c');
     baseArgs.push(process.env.PLATFORMIO_CALLER);
   }
-  runCommand(
-    'platformio',
-    [...baseArgs, ...args],
-    callback,
-    options
-  );
+  runCommand('platformio', [...baseArgs, ...args], callback, options);
 }

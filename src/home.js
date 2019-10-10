@@ -19,7 +19,6 @@ import semver from 'semver';
 import tcpPortUsed from 'tcp-port-used';
 import ws from 'ws';
 
-
 const SERVER_LAUNCH_TIMEOUT = 5 * 60; // 5 minutes
 const HTTP_HOST = '127.0.0.1';
 const HTTP_PORT_BEGIN = 8010;
@@ -27,7 +26,6 @@ const HTTP_PORT_END = 8100;
 const SESSION_ID = Math.round(Math.random() * 1000000);
 let HTTP_PORT = 0;
 let IDECMDS_LISTENER_STATUS = 0;
-
 
 export function getFrontendUri(serverHost, serverPort, options) {
   const stateStorage = (loadState() || {}).storage || {};
@@ -45,25 +43,26 @@ export function getFrontendUri(serverHost, serverPort, options) {
   return `http://${serverHost}:${serverPort}?${qs.stringify(params)}`;
 }
 
-
 export async function getFrontendVersion(serverHost, serverPort) {
   if (HTTP_PORT === 0) {
     return undefined;
   }
   return await new Promise(resolve => {
-    request(`http://${serverHost}:${serverPort}/package.json`, function (error, response, body) {
+    request(`http://${serverHost}:${serverPort}/package.json`, function(
+      error,
+      response,
+      body
+    ) {
       if (error || !response || response.statusCode !== 200) {
         return resolve(undefined);
       }
       try {
         return resolve(JSON.parse(body).version);
-      } catch (err) {
-      }
+      } catch (err) {}
       return resolve(undefined);
     });
   });
 }
-
 
 async function listenIDECommands(callback) {
   if (IDECMDS_LISTENER_STATUS > 0) {
@@ -71,7 +70,9 @@ async function listenIDECommands(callback) {
   }
   let coreVersion = '0.0.0';
   const coreVersionMsgId = Math.random().toString();
-  const sock = new ws(`ws://${HTTP_HOST}:${HTTP_PORT}/wsrpc`, { perMessageDeflate: false });
+  const sock = new ws(`ws://${HTTP_HOST}:${HTTP_PORT}/wsrpc`, {
+    perMessageDeflate: false
+  });
   sock.onopen = () => {
     IDECMDS_LISTENER_STATUS = 1;
     sock.send(JSON.stringify(jsonrpc.request(coreVersionMsgId, 'core.version')));
@@ -103,7 +104,9 @@ async function listenIDECommands(callback) {
 
     let data = null;
     if (semver.gte(coreVersion, '4.0.1-b.3')) {
-      data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands', [SESSION_ID]);
+      data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands', [
+        SESSION_ID
+      ]);
     } else {
       data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands');
     }
@@ -116,12 +119,14 @@ async function findFreePort() {
   let inUse = false;
   while (port < HTTP_PORT_END) {
     inUse = await new Promise(resolve => {
-      tcpPortUsed.check(port, HTTP_HOST)
-        .then(result => {
+      tcpPortUsed.check(port, HTTP_HOST).then(
+        result => {
           resolve(result);
-        }, () => {
+        },
+        () => {
           return resolve(false);
-        });
+        }
+      );
     });
     if (!inUse) {
       return port;
@@ -133,16 +138,18 @@ async function findFreePort() {
 
 export function isServerStarted() {
   return new Promise(resolve => {
-    tcpPortUsed.check(HTTP_PORT, HTTP_HOST)
-      .then(result => {
+    tcpPortUsed.check(HTTP_PORT, HTTP_HOST).then(
+      result => {
         resolve(result);
-      }, () => {
+      },
+      () => {
         return resolve(false);
-      });
+      }
+    );
   });
 }
 
-export async function ensureServerStarted(options={}) {
+export async function ensureServerStarted(options = {}) {
   const maxAttempts = 3;
   let attemptNums = 0;
   let lastError = undefined;
@@ -157,7 +164,9 @@ export async function ensureServerStarted(options={}) {
       // stop all PIO Home servers
       _port = HTTP_PORT_BEGIN;
       while (_port < HTTP_PORT_END) {
-        request.get(`http://${HTTP_HOST}:${_port}?__shutdown__=1`).on('error', () => {});
+        request
+          .get(`http://${HTTP_HOST}:${_port}?__shutdown__=1`)
+          .on('error', () => {});
         _port++;
       }
       await sleep(2000); // wait for 2 secs while server stops
@@ -168,9 +177,9 @@ export async function ensureServerStarted(options={}) {
   throw lastError;
 }
 
-async function _ensureServerStarted(options={}) {
+async function _ensureServerStarted(options = {}) {
   if (HTTP_PORT === 0) {
-    HTTP_PORT = options.port || await findFreePort();
+    HTTP_PORT = options.port || (await findFreePort());
   }
   const params = {
     host: HTTP_HOST,
@@ -187,12 +196,14 @@ async function _ensureServerStarted(options={}) {
           }
         }
       );
-      tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000)
-        .then(() => {
+      tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000).then(
+        () => {
           resolve(true);
-        }, (err) => {
+        },
+        err => {
           reject(new Error('Could not start PIO Home server: ' + err.toString()));
-        });
+        }
+      );
     });
   }
   if (options.onIDECommand) {
@@ -223,5 +234,11 @@ export function loadState() {
 
 export function showAtStartup(caller) {
   const state = loadState();
-  return !state || !state.storage || !state.storage.showOnStartup || !(caller in state.storage.showOnStartup) || state.storage.showOnStartup[caller];
+  return (
+    !state ||
+    !state.storage ||
+    !state.storage.showOnStartup ||
+    !(caller in state.storage.showOnStartup) ||
+    state.storage.showOnStartup[caller]
+  );
 }

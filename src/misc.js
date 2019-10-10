@@ -6,7 +6,7 @@
  * the root directory of this source tree.
  */
 
-import { getCacheDir , getEnvBinDir, getEnvDir, getHomeDir } from './core';
+import { getCacheDir, getEnvBinDir, getEnvDir, getHomeDir } from './core';
 
 import fs from 'fs-plus';
 import os from 'os';
@@ -22,7 +22,12 @@ export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extraVars }) {
+export function patchOSEnviron({
+  caller,
+  useBuiltinPIOCore = true,
+  extraPath,
+  extraVars
+}) {
   process.env.PLATFORMIO_CALLER = caller;
   // Fix for platformio-atom-ide/issues/112
   if (process.platform === 'darwin') {
@@ -33,7 +38,7 @@ export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extr
   }
 
   if (extraVars) {
-    Object.keys(extraVars).forEach(name => process.env[name] = extraVars[name]);
+    Object.keys(extraVars).forEach(name => (process.env[name] = extraVars[name]));
   }
 
   // Fix for https://github.com/atom/atom/issues/11302
@@ -45,10 +50,16 @@ export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extr
     }
   }
 
-  if (useBuiltinPIOCore) { // Insert bin directory into PATH
-    process.env.PATH = [getEnvBinDir(), getEnvDir(), process.env.PATH].join(path.delimiter);
-  } else { // Remove bin directory from PATH
-    process.env.PATH = process.env.PATH.split(path.delimiter).filter(p => !p.includes(getEnvDir())).join(path.delimiter);
+  if (useBuiltinPIOCore) {
+    // Insert bin directory into PATH
+    process.env.PATH = [getEnvBinDir(), getEnvDir(), process.env.PATH].join(
+      path.delimiter
+    );
+  } else {
+    // Remove bin directory from PATH
+    process.env.PATH = process.env.PATH.split(path.delimiter)
+      .filter(p => !p.includes(getEnvDir()))
+      .join(path.delimiter);
   }
 
   if (extraPath && !process.env.PATH.includes(extraPath)) {
@@ -61,7 +72,7 @@ export function patchOSEnviron({ caller, useBuiltinPIOCore=true, extraPath, extr
   }
 }
 
-export function runCommand(cmd, args, callback=undefined, options = {}) {
+export function runCommand(cmd, args, callback = undefined, options = {}) {
   console.info('runCommand', cmd, args, options);
   const outputLines = [];
   const errorLines = [];
@@ -73,7 +84,10 @@ export function runCommand(cmd, args, callback=undefined, options = {}) {
     options.spawnOptions.cwd = getEnvBinDir();
   }
 
-  if (IS_WINDOWS && ['pip', 'virtualenv'].some(item => [path.basename(cmd), ...args].includes(item))) {
+  if (
+    IS_WINDOWS &&
+    ['pip', 'virtualenv'].some(item => [path.basename(cmd), ...args].includes(item))
+  ) {
     // Overwrite TMPDIR and avoid issue with ASCII error for Python's PIP
     const tmpEnv = Object.assign({}, process.env);
     tmpDir = tmp.dirSync({
@@ -88,14 +102,13 @@ export function runCommand(cmd, args, callback=undefined, options = {}) {
   try {
     const child = spawn(cmd, args, options.spawnOptions);
 
-    child.stdout.on('data', (line) => outputLines.push(line));
-    child.stderr.on('data', (line) => errorLines.push(line));
+    child.stdout.on('data', line => outputLines.push(line));
+    child.stderr.on('data', line => errorLines.push(line));
     child.on('close', onExit);
-    child.on('error', (err) => {
+    child.on('error', err => {
       errorLines.push(err.toString());
       onExit(-1);
-    }
-    );
+    });
   } catch (err) {
     errorLines.push(err.toString());
     onExit(-1);
@@ -178,32 +191,50 @@ function isCompatiblePython(executable) {
   }
   const args = ['-c', pythonLines.join(';')];
   return new Promise(resolve => {
-    runCommand(
-      executable,
-      args,
-      code => {
-        resolve(code === 0);
-      }
-    );
+    runCommand(executable, args, code => {
+      resolve(code === 0);
+    });
   });
 }
 
 export function getErrorReportUrl(title, description) {
   const errorToUrls = [
-    ['_remove_dead_weakref', 'https://github.com/platformio/platformio-vscode-ide/issues/142'],
-    ['WindowsError: [Error 5]', 'https://github.com/platformio/platformio-vscode-ide/issues/884'],
-    ['Could not start PIO Home server: Error: timeout', 'https://github.com/platformio/platformio-vscode-ide/issues/205'],
-    ['Failed to download file', 'https://github.com/platformio/platformio-vscode-ide/issues/386'],
-    ['Conda Virtualenv', 'https://github.com/platformio/platformio-vscode-ide/issues/914'],
-    ['ModuleNotFoundError: No module named \'distutils', 'https://github.com/platformio/platformio-vscode-ide/issues/907'],
+    [
+      '_remove_dead_weakref',
+      'https://github.com/platformio/platformio-vscode-ide/issues/142'
+    ],
+    [
+      'WindowsError: [Error 5]',
+      'https://github.com/platformio/platformio-vscode-ide/issues/884'
+    ],
+    [
+      'Could not start PIO Home server: Error: timeout',
+      'https://github.com/platformio/platformio-vscode-ide/issues/205'
+    ],
+    [
+      'Failed to download file',
+      'https://github.com/platformio/platformio-vscode-ide/issues/386'
+    ],
+    [
+      'Conda Virtualenv',
+      'https://github.com/platformio/platformio-vscode-ide/issues/914'
+    ],
+    [
+      "ModuleNotFoundError: No module named 'distutils",
+      'https://github.com/platformio/platformio-vscode-ide/issues/907'
+    ]
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
       return item[1];
     }
   }
-  return `https://github.com/platformio/platformio-${process.env.PLATFORMIO_CALLER || 'vscode'}-ide/issues/new?${qs.stringify(
-    { title, body: description, labels: 'auto' })}`;
+  return `https://github.com/platformio/platformio-${process.env.PLATFORMIO_CALLER ||
+    'vscode'}-ide/issues/new?${qs.stringify({
+    title,
+    body: description,
+    labels: 'auto'
+  })}`;
 }
 
 export function isPIOProject(dir) {
@@ -221,7 +252,10 @@ export function disposeSubscriptions(subscriptions) {
 }
 
 function uuid() {
-  const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  const s4 = () =>
+    Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
   return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
 }
 
