@@ -148,8 +148,11 @@ export function processHTTPRequest(url, callback, options) {
   });
 }
 
-export async function getPythonExecutable(useBuiltinPIOCore=true, customDirs = undefined) {
-  const exenames = IS_WINDOWS ? ['python.exe'] : ['python', 'python3', 'python2'];
+export async function getPythonExecutable(
+  useBuiltinPIOCore = true,
+  customDirs = undefined
+) {
+  const exenames = IS_WINDOWS ? ['python.exe'] : ['python3', 'python', 'python2'];
   const locations = customDirs || [];
 
   if (useBuiltinPIOCore) {
