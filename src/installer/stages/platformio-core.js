@@ -16,15 +16,18 @@ import path from 'path';
 import semver from 'semver';
 import tmp from 'tmp';
 
-
 export default class PlatformIOCoreStage extends BaseStage {
-
   static UPGRADE_PIOCORE_TIMEOUT = 86400 * 7 * 1000; // 7 days
+  static PENV_LOCK_FILE_NAME = 'piopenv.lock';
+  static PENV_LOCK_VERSION = 1; // only integer is valid
 
-  static pythonVersion = '2.7.13';
-  static pipUrl = 'https://files.pythonhosted.org/packages/45/ae/8a0ad77defb7cc903f09e551d88b443304a9bd6e6f124e75c0fbbf6de8f7/pip-18.1.tar.gz';
-  static virtualenvUrl = 'https://files.pythonhosted.org/packages/4e/8b/75469c270ac544265f0020aa7c4ea925c5284b23e445cf3aa8b99f662690/virtualenv-16.1.0.tar.gz';
-  static pioCoreDevelopUrl = 'https://github.com/platformio/platformio/archive/develop.zip';
+  static pythonVersion = '3.7.4';
+  static pipUrl =
+    'https://files.pythonhosted.org/packages/00/9e/4c83a0950d8bdec0b4ca72afd2f9cea92d08eb7c1a768363f2ea458d08b4/pip-19.2.3.tar.gz';
+  static virtualenvUrl =
+    'https://files.pythonhosted.org/packages/66/f0/6867af06d2e2f511e4e1d7094ff663acdebc4f15d4a0cb0fed1007395124/virtualenv-16.7.5.tar.gz';
+  static pioCoreDevelopUrl =
+    'https://github.com/platformio/platformio/archive/develop.zip';
 
   constructor() {
     super(...arguments);
@@ -38,7 +41,9 @@ export default class PlatformIOCoreStage extends BaseStage {
   async whereIsPython() {
     let status = this.params.pythonPrompt.STATUS_TRY_AGAIN;
     do {
-      const pythonExecutable = await misc.getPythonExecutable(this.params.useBuiltinPIOCore);
+      const pythonExecutable = await misc.getPythonExecutable(
+        this.params.useBuiltinPIOCore
+      );
       if (pythonExecutable) {
         return pythonExecutable;
       }
@@ -59,70 +64,84 @@ export default class PlatformIOCoreStage extends BaseStage {
     } while (status !== this.params.pythonPrompt.STATUS_ABORT);
 
     this.status = BaseStage.STATUS_FAILED;
-    throw new Error('Can not find Python Interpreter');
+    throw new Error(
+      'Can not find Python Interpreter. Please install Python 3.5 or above manually'
+    );
   }
 
   async installPythonForWindows() {
-    // https://www.python.org/ftp/python/2.7.14/python-2.7.14.msi
-    // https://www.python.org/ftp/python/2.7.14/python-2.7.14.amd64.msi
-    const pythonArch = process.arch === 'x64' ? '.amd64' : '';
-    const msiUrl = `https://www.python.org/ftp/python/${PlatformIOCoreStage.pythonVersion}/python-${PlatformIOCoreStage.pythonVersion}${pythonArch}.msi`;
-    const msiInstaller = await helpers.download(
-      msiUrl,
-      path.join(core.getCacheDir(), path.basename(msiUrl))
+    // https://www.python.org/ftp/python/3.7.4/python-3.7.4.exe
+    // https://www.python.org/ftp/python/3.7.4/python-3.7.4-amd64.exe
+    const pythonArch = process.arch === 'x64' ? '-amd64' : '';
+    const installerUrl = `https://www.python.org/ftp/python/${PlatformIOCoreStage.pythonVersion}/python-${PlatformIOCoreStage.pythonVersion}${pythonArch}.exe`;
+    const installer = await helpers.download(
+      installerUrl,
+      path.join(core.getCacheDir(), path.basename(installerUrl))
     );
-    const targetDir = path.join(core.getHomeDir(), 'python27');
+    const targetDir = path.join(core.getHomeDir(), 'python37');
     const pythonPath = path.join(targetDir, 'python.exe');
 
     if (!fs.isFileSync(pythonPath)) {
-      try {
-        await this.installPythonFromWindowsMSI(msiInstaller, targetDir);
-      } catch (err) {
-        console.warn(err);
-        await this.installPythonFromWindowsMSI(msiInstaller, targetDir, true);
-      }
+      await this.installPythonFromWindowsInstaller(installer, targetDir);
     }
 
     // append temporary to system environment
-    process.env.PATH = [targetDir, path.join(targetDir, 'Scripts'), process.env.PATH].join(path.delimiter);
+    process.env.PATH = [
+      targetDir,
+      path.join(targetDir, 'Scripts'),
+      process.env.PATH
+    ].join(path.delimiter);
     process.env.Path = process.env.PATH;
-
-    // install virtualenv
-    return new Promise(resolve => {
-      misc.runCommand(
-        'pip',
-        ['install', 'virtualenv'],
-        () => resolve(pythonPath)
-      );
-    });
+    return pythonPath;
   }
 
-  async installPythonFromWindowsMSI(msiInstaller, targetDir, administrative = false) {
-    const logFile = path.join(core.getCacheDir(), 'python27msi.log');
-    await new Promise((resolve, reject) => {
-      misc.runCommand(
-        'msiexec.exe',
-        [administrative ? '/a' : '/i', `"${msiInstaller}"`, '/qn', '/li', `"${logFile}"`, `TARGETDIR="${targetDir}"`],
-        (code, stdout, stderr) => {
-          if (code === 0) {
-            return resolve(stdout);
-          } else {
-            if (fs.isFileSync(logFile)) {
-              stderr = fs.readFileSync(logFile).toString();
-            }
-            return reject(new Error(`MSI Python2.7: ${stderr}`));
-          }
-        },
-        {
-          spawnOptions: {
-            shell: true
-          }
-        }
-      );
-    });
-    if (!fs.isFileSync(path.join(targetDir, 'python.exe'))) {
-      throw new Error('Could not install Python 2.7 using MSI');
+  async installPythonFromWindowsInstaller(installer, targetDir) {
+    if (fs.isDirectorySync(targetDir)) {
+      try {
+        fs.removeSync(targetDir);
+      } catch (err) {
+        console.warn(err);
+      }
     }
+    misc.runCommand(
+      installer,
+      [
+        '/quiet',
+        '/log',
+        path.join(core.getCacheDir(), 'python-installer.log'),
+        'SimpleInstall=1',
+        'InstallAllUsers=0',
+        'InstallLauncherAllUsers=0',
+        'Shortcuts=0',
+        'Include_lib=1',
+        'Include_pip=1',
+        'Include_doc=0',
+        'Include_launcher=0',
+        'Include_test=0',
+        'Include_tcltk=0',
+        `DefaultJustForMeTargetDir=${targetDir}`
+      ],
+      {
+        spawnOptions: {
+          shell: true
+        }
+      }
+    );
+
+    const timeout = 5 * 60;
+    const delay = 5;
+    let elapsed = 0;
+    const pipPath = path.join(targetDir, 'Scripts', 'pip.exe');
+    while (elapsed < timeout) {
+      await misc.sleep(delay * 1000);
+      elapsed += delay;
+      if (fs.isFileSync(pipPath)) {
+        return true;
+      }
+    }
+    throw new Error(
+      'Could not install Python 3 automatically. Please install it manually from https://python.org'
+    );
   }
 
   cleanVirtualEnvDir() {
@@ -163,6 +182,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async createVirtualenvWithLocal() {
+    this.cleanVirtualEnvDir();
     const pythonExecutable = await this.whereIsPython();
     const venvCmdOptions = [
       [pythonExecutable, '-m', 'venv', core.getEnvDir()],
@@ -177,9 +197,12 @@ export default class PlatformIOCoreStage extends BaseStage {
       try {
         return await new Promise((resolve, reject) => {
           misc.runCommand(
-            cmdOptions[0], cmdOptions.slice(1),
+            cmdOptions[0],
+            cmdOptions.slice(1),
             (code, stdout, stderr) => {
-              return code === 0 ? resolve(stdout) : reject(new Error(`User's Virtualenv: ${stderr}`));
+              return code === 0
+                ? resolve(stdout)
+                : reject(new Error(`User's Virtualenv: ${stderr}`));
             }
           );
         });
@@ -203,8 +226,9 @@ export default class PlatformIOCoreStage extends BaseStage {
       unsafeCleanup: true
     }).name;
     const dstDir = await helpers.extractTarGz(archivePath, tmpDir);
-    const virtualenvScript = fs.listTreeSync(dstDir).find(
-      item => path.basename(item) === 'virtualenv.py');
+    const virtualenvScript = fs
+      .listTreeSync(dstDir)
+      .find(item => path.basename(item) === 'virtualenv.py');
     if (!virtualenvScript) {
       throw new Error('Can not find virtualenv.py script');
     }
@@ -268,7 +292,9 @@ export default class PlatformIOCoreStage extends BaseStage {
         } catch (errPkg) {
           misc.reportError(errDl);
           console.warn(errPkg);
-          throw new Error(`Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv \n ${errDl.toString()}`);
+          throw new Error(
+            `Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv \n ${errDl.toString()}`
+          );
         }
       }
     }
@@ -281,9 +307,13 @@ export default class PlatformIOCoreStage extends BaseStage {
       path.join(core.getCacheDir(), path.basename(PlatformIOCoreStage.pipUrl))
     );
     return new Promise((resolve, reject) => {
-      misc.runCommand(pythonExecutable, ['-m', 'pip', 'install', '-U', pipArchive], (code, stdout, stderr) => {
-        return code === 0 ? resolve(stdout) : reject(stderr);
-      });
+      misc.runCommand(
+        pythonExecutable,
+        ['-m', 'pip', 'install', '-U', pipArchive],
+        (code, stdout, stderr) => {
+          return code === 0 ? resolve(stdout) : reject(stderr);
+        }
+      );
     });
   }
 
@@ -348,14 +378,23 @@ export default class PlatformIOCoreStage extends BaseStage {
     const newState = this.initState();
     const now = new Date().getTime();
     if (
-      (process.env.PLATFORMIO_IDE && newState.lastIDEVersion && newState.lastIDEVersion !== process.env.PLATFORMIO_IDE)
-      || ((now - PlatformIOCoreStage.UPGRADE_PIOCORE_TIMEOUT) > parseInt(newState.pioCoreChecked))
+      (process.env.PLATFORMIO_IDE &&
+        newState.lastIDEVersion &&
+        newState.lastIDEVersion !== process.env.PLATFORMIO_IDE) ||
+      now - PlatformIOCoreStage.UPGRADE_PIOCORE_TIMEOUT >
+        parseInt(newState.pioCoreChecked)
     ) {
       newState.pioCoreChecked = now;
       // PIO Core
       await new Promise(resolve => {
         core.runPIOCommand(
-          ['upgrade', ...(this.params.useDevelopmentPIOCore && !semver.prerelease(currentCoreVersion) ? ['--dev'] : [])],
+          [
+            'upgrade',
+            ...(this.params.useDevelopmentPIOCore &&
+            !semver.prerelease(currentCoreVersion)
+              ? ['--dev']
+              : [])
+          ],
           (code, stdout, stderr) => {
             if (code !== 0) {
               console.warn(stdout, stderr);
@@ -369,16 +408,35 @@ export default class PlatformIOCoreStage extends BaseStage {
     this.state = newState;
   }
 
+  checkEnvDirLock() {
+    if (!fs.isDirectorySync(core.getEnvBinDir())) {
+      throw new Error('Virtual environment is not created');
+    }
+    const lockPath = path.join(
+      core.getEnvDir(),
+      PlatformIOCoreStage.PENV_LOCK_FILE_NAME
+    );
+    if (!fs.isFileSync(lockPath)) {
+      throw new Error('Virtual environment lock file is missed');
+    }
+    if (parseInt(fs.readFileSync(lockPath)) !== PlatformIOCoreStage.PENV_LOCK_VERSION) {
+      throw new Error('Virtual environment is outdated');
+    }
+    return true;
+  }
+
+  setEnvDirLock() {
+    fs.writeFileSync(
+      path.join(core.getEnvDir(), PlatformIOCoreStage.PENV_LOCK_FILE_NAME),
+      PlatformIOCoreStage.PENV_LOCK_VERSION.toString()
+    );
+  }
+
   async check() {
     const coreVersion = helpers.PEPverToSemver(await core.getVersion());
 
     if (this.params.useBuiltinPIOCore) {
-      if (!fs.isDirectorySync(core.getEnvBinDir())) {
-        throw new Error('Virtual environment is not created');
-      }
-      else if (semver.lt(coreVersion, '3.5.0-rc.4')) {
-        throw new Error('Force new python environment');
-      }
+      this.checkEnvDirLock();
       try {
         await this.autoUpgradePIOCore(coreVersion);
       } catch (err) {
@@ -389,7 +447,9 @@ export default class PlatformIOCoreStage extends BaseStage {
     if (semver.lt(coreVersion, this.params.pioCoreMinVersion)) {
       this.params.setUseBuiltinPIOCore(true);
       this.params.useBuiltinPIOCore = true;
-      this.params.useDevelopmentPIOCore = this.params.useDevelopmentPIOCore || semver.prerelease(this.params.pioCoreMinVersion);
+      this.params.useDevelopmentPIOCore =
+        this.params.useDevelopmentPIOCore ||
+        semver.prerelease(this.params.pioCoreMinVersion);
       throw new Error(`Incompatible PIO Core ${coreVersion}`);
     }
 
@@ -410,6 +470,8 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     try {
       await this.createVirtualenv();
+      this.setEnvDirLock();
+
       await this.installPIOCore();
       await this.installPIOHome();
     } catch (err) {
@@ -420,5 +482,4 @@ export default class PlatformIOCoreStage extends BaseStage {
     this.status = BaseStage.STATUS_SUCCESSED;
     return true;
   }
-
 }

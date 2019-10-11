@@ -95,7 +95,12 @@ function getContentLength(url) {
         url
       },
       (err, response) => {
-        if (err || response.statusCode !== 200 || !response.headers['content-length']) {
+        if (
+          err ||
+          response.statusCode !== 200 ||
+          !response.headers ||
+          !response.headers['content-length']
+        ) {
           resolve(-1);
         }
         resolve(parseInt(response.headers['content-length']));

@@ -160,8 +160,8 @@ export async function getPythonExecutable(
     locations.push(getEnvDir()); // conda
   }
   if (IS_WINDOWS) {
-    // isolated Python 2.7 in PlatformIO Home directory
-    locations.push(path.join(getHomeDir(), 'python27'));
+    // isolated Python 3.7 in PlatformIO Home directory
+    locations.push(path.join(getHomeDir(), 'python37'));
   }
   // extend with paths from env.PATH
   process.env.PATH.split(path.delimiter).forEach(item => {
