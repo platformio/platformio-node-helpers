@@ -7,7 +7,7 @@
     "build": "webpack --env build",
     "dev": "webpack --progress --colors --watch --env dev",
     "lint": "eslint --ext js src || exit 0",
-    "prettier": "prettier --single-quote --print-width 88 --write \"src/**/*.js\""
+    "format": "prettier --single-quote --print-width 88 --write \"src/**/*.js\""
   },
   "repository": {
     "type": "git",

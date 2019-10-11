@@ -32,6 +32,8 @@ export default class PlatformIOCoreStage extends BaseStage {
   constructor() {
     super(...arguments);
     tmp.setGracefulCleanup();
+
+    this._skipPipUpgrading = false;
   }
 
   get name() {
@@ -79,10 +81,11 @@ export default class PlatformIOCoreStage extends BaseStage {
       path.join(core.getCacheDir(), path.basename(installerUrl))
     );
     const targetDir = path.join(core.getHomeDir(), 'python37');
-    const pythonPath = path.join(targetDir, 'python.exe');
+    let pythonPath = path.join(targetDir, 'python.exe');
 
     if (!fs.isFileSync(pythonPath)) {
-      await this.installPythonFromWindowsInstaller(installer, targetDir);
+      pythonPath = await this.installPythonFromWindowsInstaller(installer, targetDir);
+      this._skipPipUpgrading = true;
     }
 
     // append temporary to system environment
@@ -95,7 +98,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     return pythonPath;
   }
 
-  async installPythonFromWindowsInstaller(installer, targetDir) {
+  installPythonFromWindowsInstaller(installer, targetDir) {
     if (fs.isDirectorySync(targetDir)) {
       try {
         fs.removeSync(targetDir);
@@ -103,45 +106,48 @@ export default class PlatformIOCoreStage extends BaseStage {
         console.warn(err);
       }
     }
-    misc.runCommand(
-      installer,
-      [
-        '/quiet',
-        '/log',
-        path.join(core.getCacheDir(), 'python-installer.log'),
-        'SimpleInstall=1',
-        'InstallAllUsers=0',
-        'InstallLauncherAllUsers=0',
-        'Shortcuts=0',
-        'Include_lib=1',
-        'Include_pip=1',
-        'Include_doc=0',
-        'Include_launcher=0',
-        'Include_test=0',
-        'Include_tcltk=0',
-        `DefaultJustForMeTargetDir=${targetDir}`
-      ],
-      {
-        spawnOptions: {
-          shell: true
+    const logPath = path.join(core.getCacheDir(), 'python-installer.log');
+    return new Promise((resolve, reject) => {
+      misc.runCommand(
+        installer,
+        [
+          '/quiet',
+          '/log',
+          logPath,
+          'SimpleInstall=1',
+          'InstallAllUsers=0',
+          'InstallLauncherAllUsers=0',
+          'Shortcuts=0',
+          'Include_lib=1',
+          'Include_pip=1',
+          'Include_doc=0',
+          'Include_launcher=0',
+          'Include_test=0',
+          'Include_tcltk=0',
+          `TargetDir=${targetDir}`,
+          `DefaultAllUsersTargetDir=${targetDir}`,
+          `DefaultJustForMeTargetDir=${targetDir}`
+        ],
+        code => {
+          if (code === 0 && fs.isFileSync(path.join(targetDir, 'python.exe'))) {
+            return resolve(path.join(targetDir, 'python.exe'));
+          }
+          if (fs.isFileSync(logPath)) {
+            console.error(fs.readFileSync(logPath).toString());
+          }
+          return reject(
+            new Error(
+              'Could not install Python 3 automatically. Please install it manually from https://python.org'
+            )
+          );
+        },
+        {
+          spawnOptions: {
+            shell: true
+          }
         }
-      }
-    );
-
-    const timeout = 5 * 60;
-    const delay = 5;
-    let elapsed = 0;
-    const pipPath = path.join(targetDir, 'Scripts', 'pip.exe');
-    while (elapsed < timeout) {
-      await misc.sleep(delay * 1000);
-      elapsed += delay;
-      if (fs.isFileSync(pipPath)) {
-        return true;
-      }
-    }
-    throw new Error(
-      'Could not install Python 3 automatically. Please install it manually from https://python.org'
-    );
+      );
+    });
   }
 
   cleanVirtualEnvDir() {
@@ -301,6 +307,9 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async upgradePIP(pythonExecutable) {
+    if (this._skipPipUpgrading) {
+      return;
+    }
     // we use manual downloading to resolve SSL issue with old `pip`
     const pipArchive = await helpers.download(
       PlatformIOCoreStage.pipUrl,
