@@ -22,8 +22,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   static PENV_LOCK_VERSION = 1; // only integer is valid
 
   static pythonVersion = '3.7.4';
-  static pipUrl =
-    'https://files.pythonhosted.org/packages/00/9e/4c83a0950d8bdec0b4ca72afd2f9cea92d08eb7c1a768363f2ea458d08b4/pip-19.2.3.tar.gz';
+  static getPipUrl = 'https://bootstrap.pypa.io/get-pip.py';
   static virtualenvUrl =
     'https://files.pythonhosted.org/packages/66/f0/6867af06d2e2f511e4e1d7094ff663acdebc4f15d4a0cb0fed1007395124/virtualenv-16.7.5.tar.gz';
   static pioCoreDevelopUrl =
@@ -33,7 +32,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     super(...arguments);
     tmp.setGracefulCleanup();
 
-    this._skipPipUpgrading = false;
+    this._skipPIPInstalling = false;
   }
 
   get name() {
@@ -85,7 +84,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     if (!fs.isFileSync(pythonPath)) {
       pythonPath = await this.installPythonFromWindowsInstaller(installer, targetDir);
-      this._skipPipUpgrading = true;
+      this._skipPIPInstalling = true;
     }
 
     // append temporary to system environment
@@ -306,23 +305,23 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
   }
 
-  async upgradePIP(pythonExecutable) {
-    if (this._skipPipUpgrading) {
+  async installPIP(pythonExecutable) {
+    fs.writeFileSync(
+      path.join(core.getEnvDir(), 'pip.conf'),
+      ['[global]', 'user=no'].join('\n')
+    );
+    if (this._skipPIPInstalling) {
       return;
     }
     // we use manual downloading to resolve SSL issue with old `pip`
-    const pipArchive = await helpers.download(
-      PlatformIOCoreStage.pipUrl,
-      path.join(core.getCacheDir(), path.basename(PlatformIOCoreStage.pipUrl))
+    const getPipScript = await helpers.download(
+      PlatformIOCoreStage.getPipUrl,
+      path.join(core.getCacheDir(), path.basename(PlatformIOCoreStage.getPipUrl))
     );
     return new Promise((resolve, reject) => {
-      misc.runCommand(
-        pythonExecutable,
-        ['-m', 'pip', 'install', '-U', pipArchive],
-        (code, stdout, stderr) => {
-          return code === 0 ? resolve(stdout) : reject(stderr);
-        }
-      );
+      misc.runCommand(pythonExecutable, [getPipScript], (code, stdout, stderr) => {
+        return code === 0 ? resolve(stdout) : reject(stderr);
+      });
     });
   }
 
@@ -331,10 +330,10 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     // Try to upgrade PIP to the latest version with updated openSSL
     try {
-      await this.upgradePIP(pythonExecutable);
+      await this.installPIP(pythonExecutable);
     } catch (err) {
       console.warn(err);
-      misc.reportError(new Error(`Upgrade PIP: ${err.toString()}`));
+      misc.reportError(new Error(`Installing PIP: ${err.toString()}`));
     }
 
     // Install dependencies
@@ -417,7 +416,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     this.state = newState;
   }
 
-  checkEnvDirLock() {
+  checkPenvLocked() {
     if (!fs.isDirectorySync(core.getEnvBinDir())) {
       throw new Error('Virtual environment is not created');
     }
@@ -434,7 +433,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     return true;
   }
 
-  setEnvDirLock() {
+  lockPenvDir() {
     fs.writeFileSync(
       path.join(core.getEnvDir(), PlatformIOCoreStage.PENV_LOCK_FILE_NAME),
       PlatformIOCoreStage.PENV_LOCK_VERSION.toString()
@@ -445,7 +444,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     const coreVersion = helpers.PEPverToSemver(await core.getVersion());
 
     if (this.params.useBuiltinPIOCore) {
-      this.checkEnvDirLock();
+      this.checkPenvLocked();
       try {
         await this.autoUpgradePIOCore(coreVersion);
       } catch (err) {
@@ -479,7 +478,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     try {
       await this.createVirtualenv();
-      this.setEnvDirLock();
+      this.lockPenvDir();
 
       await this.installPIOCore();
       await this.installPIOHome();
