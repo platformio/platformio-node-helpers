@@ -11,39 +11,48 @@ import { IS_WINDOWS, runCommand } from './misc';
 import fs from 'fs-plus';
 import path from 'path';
 
-export function getHomeDir() {
-  let userHomeDir =
-    IS_WINDOWS && !process.env.HOME ? process.env.USERPROFILE : process.env.HOME;
-  userHomeDir =
-    process.env.PLATFORMIO_HOME_DIR || path.join(userHomeDir || '~', '.platformio');
-  if (!IS_WINDOWS) {
-    return userHomeDir;
+export function getCoreDir() {
+  let userHomeDir = process.env.HOME || '~';
+  if (IS_WINDOWS) {
+    if (process.env.USERPROFILE) {
+      userHomeDir = process.env.USERPROFILE;
+    } else if (process.env.HOMEPATH) {
+      userHomeDir = path.join(process.env.HOMEDRIVE || '', process.env.HOMEPATH);
+    }
   }
-  const homeDirPathFormat = path.parse(userHomeDir);
+  const coreDir =
+    process.env.PLATFORMIO_CORE_DIR ||
+    process.env.PLATFORMIO_HOME_DIR || /* backward compatibility */
+    path.join(userHomeDir, '.platformio');
+  if (!IS_WINDOWS) {
+    return coreDir;
+  }
+  const coreDirPathFormat = path.parse(coreDir);
   const rootDir = path.format({
-    root: homeDirPathFormat.root,
-    dir: homeDirPathFormat.root,
+    root: coreDirPathFormat.root,
+    dir: coreDirPathFormat.root,
     base: '.platformio',
     name: '.platformio'
   });
+  // if we already created it
   if (fs.isDirectorySync(rootDir)) {
     return rootDir;
   }
   // Make sure that all path characters have valid ASCII codes.
-  for (const char of userHomeDir) {
+  for (const char of coreDir) {
     if (char.charCodeAt(0) > 127) {
       // If they don't, put the pio home directory into the root of the disk.
       return rootDir;
     }
   }
-  return userHomeDir;
+  return coreDir;
 }
 
 export function getEnvDir() {
   if ('PLATFORMIO_PENV_DIR' in process.env) {
     return process.env['PLATFORMIO_PENV_DIR'];
   }
-  return path.join(getHomeDir(), 'penv');
+  return path.join(getCoreDir(), 'penv');
 }
 
 export function getEnvBinDir() {
@@ -51,7 +60,7 @@ export function getEnvBinDir() {
 }
 
 export function getCacheDir() {
-  const dir = path.join(getHomeDir(), '.cache');
+  const dir = path.join(getCoreDir(), '.cache');
   if (!fs.isDirectorySync(dir)) {
     fs.makeTreeSync(dir);
   }

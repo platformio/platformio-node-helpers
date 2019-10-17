@@ -6,7 +6,7 @@
  * the root directory of this source tree.
  */
 
-import { getHomeDir, runPIOCommand } from './core';
+import { getCoreDir, runPIOCommand } from './core';
 import { reportError, sleep } from './misc';
 
 import { PEPverToSemver } from './installer/helpers';
@@ -220,7 +220,7 @@ export function shutdownServer() {
 }
 
 export function loadState() {
-  const statePath = path.join(getHomeDir(), 'homestate.json');
+  const statePath = path.join(getCoreDir(), 'homestate.json');
   if (!fs.isFileSync(statePath)) {
     return null;
   }

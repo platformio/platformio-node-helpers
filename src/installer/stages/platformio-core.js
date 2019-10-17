@@ -79,7 +79,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       installerUrl,
       path.join(core.getCacheDir(), path.basename(installerUrl))
     );
-    const targetDir = path.join(core.getHomeDir(), 'python37');
+    const targetDir = path.join(core.getCoreDir(), 'python37');
     let pythonPath = path.join(targetDir, 'python.exe');
 
     if (!fs.isFileSync(pythonPath)) {

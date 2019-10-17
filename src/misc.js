@@ -6,7 +6,7 @@
  * the root directory of this source tree.
  */
 
-import { getCacheDir, getEnvBinDir, getEnvDir, getHomeDir } from './core';
+import { getCacheDir, getEnvBinDir, getEnvDir, getCoreDir } from './core';
 
 import fs from 'fs-plus';
 import os from 'os';
@@ -161,7 +161,7 @@ export async function getPythonExecutable(
   }
   if (IS_WINDOWS) {
     // isolated Python 3.7 in PlatformIO Home directory
-    locations.push(path.join(getHomeDir(), 'python37'));
+    locations.push(path.join(getCoreDir(), 'python37'));
   }
   // extend with paths from env.PATH
   process.env.PATH.split(path.delimiter).forEach(item => {
