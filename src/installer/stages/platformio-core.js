@@ -417,9 +417,6 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   checkPenvLocked() {
-    if (!fs.isDirectorySync(core.getEnvBinDir())) {
-      throw new Error('Virtual environment is not created');
-    }
     const lockPath = path.join(
       core.getEnvDir(),
       PlatformIOCoreStage.PENV_LOCK_FILE_NAME
@@ -444,7 +441,10 @@ export default class PlatformIOCoreStage extends BaseStage {
     const coreVersion = helpers.PEPverToSemver(await core.getVersion());
 
     if (this.params.useBuiltinPIOCore) {
-      this.checkPenvLocked();
+      if (!fs.isDirectorySync(core.getEnvBinDir())) {
+        throw new Error('Virtual environment is not created');
+      }
+      // this.checkPenvLocked();
       try {
         await this.autoUpgradePIOCore(coreVersion);
       } catch (err) {
