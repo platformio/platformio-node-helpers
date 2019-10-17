@@ -22,7 +22,7 @@ export function getCoreDir() {
   }
   const coreDir =
     process.env.PLATFORMIO_CORE_DIR ||
-    process.env.PLATFORMIO_HOME_DIR || /* backward compatibility */
+    process.env.PLATFORMIO_HOME_DIR /* backward compatibility */ ||
     path.join(userHomeDir, '.platformio');
   if (!IS_WINDOWS) {
     return coreDir;

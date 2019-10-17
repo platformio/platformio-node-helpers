@@ -6,7 +6,7 @@
  * the root directory of this source tree.
  */
 
-import { getCacheDir, getEnvBinDir, getEnvDir, getCoreDir } from './core';
+import { getCacheDir, getCoreDir, getEnvBinDir, getEnvDir } from './core';
 
 import fs from 'fs-plus';
 import os from 'os';

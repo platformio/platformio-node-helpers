@@ -12,6 +12,7 @@ import * as misc from '../../misc';
 
 import BaseStage from './base';
 import fs from 'fs-plus';
+import os from 'os';
 import path from 'path';
 import semver from 'semver';
 import tmp from 'tmp';
@@ -19,7 +20,7 @@ import tmp from 'tmp';
 export default class PlatformIOCoreStage extends BaseStage {
   static UPGRADE_PIOCORE_TIMEOUT = 86400 * 7 * 1000; // 7 days
   static PENV_LOCK_FILE_NAME = 'piopenv.lock';
-  static PENV_LOCK_VERSION = 1; // only integer is valid
+  static PENV_LOCK_VERSION = `${os.type()}-${os.arch()}-${os.release()}`;
 
   static pythonVersion = '3.7.4';
   static getPipUrl = 'https://bootstrap.pypa.io/get-pip.py';
@@ -422,9 +423,12 @@ export default class PlatformIOCoreStage extends BaseStage {
       PlatformIOCoreStage.PENV_LOCK_FILE_NAME
     );
     if (!fs.isFileSync(lockPath)) {
-      throw new Error('Virtual environment lock file is missed');
+      // skip manually created virtualenv
+      return;
     }
-    if (parseInt(fs.readFileSync(lockPath)) !== PlatformIOCoreStage.PENV_LOCK_VERSION) {
+    if (
+      fs.readFileSync(lockPath).trim() !== PlatformIOCoreStage.PENV_LOCK_VERSION.trim()
+    ) {
       throw new Error('Virtual environment is outdated');
     }
     return true;
@@ -433,7 +437,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   lockPenvDir() {
     fs.writeFileSync(
       path.join(core.getEnvDir(), PlatformIOCoreStage.PENV_LOCK_FILE_NAME),
-      PlatformIOCoreStage.PENV_LOCK_VERSION.toString()
+      PlatformIOCoreStage.PENV_LOCK_VERSION
     );
   }
 
@@ -444,7 +448,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       if (!fs.isDirectorySync(core.getEnvBinDir())) {
         throw new Error('Virtual environment is not created');
       }
-      // this.checkPenvLocked();
+      this.checkPenvLocked();
       try {
         await this.autoUpgradePIOCore(coreVersion);
       } catch (err) {
