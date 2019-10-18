@@ -427,7 +427,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       return;
     }
     if (
-      fs.readFileSync(lockPath).trim() !== PlatformIOCoreStage.PENV_LOCK_VERSION.trim()
+      fs.readFileSync(lockPath).toString().trim() !== PlatformIOCoreStage.PENV_LOCK_VERSION.trim()
     ) {
       throw new Error('Virtual environment is outdated');
     }

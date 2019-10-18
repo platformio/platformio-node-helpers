@@ -66,6 +66,14 @@ export function patchOSEnviron({
     process.env.PATH = [extraPath, process.env.PATH].join(path.delimiter);
   }
 
+  // Expand Windows environment variables in %xxx% format
+  const reWindowsEnvVar = /\%([^\%]+)\%/g;
+  while (IS_WINDOWS && reWindowsEnvVar.test(process.env.PATH)) {
+    process.env.PATH = process.env.PATH.replace(reWindowsEnvVar, (_, envvar) => {
+      return process.env[envvar] || '';
+    });
+  }
+
   // copy PATH to Path (Windows issue)
   if (process.env.Path) {
     process.env.Path = process.env.PATH;
