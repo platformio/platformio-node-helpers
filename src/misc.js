@@ -188,7 +188,7 @@ function isCompatiblePython(executable) {
     'assert (sys.version_info >= (2, 7, 9) and sys.version_info < (3,)) or sys.version_info >= (3, 5)'
   ];
   if (IS_WINDOWS) {
-    pythonLines.push('assert os.path.isdir(os.path.join(sys.prefix, "Scripts"))');
+    pythonLines.push('assert os.path.isdir(os.path.join(sys.prefix, "Scripts")) or __import__("venv")');
     pythonLines.push('assert not any(s in sys.executable.lower() for s in ("msys", "mingw", "emacs"))');
   }
   const args = ['-c', pythonLines.join(';')];
