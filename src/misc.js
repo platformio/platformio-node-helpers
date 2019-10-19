@@ -66,14 +66,6 @@ export function patchOSEnviron({
     process.env.PATH = [extraPath, process.env.PATH].join(path.delimiter);
   }
 
-  // Expand Windows environment variables in %xxx% format
-  const reWindowsEnvVar = /\%([^\%]+)\%/g;
-  while (IS_WINDOWS && reWindowsEnvVar.test(process.env.PATH)) {
-    process.env.PATH = process.env.PATH.replace(reWindowsEnvVar, (_, envvar) => {
-      return process.env[envvar] || '';
-    });
-  }
-
   // copy PATH to Path (Windows issue)
   if (process.env.Path) {
     process.env.Path = process.env.PATH;
@@ -193,12 +185,11 @@ function isCompatiblePython(executable) {
   const pythonLines = [
     'import os, sys',
     'assert sys.platform != "cygwin"',
-    'assert not sys.platform.startswith("win") or not any(s in sys.executable.lower() for s in ("msys", "mingw", "emacs"))',
-    'assert not sys.platform.startswith("win") or os.path.isdir(os.path.join(sys.prefix, "Scripts"))',
-    'assert (sys.version_info >= (2, 7, 5) and sys.version_info < (3,)) or sys.version_info >= (3, 5)'
+    'assert (sys.version_info >= (2, 7, 9) and sys.version_info < (3,)) or sys.version_info >= (3, 5)'
   ];
   if (IS_WINDOWS) {
-    pythonLines.push('assert sys.version_info >= (2, 7, 9)');
+    pythonLines.push('assert os.path.isdir(os.path.join(sys.prefix, "Scripts"))');
+    pythonLines.push('assert not any(s in sys.executable.lower() for s in ("msys", "mingw", "emacs"))');
   }
   const args = ['-c', pythonLines.join(';')];
   return new Promise(resolve => {
