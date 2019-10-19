@@ -205,8 +205,8 @@ function isCompatiblePython(executable) {
 export function getErrorReportUrl(title, description) {
   const errorToUrls = [
     [
-      '_remove_dead_weakref',
-      'https://github.com/platformio/platformio-vscode-ide/issues/142'
+      'System: Darwin, 19.0.0',
+      'https://github.com/platformio/platformio-vscode-ide/issues/1108'
     ],
     [
       'WindowsError: [Error 5]',
