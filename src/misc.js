@@ -8,7 +8,8 @@
 
 import { getCacheDir, getCoreDir, getEnvBinDir, getEnvDir } from './core';
 
-import fs from 'fs-plus';
+import fs from 'fs';
+import fsPlus from 'fs-plus';
 import os from 'os';
 import path from 'path';
 import qs from 'querystringify';
@@ -66,6 +67,14 @@ export function patchOSEnviron({
     process.env.PATH = [extraPath, process.env.PATH].join(path.delimiter);
   }
 
+  // Expand Windows environment variables in %xxx% format
+  const reWindowsEnvVar = /\%([^\%]+)\%/g;
+  while (IS_WINDOWS && reWindowsEnvVar.test(process.env.PATH)) {
+    process.env.PATH = process.env.PATH.replace(reWindowsEnvVar, (_, envvar) => {
+      return process.env[envvar] || '';
+    });
+  }
+
   // copy PATH to Path (Windows issue)
   if (process.env.Path) {
     process.env.Path = process.env.PATH;
@@ -80,7 +89,7 @@ export function runCommand(cmd, args, callback = undefined, options = {}) {
   let tmpDir = null;
 
   options.spawnOptions = options.spawnOptions || {};
-  if (!options.spawnOptions.cwd && fs.isDirectorySync(getEnvBinDir())) {
+  if (!options.spawnOptions.cwd && fsPlus.isDirectorySync(getEnvBinDir())) {
     options.spawnOptions.cwd = getEnvBinDir();
   }
 
@@ -122,7 +131,7 @@ export function runCommand(cmd, args, callback = undefined, options = {}) {
 
     if (tmpDir) {
       try {
-        fs.removeSync(tmpDir);
+        fsPlus.removeSync(tmpDir);
       } catch (err) {
         console.warn(err);
       }
@@ -173,7 +182,7 @@ export async function getPythonExecutable(
   for (const location of locations) {
     for (const exename of exenames) {
       const executable = path.normalize(path.join(location, exename)).replace(/"/g, '');
-      if (fs.isFileSync(executable) && (await isCompatiblePython(executable))) {
+      if (fs.existsSync(executable) && (await isCompatiblePython(executable))) {
         return executable;
       }
     }
