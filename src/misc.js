@@ -252,7 +252,7 @@ export function getErrorReportUrl(title, description) {
 }
 
 export function isPIOProject(dir) {
-  return fs.isFileSync(path.join(dir, 'platformio.ini'));
+  return fsPlus.isFileSync(path.join(dir, 'platformio.ini'));
 }
 
 export function arrayRemove(array, element) {
