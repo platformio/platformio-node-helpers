@@ -8,6 +8,7 @@
 
 import * as core from '../../core';
 import * as helpers from '../helpers';
+import * as home from '../../home';
 import * as misc from '../../misc';
 
 import BaseStage from './base';
@@ -484,6 +485,9 @@ export default class PlatformIOCoreStage extends BaseStage {
     this.status = BaseStage.STATUS_INSTALLING;
 
     try {
+      // shutdown all PIO Home servers which block python.exe on Windows
+      await home.shutdownAllServers();
+
       await this.createVirtualenv();
       this.lockPenvDir();
 
