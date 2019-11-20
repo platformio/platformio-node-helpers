@@ -17,6 +17,94 @@ import request from 'request';
 import spawn from 'cross-spawn';
 import tmp from 'tmp';
 
+const CHECK_PYTHON_SCRIPT = `
+import os
+import sys
+
+
+IS_WINDOWS = sys.platform.lower().startswith("win")
+PYTHON_EXE = sys.executable
+CHECK_HTTPS_URLS = ["https://github.com", "https://platformio.org", "https://pypi.org"]
+
+
+def check_min_version():
+    assert (
+        sys.version_info >= (2, 7, 9) and sys.version_info < (3,)
+    ) or sys.version_info >= (3, 5)
+
+
+def check_win_custom():
+    assert not any(s in PYTHON_EXE.lower() for s in ("msys", "mingw", "emacs"))
+    assert os.path.isdir(os.path.join(sys.prefix, "Scripts")) or (
+        sys.version_info >= (3, 5) and __import__("venv")
+    )
+
+
+def check_urllib_ssl():
+    for url in CHECK_HTTPS_URLS:
+        if url_status_ok(url):
+            return True
+    return False
+
+
+def url_status_ok(url):
+    for f in (
+        urllib_url_status_ok,
+        urllib3_url_status_ok,
+        requests_url_status_ok,
+    ):
+        try:
+            assert f(url)
+            return True
+        except Exception as e:
+            print(e)
+    return False
+
+
+def urllib_url_status_ok(url):
+    try:
+        from urllib.request import urlopen
+    except ImportError:
+        from urllib import urlopen
+    try:
+        return int(urlopen(url).getcode()) == 200
+    except:
+        return False
+
+
+def urllib3_url_status_ok(url):
+    import urllib3
+
+    try:
+        return int(urllib3.PoolManager().request("GET", url).status) == 200
+    except:
+        return False
+
+
+def requests_url_status_ok(url):
+    import requests
+
+    r = requests.get(url)
+    r.raise_for_status()
+    return True
+
+
+if __name__ == "__main__":
+    # we do not support cygwin
+    assert sys.platform != "cygwin"
+
+    check_min_version()
+
+    if IS_WINDOWS:
+        check_win_custom()
+
+    assert check_urllib_ssl()
+
+    print(PYTHON_EXE)
+    sys.exit(0)
+
+`;
+
 export const IS_WINDOWS = process.platform.startsWith('win');
 
 export function sleep(ms) {
@@ -183,10 +271,20 @@ export async function getPythonExecutable(
     }
   });
 
+  const checkScriptPath = path.join(getCacheDir(), 'check-python.py');
+  fs.writeFile(checkScriptPath, CHECK_PYTHON_SCRIPT, err => {
+    if (err) {
+      console.error(err);
+    }
+  });
+
   for (const location of locations) {
     for (const exename of exenames) {
       const executable = path.normalize(path.join(location, exename)).replace(/"/g, '');
-      if (fs.existsSync(executable) && (await isCompatiblePython(executable))) {
+      if (
+        fs.existsSync(executable) &&
+        (await _isCompatiblePython(executable, checkScriptPath))
+      ) {
         return executable;
       }
     }
@@ -194,22 +292,13 @@ export async function getPythonExecutable(
   return undefined;
 }
 
-function isCompatiblePython(executable) {
-  const pythonLines = [
-    'import os, sys',
-    'assert sys.platform != "cygwin"',
-    'assert (sys.version_info >= (2, 7, 9) and sys.version_info < (3,)) or sys.version_info >= (3, 5)'
-  ];
-  if (IS_WINDOWS) {
-    pythonLines.push(
-      'assert (os.path.isdir(os.path.join(sys.prefix, "Scripts")) ' +
-        'and not any(s in sys.executable.lower() for s in ("msys", "mingw", "emacs"))) ' +
-        'or (sys.version_info >= (3, 5) and __import__("venv"))'
-    );
-  }
-  const args = ['-c', pythonLines.join(';')];
+function _isCompatiblePython(executable, checkScriptPath) {
   return new Promise(resolve => {
-    runCommand(executable, args, code => {
+    runCommand(executable, [checkScriptPath], (code, stdout, stderr) => {
+      console.info(stdout);
+      if (stderr) {
+        console.warn(stderr);
+      }
       resolve(code === 0);
     });
   });
