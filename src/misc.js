@@ -24,7 +24,7 @@ import sys
 
 IS_WINDOWS = sys.platform.lower().startswith("win")
 PYTHON_EXE = sys.executable
-CHECK_HTTPS_URLS = ["https://github.com", "https://platformio.org", "https://pypi.org"]
+CHECK_HTTPS_URLS = ["https://github.com", "https://platformio.org"]
 
 
 def check_min_version():
