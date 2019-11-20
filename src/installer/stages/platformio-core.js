@@ -23,7 +23,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   static PENV_LOCK_FILE_NAME = 'piopenv.lock';
   static PENV_LOCK_VERSION = `${os.type()}-${os.arch()}-${os.release()}`;
 
-  static pythonVersion = '3.7.4';
+  static pythonVersion = '3.7.5';
   static getPipUrl = 'https://bootstrap.pypa.io/get-pip.py';
   static virtualenvUrl =
     'https://files.pythonhosted.org/packages/66/f0/6867af06d2e2f511e4e1d7094ff663acdebc4f15d4a0cb0fed1007395124/virtualenv-16.7.5.tar.gz';
