@@ -80,6 +80,11 @@ export class ProjectTasks {
       multienv: true
     },
     {
+      name: 'Check',
+      args: ['check'],
+      multienv: true
+    },
+    {
       name: 'Pre-Debug',
       description: 'build in debug mode',
       args: ['debug'],
