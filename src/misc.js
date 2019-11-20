@@ -79,6 +79,10 @@ export function patchOSEnviron({
   if (process.env.Path) {
     process.env.Path = process.env.PATH;
   }
+
+  // Configure NO_PROXY for PIO Home
+  process.env.NO_PROXY =
+    '127.0.0.1' + (process.env.NO_PROXY ? `,${process.env.NO_PROXY}` : '');
 }
 
 export function runCommand(cmd, args, callback = undefined, options = {}) {
