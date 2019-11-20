@@ -20,6 +20,7 @@ import tcpPortUsed from 'tcp-port-used';
 import ws from 'ws';
 
 const SERVER_LAUNCH_TIMEOUT = 5 * 60; // 5 minutes
+const SERVER_AUTOSHUTDOWN_TIMEOUT = 3600; // 1 hour
 const HTTP_HOST = '127.0.0.1';
 const HTTP_PORT_BEGIN = 8010;
 const HTTP_PORT_END = 8050;
@@ -177,7 +178,14 @@ async function _ensureServerStarted(options = {}) {
   if (!(await isServerStarted())) {
     await new Promise((resolve, reject) => {
       runPIOCommand(
-        ['home', '--port', HTTP_PORT, '--no-open'],
+        [
+          'home',
+          '--port',
+          HTTP_PORT,
+          '--shutdown-timeout',
+          SERVER_AUTOSHUTDOWN_TIMEOUT,
+          '--no-open'
+        ],
         (code, stdout, stderr) => {
           if (code !== 0) {
             HTTP_PORT = 0;
