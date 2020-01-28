@@ -124,7 +124,7 @@ export default class PlatformIOCoreStage extends BaseStage {
           'Include_doc=0',
           'Include_launcher=0',
           'Include_test=0',
-          'Include_tcltk=0',
+          'Include_tcltk=1',
           `TargetDir=${targetDir}`,
           `DefaultAllUsersTargetDir=${targetDir}`,
           `DefaultJustForMeTargetDir=${targetDir}`
