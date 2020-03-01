@@ -9,6 +9,20 @@
 import ProjectConfig from './config';
 import path from 'path';
 
+/* Naively recurse over `extends` options until we find a `platform` option,
+   or nothing. */
+function getPlatform(config, section) {
+  const extended = config.get(section, 'extends');
+  if (extended) {
+    return extended
+      .split(',')
+      .map(str => str.trim())
+      .find(ext => getPlatform(config, ext));
+  } else {
+    return config.get(section, 'platform');
+  }
+}
+
 export class ProjectTasks {
   static baseTasks = [
     {
@@ -141,7 +155,7 @@ export class ProjectTasks {
     try {
       const config = new ProjectConfig(path.join(this.projectDir, 'platformio.ini'));
       for (const env of config.envs()) {
-        const platform = config.get(`env:${env}`, 'platform');
+        const platform = getPlatform(config, `env:${env}`);
         if (!platform) {
           continue;
         }
