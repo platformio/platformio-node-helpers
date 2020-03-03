@@ -9,15 +9,17 @@
 import ProjectConfig from './config';
 import path from 'path';
 
-/* Naively recurse over `extends` options until we find a `platform` option,
-   or nothing. */
+// Naively recurse over `extends` options until we find a `platform` option,
+// or nothing.
+// Returns the value of `platform` key or undefined.
 function getPlatform(config, section) {
   const extended = config.get(section, 'extends');
   if (extended) {
     return extended
       .split(',')
       .map(str => str.trim())
-      .find(ext => getPlatform(config, ext));
+      .map(section => getPlatform(config, section))
+      .find(platform => platform);
   } else {
     return config.get(section, 'platform');
   }
