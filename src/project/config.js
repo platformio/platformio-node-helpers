@@ -97,6 +97,24 @@ export default class ProjectConfig {
       value = this._data[section][option];
     } else if (section.startsWith('env:')) {
       value = this.get('env', option);
+    } else if (this._data[section]['extends']) {
+      value = null;
+      this._data[section]['extends'].split(',')
+        .map(section => section.trim())
+        .forEach(section => {
+          if (value) {
+            return
+          }
+          try {
+            value = this.getraw(section,option);
+          }
+          catch (e) {
+            value = null;
+          }
+        });
+      if(value === null) {
+        throw `NoOptionError: ${section} -> ${option}`;
+      }
     } else {
       throw `NoOptionError: ${section} -> ${option}`;
     }
