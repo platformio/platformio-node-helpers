@@ -95,9 +95,23 @@ export default class ProjectConfig {
     let value = null;
     if (option in this._data[section]) {
       value = this._data[section][option];
-    } else if (section.startsWith('env:')) {
-      value = this.get('env', option);
-    } else {
+    }
+    else {
+      if ('extends' in this._data[section]) {
+        for (const ext of ProjectConfig.parse_multi_values(this._data[section]['extends'])){
+          try {
+            value = this.getraw(ext, option);
+            break;
+          } catch {}
+        }
+      }
+      if (!value && section.startsWith('env:')) {
+        try {
+          value = this.getraw('env', option);
+        } catch {}
+      }
+    }
+    if (!value){
       throw `NoOptionError: ${section} -> ${option}`;
     }
     if (!value.includes('${') || !value.includes('}')) {
