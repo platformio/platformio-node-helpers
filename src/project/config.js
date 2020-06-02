@@ -95,10 +95,11 @@ export default class ProjectConfig {
     let value = null;
     if (option in this._data[section]) {
       value = this._data[section][option];
-    }
-    else {
+    } else {
       if ('extends' in this._data[section]) {
-        for (const ext of ProjectConfig.parse_multi_values(this._data[section]['extends'])){
+        for (const ext of ProjectConfig.parse_multi_values(
+          this._data[section]['extends']
+        )) {
           try {
             value = this.getraw(ext, option);
             break;
@@ -111,7 +112,7 @@ export default class ProjectConfig {
         } catch {}
       }
     }
-    if (!value){
+    if (!value) {
       throw `NoOptionError: ${section} -> ${option}`;
     }
     if (!value.includes('${') || !value.includes('}')) {
