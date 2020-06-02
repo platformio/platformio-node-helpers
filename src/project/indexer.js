@@ -6,18 +6,24 @@
  * the root directory of this source tree.
  */
 
-import {
-  disposeSubscriptions,
-  getPythonExecutable,
-  isPIOProject,
-  runCommand
-} from '../misc';
+import * as core from '../core';
+import * as misc from '../misc';
+import * as proc from '../proc';
 
+import fs from 'fs';
 import path from 'path';
 import { runPIOCommand } from '../core';
 
 export default class ProjectIndexer {
   static AUTO_REBUILD_DELAY = 3000;
+
+  static isPIOProjectSync(projectDir) {
+    try {
+      fs.accessSync(path.join(projectDir, 'platformio.ini'));
+      return true;
+    } catch (err) {}
+    return false;
+  }
 
   constructor(projectDir, options) {
     this.projectDir = projectDir;
@@ -43,7 +49,7 @@ export default class ProjectIndexer {
   }
 
   rebuild() {
-    if (this._inProgress || !isPIOProject(this.projectDir)) {
+    if (this._inProgress || !ProjectIndexer.isPIOProjectSync(this.projectDir)) {
       return;
     }
     return this.options.withProgress(async () => {
@@ -98,8 +104,8 @@ export default class ProjectIndexer {
   }
 
   async updateDirWatchers() {
-    disposeSubscriptions(this.dirWatchSubscriptions);
-    if (!isPIOProject(this.projectDir)) {
+    misc.disposeSubscriptions(this.dirWatchSubscriptions);
+    if (!ProjectIndexer.isPIOProjectSync(this.projectDir)) {
       return;
     }
     try {
@@ -118,47 +124,33 @@ export default class ProjectIndexer {
   }
 
   async fetchWatchDirs() {
-    if (!ProjectIndexer.PythonExecutable) {
-      ProjectIndexer.PythonExecutable = await getPythonExecutable(
-        this.options.useBuiltinPIOCore
-      );
+    if (!core.getCoreState().python_exe) {
+      throw new Error('PlatformIO Core has not been installed');
     }
     const scriptLines = [
       'import os',
-      'from platformio.project import helpers',
-      'libdeps_dir = helpers.get_project_libdeps_dir()',
-      'watch_dirs = [helpers.get_project_global_lib_dir(), helpers.get_project_lib_dir(), libdeps_dir]',
+      'from platformio.project.config import ProjectConfig',
+      'c = ProjectConfig()',
+      'libdeps_dir = c.get_optional_dir("libdeps")',
+      'watch_dirs = [c.get_optional_dir("globallib"), c.get_optional_dir("lib"), libdeps_dir]',
       'watch_dirs.extend(os.path.join(libdeps_dir, d) for d in (os.listdir(libdeps_dir) if os.path.isdir(libdeps_dir) else []) if os.path.isdir(os.path.join(libdeps_dir, d)))',
       'print(":".join(watch_dirs))'
     ];
-    return new Promise((resolve, reject) => {
-      runCommand(
-        ProjectIndexer.PythonExecutable,
-        ['-c', scriptLines.join(';')],
-        (code, stdout, stderr) => {
-          if (code === 0) {
-            resolve(
-              stdout
-                .toString()
-                .trim()
-                .split(':')
-            );
-          } else {
-            reject(new Error(stderr));
-          }
-        },
-        {
-          spawnOptions: {
-            cwd: this.projectDir
-          }
+    const output = await proc.getCommandOutput(
+      core.getCoreState().python_exe,
+      ['-c', scriptLines.join(';')],
+      {
+        spawnOptions: {
+          cwd: this.projectDir
         }
-      );
-    });
+      }
+    );
+    return output.trim().split(':');
   }
 
   dispose() {
-    disposeSubscriptions(this.dirWatchSubscriptions);
-    disposeSubscriptions(this.subscriptions);
+    misc.disposeSubscriptions(this.dirWatchSubscriptions);
+    misc.disposeSubscriptions(this.subscriptions);
     if (this._rebuildTimeout) {
       clearTimeout(this._rebuildTimeout);
     }

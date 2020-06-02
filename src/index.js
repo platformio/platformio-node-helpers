@@ -9,6 +9,7 @@
 import * as core from './core';
 import * as home from './home';
 import * as misc from './misc';
+import * as proc from './proc';
 
 import { ProjectTasks, TaskItem } from './project/tasks';
 
@@ -29,4 +30,4 @@ const project = {
   TaskItem
 };
 
-export { core, home, installer, project, misc };
+export { core, home, installer, misc, proc, project };

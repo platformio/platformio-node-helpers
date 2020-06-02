@@ -6,9 +6,9 @@
  * the root directory of this source tree.
  */
 
-import fs from 'fs-plus';
+import fs from 'fs';
+import { getCommandOutput } from '../proc';
 import request from 'request';
-import { runCommand } from '../misc';
 import tar from 'tar';
 import zlib from 'zlib';
 
@@ -37,16 +37,16 @@ export async function download(source, target, retries = 3) {
 }
 
 function fileExistsAndSizeMatches(target, contentLength) {
-  if (fs.isFileSync(target)) {
-    if (contentLength > 0 && contentLength == fs.getSizeSync(target)) {
+  try {
+    if (contentLength > 0 && contentLength == fs.statSync(target)['size']) {
       return true;
     }
     try {
-      fs.removeSync(target);
+      fs.unlinkSync(target);
     } catch (err) {
       console.warn(err);
     }
-  }
+  } catch (err) {}
   return false;
 }
 
@@ -54,19 +54,18 @@ async function _download(source, target) {
   let proxy = null;
   try {
     const apmPath = atom.packages.getApmPath();
-    proxy = await new Promise((resolve, reject) => {
-      runCommand(
-        apmPath,
-        ['--no-color', 'config', 'get', 'https-proxy'],
-        (code, stdout) => {
-          if (code !== 0) {
-            return reject(null);
-          }
-          resolve(stdout.trim() === 'null' ? null : stdout.trim());
-        }
-      );
-    });
-  } catch (err) {
+    proxy = await getCommandOutput(apmPath, [
+      '--no-color',
+      'config',
+      'get',
+      'https-proxy'
+    ]);
+    proxy = proxy.trim();
+    if (proxy === 'null') {
+      proxy = null;
+    }
+  } catch (err) {}
+  if (!proxy) {
     proxy =
       (process.env.HTTPS_PROXY && process.env.HTTPS_PROXY.trim()) ||
       (process.env.HTTP_PROXY && process.env.HTTP_PROXY.trim());
@@ -110,6 +109,11 @@ function getContentLength(url) {
 }
 
 export function extractTarGz(source, destination) {
+  try {
+    fs.accessSync(destination);
+  } catch (err) {
+    fs.mkdirSync(destination, { recursive: true });
+  }
   return new Promise((resolve, reject) => {
     fs.createReadStream(source)
       .pipe(zlib.createGunzip())
@@ -122,8 +126,4 @@ export function extractTarGz(source, destination) {
       .on('error', err => reject(err))
       .on('close', () => resolve(destination));
   });
-}
-
-export function PEPverToSemver(pepver) {
-  return pepver.replace(/(\.\d+)\.?(dev|a|b|rc|post)/, '$1-$2.');
 }

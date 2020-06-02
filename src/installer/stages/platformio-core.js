@@ -7,62 +7,128 @@
  */
 
 import * as core from '../../core';
-import * as helpers from '../helpers';
 import * as home from '../../home';
 import * as misc from '../../misc';
+import * as proc from '../../proc';
+import { download, extractTarGz } from '../helpers';
 
 import BaseStage from './base';
-import fs from 'fs-plus';
-import os from 'os';
+import { callInstallerScript } from '../get-platformio';
+import { promises as fs } from 'fs';
 import path from 'path';
-import semver from 'semver';
 import tmp from 'tmp';
 
 export default class PlatformIOCoreStage extends BaseStage {
-  static UPGRADE_PIOCORE_TIMEOUT = 86400 * 7 * 1000; // 7 days
-  static PENV_LOCK_FILE_NAME = 'piopenv.lock';
-  static PENV_LOCK_VERSION = `${os.type()}-${os.arch()}-${os.release()}`;
+  static PORTABLE_PYTHON_URLS = {
+    windows_x86:
+      'https://dl.bintray.com/platformio/dl-misc/python-portable-windows_x86-3.7.7.tar.gz',
+    windows_amd64:
+      'https://dl.bintray.com/platformio/dl-misc/python-portable-windows_amd64-3.7.7.tar.gz'
+  };
 
-  static pythonVersion = '3.7.5';
-  static getPipUrl = 'https://bootstrap.pypa.io/get-pip.py';
-  static virtualenvUrl =
-    'https://files.pythonhosted.org/packages/e7/80/15d28e5a075fb02366ce97558120bb987868dab3600233ec7be032dc6d01/virtualenv-16.7.7.tar.gz';
-  static pioCoreDevelopUrl =
-    'https://github.com/platformio/platformio/archive/develop.zip';
+  static getBuiltInPythonDir() {
+    return path.join(core.getCoreDir(), 'python37');
+  }
 
   constructor() {
     super(...arguments);
     tmp.setGracefulCleanup();
-
-    this._skipPIPInstalling = false;
   }
 
   get name() {
     return 'PlatformIO Core';
   }
 
+  async check() {
+    if (!this.params.useBuiltinPIOCore) {
+      this.status = BaseStage.STATUS_SUCCESSED;
+      return true;
+    }
+    try {
+      await fs.access(core.getEnvBinDir());
+    } catch (err) {
+      throw new Error('PlatformIO Core has not been installed yet!');
+    }
+    // check that PIO Core is installed and load its state
+    await this.loadCoreState();
+    // Add PIO Core virtualenv to global PATH
+    // Setup `platformio` CLI globally for a Node.JS process
+    proc.extendOSEnvironPath([core.getEnvBinDir(), core.getEnvDir()]);
+    this.status = BaseStage.STATUS_SUCCESSED;
+    return true;
+  }
+
+  async install() {
+    if (this.status === BaseStage.STATUS_SUCCESSED) {
+      return true;
+    }
+    if (!this.params.useBuiltinPIOCore) {
+      this.status = BaseStage.STATUS_SUCCESSED;
+      return true;
+    }
+    this.status = BaseStage.STATUS_INSTALLING;
+    try {
+      // shutdown all PIO Home servers which block python.exe on Windows
+      await home.shutdownAllServers();
+      // run installer script
+      const scriptArgs = [];
+      if (this.params.useDevelopmentPIOCore) {
+        scriptArgs.push('--dev');
+      }
+      console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
+      await this.installPIOHome();
+    } catch (err) {
+      misc.reportError(err);
+      throw err;
+    }
+    return true;
+  }
+
+  async loadCoreState() {
+    const stateJSONPath = path.join(
+      core.getCacheDir(),
+      `core-dump-${Math.round(Math.random() * 100000)}.json`
+    );
+    const scriptArgs = [];
+    if (this.params.useDevelopmentPIOCore) {
+      scriptArgs.push('--dev');
+    }
+    scriptArgs.push(...['check', 'core', '--auto-upgrade']);
+    scriptArgs.push(...['--dump-state', stateJSONPath]);
+    if (this.params.pioCoreVersionSpec) {
+      scriptArgs.push(...['--version-spec', this.params.pioCoreVersionSpec]);
+    }
+    console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
+
+    // Load PIO Core state
+    const coreState = await misc.loadJSON(stateJSONPath);
+    console.info('PIO Core State', coreState);
+    core.setCoreState(coreState);
+    await fs.unlink(stateJSONPath); // cleanup
+
+    return true;
+  }
+
   async whereIsPython() {
     let status = this.params.pythonPrompt.STATUS_TRY_AGAIN;
+
+    if (this.params.useBuiltinPython) {
+      try {
+        await this.configurePreBuiltPython();
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+
     do {
-      const pythonExecutable = await misc.getPythonExecutable(
-        this.params.useBuiltinPIOCore
-      );
+      const pythonExecutable = await proc.findPythonExecutable();
       if (pythonExecutable) {
         return pythonExecutable;
       }
-
-      if (process.platform.startsWith('win')) {
-        try {
-          return await this.installPythonForWindows();
-        } catch (err) {
-          console.warn(err);
-        }
-      }
-
       const result = await this.params.pythonPrompt.prompt();
       status = result.status;
       if (status === this.params.pythonPrompt.STATUS_CUSTOMEXE) {
-        return result.pythonExecutable;
+        proc.extendOSEnvironPath([path.dirname(result.pythonExecutable)]);
       }
     } while (status !== this.params.pythonPrompt.STATUS_ABORT);
 
@@ -72,291 +138,45 @@ export default class PlatformIOCoreStage extends BaseStage {
     );
   }
 
-  async installPythonForWindows() {
-    // https://www.python.org/ftp/python/3.7.4/python-3.7.4.exe
-    // https://www.python.org/ftp/python/3.7.4/python-3.7.4-amd64.exe
-    const pythonArch = process.arch === 'x64' ? '-amd64' : '';
-    const installerUrl = `https://www.python.org/ftp/python/${PlatformIOCoreStage.pythonVersion}/python-${PlatformIOCoreStage.pythonVersion}${pythonArch}.exe`;
-    const installer = await helpers.download(
-      installerUrl,
-      path.join(core.getCacheDir(), path.basename(installerUrl))
-    );
-    const targetDir = path.join(core.getCoreDir(), 'python37');
-    let pythonPath = path.join(targetDir, 'python.exe');
-
-    if (!fs.isFileSync(pythonPath)) {
-      pythonPath = await this.installPythonFromWindowsInstaller(installer, targetDir);
-      this._skipPIPInstalling = true;
+  async ensurePythonExeExists(pythonDir) {
+    if (proc.IS_WINDOWS) {
+      await fs.access(path.join(pythonDir, 'python.exe'));
+    } else {
+      await fs.access(path.join(pythonDir, 'bin', 'python'));
     }
-
-    // append temporary to system environment
-    process.env.PATH = [
-      targetDir,
-      path.join(targetDir, 'Scripts'),
-      process.env.PATH
-    ].join(path.delimiter);
-    process.env.Path = process.env.PATH;
-    return pythonPath;
+    return true;
   }
 
-  installPythonFromWindowsInstaller(installer, targetDir) {
-    if (fs.isDirectorySync(targetDir)) {
-      try {
-        fs.removeSync(targetDir);
-      } catch (err) {
-        console.warn(err);
-      }
-    }
-    const logPath = path.join(core.getCacheDir(), 'python-installer.log');
-    return new Promise((resolve, reject) => {
-      misc.runCommand(
-        installer,
-        [
-          '/quiet',
-          '/log',
-          logPath,
-          'SimpleInstall=1',
-          'InstallAllUsers=0',
-          'InstallLauncherAllUsers=0',
-          'Shortcuts=0',
-          'Include_lib=1',
-          'Include_pip=1',
-          'Include_doc=0',
-          'Include_launcher=0',
-          'Include_test=0',
-          'Include_tcltk=1',
-          `TargetDir=${targetDir}`,
-          `DefaultAllUsersTargetDir=${targetDir}`,
-          `DefaultJustForMeTargetDir=${targetDir}`
-        ],
-        code => {
-          if (code === 0 && fs.isFileSync(path.join(targetDir, 'python.exe'))) {
-            return resolve(path.join(targetDir, 'python.exe'));
-          }
-          if (fs.isFileSync(logPath)) {
-            console.error(fs.readFileSync(logPath).toString());
-          }
-          return reject(
-            new Error(
-              'Could not install Python 3 automatically. Please install it manually from https://python.org'
-            )
-          );
-        },
-        {
-          spawnOptions: {
-            shell: true
-          }
-        }
+  async configurePreBuiltPython() {
+    const systype = proc.getSysType();
+    const pythonTarGzUrl = PlatformIOCoreStage.PORTABLE_PYTHON_URLS[systype];
+    if (!pythonTarGzUrl) {
+      console.info(
+        `There is no built-in Python for ${systype} platform, we will use a system Python`
       );
-    });
-  }
-
-  cleanVirtualEnvDir() {
-    const envDir = core.getEnvDir();
-    if (!fs.isDirectorySync(envDir)) {
-      return true;
-    }
-    try {
-      fs.removeSync(envDir);
-      return true;
-    } catch (err) {
-      console.warn(err);
-      return false;
-    }
-  }
-
-  isCondaInstalled() {
-    return new Promise(resolve => {
-      misc.runCommand('conda', ['--version'], code => resolve(code === 0));
-    });
-  }
-
-  createVirtualenvWithConda() {
-    this.cleanVirtualEnvDir();
-    return new Promise((resolve, reject) => {
-      misc.runCommand(
-        'conda',
-        ['create', '--yes', '--quiet', 'python=2', 'pip', '--prefix', core.getEnvDir()],
-        (code, stdout, stderr) => {
-          if (code === 0) {
-            return resolve(stdout);
-          } else {
-            return reject(new Error(`Conda Virtualenv: ${stderr}`));
-          }
-        }
-      );
-    });
-  }
-
-  async createVirtualenvWithLocal() {
-    this.cleanVirtualEnvDir();
-    const pythonExecutable = await this.whereIsPython();
-    const venvCmdOptions = [
-      [pythonExecutable, '-m', 'venv', core.getEnvDir()],
-      [pythonExecutable, '-m', 'virtualenv', '-p', pythonExecutable, core.getEnvDir()],
-      ['virtualenv', '-p', pythonExecutable, core.getEnvDir()],
-      [pythonExecutable, '-m', 'virtualenv', core.getEnvDir()],
-      ['virtualenv', core.getEnvDir()]
-    ];
-    let lastError = null;
-    for (const cmdOptions of venvCmdOptions) {
-      this.cleanVirtualEnvDir();
-      try {
-        return await new Promise((resolve, reject) => {
-          misc.runCommand(
-            cmdOptions[0],
-            cmdOptions.slice(1),
-            (code, stdout, stderr) => {
-              return code === 0
-                ? resolve(stdout)
-                : reject(new Error(`User's Virtualenv: ${stderr}`));
-            }
-          );
-        });
-      } catch (err) {
-        console.warn(err);
-        lastError = err;
-      }
-    }
-
-    throw lastError;
-  }
-
-  async createVirtualenvWithDownload() {
-    this.cleanVirtualEnvDir();
-    const archivePath = await helpers.download(
-      PlatformIOCoreStage.virtualenvUrl,
-      path.join(core.getCacheDir(), 'virtualenv.tar.gz')
-    );
-    const tmpDir = tmp.dirSync({
-      dir: core.getCacheDir(),
-      unsafeCleanup: true
-    }).name;
-    const dstDir = await helpers.extractTarGz(archivePath, tmpDir);
-    const virtualenvScript = fs
-      .listTreeSync(dstDir)
-      .find(item => path.basename(item) === 'virtualenv.py');
-    if (!virtualenvScript) {
-      throw new Error('Can not find virtualenv.py script');
-    }
-    const pythonExecutable = await this.whereIsPython();
-    return new Promise((resolve, reject) => {
-      misc.runCommand(
-        pythonExecutable,
-        [virtualenvScript, core.getEnvDir()],
-        (code, stdout, stderr) => {
-          try {
-            fs.removeSync(tmpDir);
-          } catch (err) {
-            console.warn(err);
-          }
-          if (code === 0) {
-            return resolve(stdout);
-          } else {
-            let userNotification = `Virtualenv Create: ${stderr}\n${stdout}`;
-            if (stderr.includes('WindowsError: [Error 5]')) {
-              userNotification = `If you use Antivirus, it can block PlatformIO Installer. Try to disable it for a while.\n\n${userNotification}`;
-            }
-            return reject(new Error(userNotification));
-          }
-        }
-      );
-    });
-  }
-
-  async installVirtualenvPackage() {
-    const pythonExecutable = await this.whereIsPython();
-    return new Promise((resolve, reject) => {
-      misc.runCommand(
-        pythonExecutable,
-        ['-m', 'pip', 'install', 'virtualenv'],
-        (code, stdout, stderr) => {
-          if (code === 0) {
-            return resolve(stdout);
-          } else {
-            return reject(new Error(`Install Virtualenv globally: ${stderr}`));
-          }
-        }
-      );
-    });
-  }
-
-  async createVirtualenv() {
-    if (await this.isCondaInstalled()) {
-      return await this.createVirtualenvWithConda();
-    }
-    try {
-      await this.createVirtualenvWithLocal();
-    } catch (err) {
-      console.warn(err);
-      try {
-        await this.createVirtualenvWithDownload();
-      } catch (errDl) {
-        console.warn(errDl);
-        try {
-          await this.installVirtualenvPackage();
-          await this.createVirtualenvWithLocal();
-        } catch (errPkg) {
-          misc.reportError(errDl);
-          console.warn(errPkg);
-          throw new Error(
-            `Could not create PIO Core Virtual Environment. Please create it manually -> http://bit.ly/pio-core-virtualenv \n ${errDl.toString()}`
-          );
-        }
-      }
-    }
-  }
-
-  async installPIP(pythonExecutable) {
-    fs.writeFileSync(
-      path.join(core.getEnvDir(), 'pip.conf'),
-      ['[global]', 'user=no'].join('\n')
-    );
-    if (this._skipPIPInstalling) {
       return;
     }
-    // we use manual downloading to resolve SSL issue with old `pip`
-    const getPipScript = await helpers.download(
-      PlatformIOCoreStage.getPipUrl,
-      path.join(core.getCacheDir(), path.basename(PlatformIOCoreStage.getPipUrl))
-    );
-    return new Promise((resolve, reject) => {
-      misc.runCommand(pythonExecutable, [getPipScript], (code, stdout, stderr) => {
-        return code === 0 ? resolve(stdout) : reject(stderr);
-      });
-    });
-  }
-
-  async installPIOCore() {
-    const pythonExecutable = await this.whereIsPython();
-
-    // Try to upgrade PIP to the latest version with updated openSSL
+    const builtInPythonDir = PlatformIOCoreStage.getBuiltInPythonDir();
     try {
-      await this.installPIP(pythonExecutable);
+      await this.ensurePythonExeExists(builtInPythonDir);
     } catch (err) {
-      console.warn(err);
-      misc.reportError(new Error(`Installing PIP: ${err.toString()}`));
+      try {
+        const tarballPath = await download(
+          pythonTarGzUrl,
+          path.join(core.getCacheDir(), path.basename(pythonTarGzUrl))
+        );
+        await extractTarGz(tarballPath, builtInPythonDir);
+        await this.ensurePythonExeExists(builtInPythonDir);
+      } catch (err) {
+        console.error(err);
+        // cleanup
+        try {
+          await fs.rmdir(builtInPythonDir, { recursive: true });
+        } catch (err) {}
+      }
     }
-
-    // Install dependencies
-    const args = ['-m', 'pip', 'install', '-U'];
-    if (this.params.useDevelopmentPIOCore) {
-      args.push(PlatformIOCoreStage.pioCoreDevelopUrl);
-    } else {
-      args.push('platformio');
-    }
-    return new Promise((resolve, reject) => {
-      misc.runCommand(pythonExecutable, args, (code, stdout, stderr) => {
-        if (code === 0) {
-          resolve(stdout);
-        } else {
-          if (misc.IS_WINDOWS) {
-            stderr = `If you have antivirus/firewall/defender software in a system, try to disable it for a while. \n ${stderr}`;
-          }
-          return reject(new Error(`PIP Core: ${stderr}`));
-        }
-      });
-    });
+    proc.extendOSEnvironPath([builtInPythonDir]);
+    return builtInPythonDir;
   }
 
   installPIOHome() {
@@ -371,134 +191,5 @@ export default class PlatformIOCoreStage extends BaseStage {
         }
       );
     });
-  }
-
-  initState() {
-    let state = this.state;
-    if (!state || !state.pioCoreChecked || !state.lastIDEVersion) {
-      state = {
-        pioCoreChecked: 0,
-        lastIDEVersion: null
-      };
-    }
-    return state;
-  }
-
-  async autoUpgradePIOCore(currentCoreVersion) {
-    const newState = this.initState();
-    const now = new Date().getTime();
-    if (
-      (process.env.PLATFORMIO_IDE &&
-        newState.lastIDEVersion &&
-        newState.lastIDEVersion !== process.env.PLATFORMIO_IDE) ||
-      now - PlatformIOCoreStage.UPGRADE_PIOCORE_TIMEOUT >
-        parseInt(newState.pioCoreChecked)
-    ) {
-      newState.pioCoreChecked = now;
-      // PIO Core
-      await new Promise(resolve => {
-        core.runPIOCommand(
-          [
-            'upgrade',
-            ...(this.params.useDevelopmentPIOCore &&
-            !semver.prerelease(currentCoreVersion)
-              ? ['--dev']
-              : [])
-          ],
-          (code, stdout, stderr) => {
-            if (code !== 0) {
-              console.warn(stdout, stderr);
-            }
-            resolve(true);
-          }
-        );
-      });
-    }
-    newState.lastIDEVersion = process.env.PLATFORMIO_IDE;
-    this.state = newState;
-  }
-
-  checkPenvLocked() {
-    const lockPath = path.join(
-      core.getEnvDir(),
-      PlatformIOCoreStage.PENV_LOCK_FILE_NAME
-    );
-    if (!fs.isFileSync(lockPath)) {
-      // skip manually created virtualenv
-      return;
-    }
-    if (
-      fs
-        .readFileSync(lockPath)
-        .toString()
-        .trim() !== PlatformIOCoreStage.PENV_LOCK_VERSION.trim()
-    ) {
-      throw new Error('Virtual environment is outdated');
-    }
-    return true;
-  }
-
-  lockPenvDir() {
-    fs.writeFileSync(
-      path.join(core.getEnvDir(), PlatformIOCoreStage.PENV_LOCK_FILE_NAME),
-      PlatformIOCoreStage.PENV_LOCK_VERSION
-    );
-  }
-
-  async check() {
-    const coreVersion = helpers.PEPverToSemver(await core.getVersion());
-
-    if (this.params.useBuiltinPIOCore) {
-      if (!fs.isDirectorySync(core.getEnvBinDir())) {
-        throw new Error('Virtual environment is not created');
-      }
-      this.checkPenvLocked();
-      try {
-        await this.autoUpgradePIOCore(coreVersion);
-      } catch (err) {
-        console.warn(err);
-      }
-    }
-
-    if (semver.lt(coreVersion, this.params.pioCoreMinVersion)) {
-      this.params.setUseBuiltinPIOCore(true);
-      this.params.useBuiltinPIOCore = true;
-      this.params.useDevelopmentPIOCore =
-        this.params.useDevelopmentPIOCore ||
-        semver.prerelease(this.params.pioCoreMinVersion);
-      throw new Error(`Incompatible PIO Core ${coreVersion}`);
-    }
-
-    this.status = BaseStage.STATUS_SUCCESSED;
-    console.info(`Found PIO Core ${coreVersion}`);
-    return true;
-  }
-
-  async install() {
-    if (this.status === BaseStage.STATUS_SUCCESSED) {
-      return true;
-    }
-    if (!this.params.useBuiltinPIOCore) {
-      this.status = BaseStage.STATUS_SUCCESSED;
-      return true;
-    }
-    this.status = BaseStage.STATUS_INSTALLING;
-
-    try {
-      // shutdown all PIO Home servers which block python.exe on Windows
-      await home.shutdownAllServers();
-
-      await this.createVirtualenv();
-      this.lockPenvDir();
-
-      await this.installPIOCore();
-      await this.installPIOHome();
-    } catch (err) {
-      misc.reportError(err);
-      throw err;
-    }
-
-    this.status = BaseStage.STATUS_SUCCESSED;
-    return true;
   }
 }

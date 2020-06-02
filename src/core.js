@@ -6,12 +6,26 @@
  * the root directory of this source tree.
  */
 
-import { IS_WINDOWS, runCommand } from './misc';
+import { IS_WINDOWS, runCommand } from './proc';
 
-import fs from 'fs-plus';
+import fs from 'fs';
 import path from 'path';
 
+let _CORE_STATE = {};
+
+export function setCoreState(state) {
+  _CORE_STATE = state;
+}
+
+export function getCoreState() {
+  return _CORE_STATE;
+}
+
 export function getCoreDir() {
+  if (getCoreState().core_dir) {
+    return getCoreState().core_dir;
+  }
+  // fallback
   let userHomeDir = process.env.HOME || '~';
   if (IS_WINDOWS) {
     if (process.env.USERPROFILE) {
@@ -35,9 +49,10 @@ export function getCoreDir() {
     name: '.platformio'
   });
   // if we already created it
-  if (fs.isDirectorySync(rootDir)) {
+  try {
+    fs.accessSync(rootDir);
     return rootDir;
-  }
+  } catch (err) {}
   // Make sure that all path characters have valid ASCII codes.
   for (const char of coreDir) {
     if (char.charCodeAt(0) > 127) {
@@ -48,7 +63,25 @@ export function getCoreDir() {
   return coreDir;
 }
 
+export function getCacheDir() {
+  if (getCoreState().cache_dir) {
+    return getCoreState().cache_dir;
+  }
+  // fallback
+  const dir = path.join(getCoreDir(), '.cache');
+  try {
+    fs.accessSync(dir);
+  } catch (err) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+}
+
 export function getEnvDir() {
+  if (getCoreState().penv_dir) {
+    return getCoreState().penv_dir;
+  }
+  // fallback
   if ('PLATFORMIO_PENV_DIR' in process.env) {
     return process.env['PLATFORMIO_PENV_DIR'];
   }
@@ -56,30 +89,11 @@ export function getEnvDir() {
 }
 
 export function getEnvBinDir() {
-  return path.join(getEnvDir(), IS_WINDOWS ? 'Scripts' : 'bin');
-}
-
-export function getCacheDir() {
-  const dir = path.join(getCoreDir(), '.cache');
-  if (!fs.isDirectorySync(dir)) {
-    fs.makeTreeSync(dir);
+  if (getCoreState().penv_bin_dir) {
+    return getCoreState().penv_bin_dir;
   }
-  return dir;
-}
-
-export function getVersion() {
-  return new Promise((resolve, reject) => {
-    runCommand('platformio', ['--version'], (code, stdout, stderr) => {
-      if (code === 0) {
-        try {
-          return resolve(stdout.trim().match(/[\d+\.]+.*$/)[0]);
-        } catch (err) {
-          return reject(err.toString());
-        }
-      }
-      return reject(new Error(stderr));
-    });
-  });
+  // fallback
+  return path.join(getEnvDir(), IS_WINDOWS ? 'Scripts' : 'bin');
 }
 
 export function runPIOCommand(args, callback, options = {}) {
@@ -88,5 +102,14 @@ export function runPIOCommand(args, callback, options = {}) {
     baseArgs.push('-c');
     baseArgs.push(process.env.PLATFORMIO_CALLER);
   }
-  runCommand('platformio', [...baseArgs, ...args], callback, options);
+  options.spawnOptions = options.spawnOptions || {};
+  if (!options.spawnOptions.cwd) {
+    options.spawnOptions.cwd = getEnvBinDir();
+  }
+  runCommand(
+    getCoreState().platformio_exe || 'platformio',
+    [...baseArgs, ...args],
+    callback,
+    options
+  );
 }

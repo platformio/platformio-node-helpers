@@ -6,11 +6,9 @@
  * the root directory of this source tree.
  */
 
+import * as misc from './misc';
 import { getCoreDir, runPIOCommand } from './core';
-import { reportError, sleep } from './misc';
 
-import { PEPverToSemver } from './installer/helpers';
-import fs from 'fs-plus';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
@@ -28,8 +26,8 @@ const SESSION_ID = Math.round(Math.random() * 1000000);
 let HTTP_PORT = 0;
 let IDECMDS_LISTENER_STATUS = 0;
 
-export function getFrontendUri(serverHost, serverPort, options) {
-  const stateStorage = (loadState() || {}).storage || {};
+export async function getFrontendUri(serverHost, serverPort, options) {
+  const stateStorage = ((await loadState()) || {}).storage || {};
   const params = {
     start: options.start || '/',
     theme: stateStorage.theme || options.theme,
@@ -86,7 +84,7 @@ async function listenIDECommands(callback) {
       switch (result.type) {
         case 'success':
           if (result.payload.id === coreVersionMsgId) {
-            coreVersion = PEPverToSemver(result.payload.result);
+            coreVersion = misc.PEPverToSemver(result.payload.result);
           } else {
             callback(result.payload.result.method, result.payload.result.params);
           }
@@ -163,7 +161,7 @@ export async function ensureServerStarted(options = {}) {
     }
     attemptNums++;
   }
-  reportError(lastError);
+  misc.reportError(lastError);
   throw lastError;
 }
 
@@ -222,24 +220,15 @@ export async function shutdownAllServers() {
     request.get(`http://${HTTP_HOST}:${port}?__shutdown__=1`).on('error', () => {});
     port++;
   }
-  await sleep(2000); // wait for 2 secs while server stops
+  await misc.sleep(2000); // wait for 2 secs while server stops
 }
 
-export function loadState() {
-  const statePath = path.join(getCoreDir(), 'homestate.json');
-  if (!fs.isFileSync(statePath)) {
-    return null;
-  }
-  try {
-    return JSON.parse(fs.readFileSync(statePath, 'utf8'));
-  } catch (err) {
-    console.warn(err);
-    return null;
-  }
+async function loadState() {
+  return await misc.loadJSON(path.join(getCoreDir(), 'homestate.json'));
 }
 
-export function showAtStartup(caller) {
-  const state = loadState();
+export async function showAtStartup(caller) {
+  const state = await loadState();
   return (
     !state ||
     !state.storage ||
