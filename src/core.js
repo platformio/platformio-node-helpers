@@ -6,19 +6,19 @@
  * the root directory of this source tree.
  */
 
-import { IS_WINDOWS, runCommand } from './proc';
+import * as proc from './proc';
 
 import fs from 'fs';
 import path from 'path';
 
-let _CORE_STATE = {};
+let _CORE_STATE = undefined;
 
 export function setCoreState(state) {
   _CORE_STATE = state;
 }
 
 export function getCoreState() {
-  return _CORE_STATE;
+  return _CORE_STATE || {};
 }
 
 export function getCoreDir() {
@@ -27,7 +27,7 @@ export function getCoreDir() {
   }
   // fallback
   let userHomeDir = process.env.HOME || '~';
-  if (IS_WINDOWS) {
+  if (proc.IS_WINDOWS) {
     if (process.env.USERPROFILE) {
       userHomeDir = process.env.USERPROFILE;
     } else if (process.env.HOMEPATH) {
@@ -38,7 +38,7 @@ export function getCoreDir() {
     process.env.PLATFORMIO_CORE_DIR ||
     process.env.PLATFORMIO_HOME_DIR /* backward compatibility */ ||
     path.join(userHomeDir, '.platformio');
-  if (!IS_WINDOWS) {
+  if (!proc.IS_WINDOWS) {
     return coreDir;
   }
   const coreDirPathFormat = path.parse(coreDir);
@@ -93,7 +93,17 @@ export function getEnvBinDir() {
     return getCoreState().penv_bin_dir;
   }
   // fallback
-  return path.join(getEnvDir(), IS_WINDOWS ? 'Scripts' : 'bin');
+  return path.join(getEnvDir(), proc.IS_WINDOWS ? 'Scripts' : 'bin');
+}
+
+export async function getCorePythonExe() {
+  const result =
+    getCoreState().python_exe ||
+    (await proc.findPythonExecutable({ pioCoreSpec: '>=4' }));
+  if (!result) {
+    throw new Error('PlatformIO Core is not installed');
+  }
+  return result;
 }
 
 export function runPIOCommand(args, callback, options = {}) {
@@ -106,7 +116,7 @@ export function runPIOCommand(args, callback, options = {}) {
   if (!options.spawnOptions.cwd) {
     options.spawnOptions.cwd = getEnvBinDir();
   }
-  runCommand(
+  proc.runCommand(
     getCoreState().platformio_exe || 'platformio',
     [...baseArgs, ...args],
     callback,

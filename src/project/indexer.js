@@ -124,9 +124,6 @@ export default class ProjectIndexer {
   }
 
   async fetchWatchDirs() {
-    if (!core.getCoreState().python_exe) {
-      throw new Error('PlatformIO Core has not been installed');
-    }
     const scriptLines = [
       'import os',
       'from platformio.project.config import ProjectConfig',
@@ -137,7 +134,7 @@ export default class ProjectIndexer {
       'print(":".join(watch_dirs))'
     ];
     const output = await proc.getCommandOutput(
-      core.getCoreState().python_exe,
+      await core.getCorePythonExe(),
       ['-c', scriptLines.join(';')],
       {
         spawnOptions: {
