@@ -6,7 +6,7 @@
  * the root directory of this source tree.
  */
 
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import glob from 'glob';
 
 export default class ProjectConfig {
@@ -34,23 +34,22 @@ export default class ProjectConfig {
     return result;
   }
 
-  constructor(path) {
-    this.path = path;
+  constructor() {
     this._parsed = [];
     this._data = {};
-    if (path) {
-      this.read(path);
-    }
   }
 
-  read(path) {
+  async read(path) {
+    if (!path) {
+      return;
+    }
     if (this._parsed.includes(path)) {
       return;
     }
     this._parsed.push(path);
     let section = null;
     let option = null;
-    for (let line of fs.readFileSync(path, 'utf-8').split(this.reLines)) {
+    for (let line of (await fs.readFile(path, 'utf-8')).split(this.reLines)) {
       // Remove comments
       line = line.replace(this.reComment, '');
       if (!line) {
@@ -84,7 +83,7 @@ export default class ProjectConfig {
     }
 
     this.getlist('platformio', 'extra_configs').forEach(pattern =>
-      glob.sync(pattern).forEach(item => this.read(item))
+      glob.sync(pattern).forEach(async item => await this.read(item))
     );
   }
 
