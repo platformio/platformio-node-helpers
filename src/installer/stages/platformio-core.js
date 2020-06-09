@@ -21,9 +21,9 @@ import tmp from 'tmp';
 export default class PlatformIOCoreStage extends BaseStage {
   static PORTABLE_PYTHON_URLS = {
     windows_x86:
-      'https://dl.bintray.com/platformio/dl-misc/python-portable-windows_x86-3.7.7.tar.gz',
+      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_x86-3.7.7.tar.gz',
     windows_amd64:
-      'https://dl.bintray.com/platformio/dl-misc/python-portable-windows_amd64-3.7.7.tar.gz'
+      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_amd64-3.7.7.tar.gz'
   };
 
   static getBuiltInPythonDir() {
