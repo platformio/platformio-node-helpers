@@ -211,15 +211,14 @@ export class TaskItem {
   }
 
   get id() {
-    let id = this.name;
-    if (this.coreEnv) {
-      id += ` (${this.coreEnv})`;
-    }
-    return id;
+    const env = this.coreEnv;
+    return env ? `${this.name} (${env})` : this.name;
   }
 
   get title() {
-    return this.description ? `${this.id} [${this.description}]` : this.id;
+    const env = this.coreEnv;
+    const title = this.description || this.name;
+    return env ? `${title} (${env})` : title;
   }
 
   isBuild() {
