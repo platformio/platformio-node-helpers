@@ -54,7 +54,7 @@ export class ProjectTasks {
     },
     {
       name: 'Pre-Debug',
-      description: 'build in debug mode',
+      description: 'Build in debug mode',
       args: ['debug'],
       group: 'Advanced',
       multienv: true
@@ -114,14 +114,14 @@ export class ProjectTasks {
         'Miscellaneous'
       ),
       new TaskItem(
-        'Update project libraries',
+        'Update Project Libraries',
         undefined,
         ['lib', 'update'],
         'Miscellaneous'
       ),
       new TaskItem(
+        'Update All',
         'Update All (libraries, dev-platforms, and packages)',
-        undefined,
         ['update'],
         'Miscellaneous'
       ),
@@ -158,7 +158,7 @@ export class ProjectTasks {
             target.title || target.name,
             target.description,
             ['run', '--target', target.name, '--environment', name],
-            target.scope === 'system' ? 'Platform' : 'Custom'
+            target.group
           )
         );
       }
