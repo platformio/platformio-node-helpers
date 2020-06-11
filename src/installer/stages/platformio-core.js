@@ -72,7 +72,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       await home.shutdownAllServers();
       // run installer script
       const scriptArgs = [];
-      if (this.params.useDevelopmentPIOCore) {
+      if (this.useDevCore()) {
         scriptArgs.push('--dev');
       }
       console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
@@ -84,13 +84,20 @@ export default class PlatformIOCoreStage extends BaseStage {
     return true;
   }
 
+  useDevCore() {
+    return (
+      this.params.useDevelopmentPIOCore ||
+      (this.params.pioCoreVersionSpec || '').includes('-')
+    );
+  }
+
   async loadCoreState() {
     const stateJSONPath = path.join(
       core.getCacheDir(),
       `core-dump-${Math.round(Math.random() * 100000)}.json`
     );
     const scriptArgs = [];
-    if (this.params.useDevelopmentPIOCore) {
+    if (this.useDevCore()) {
       scriptArgs.push('--dev');
     }
     scriptArgs.push(...['check', 'core', '--auto-upgrade']);
