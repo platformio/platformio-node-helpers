@@ -6,16 +6,21 @@
  * the root directory of this source tree.
  */
 
-import fs from 'fs';
+import * as fs from 'fs';
+
+import crypto from 'crypto';
+import { promises as fsAsync } from 'fs';
 import { getCommandOutput } from '../proc';
 import request from 'request';
 import tar from 'tar';
 import zlib from 'zlib';
 
 export async function download(source, target, retries = 3) {
-  const contentLength = await getContentLength(source);
-
-  if (fileExistsAndSizeMatches(target, contentLength)) {
+  let checksum = undefined;
+  if (source.includes('#')) {
+    [source, checksum] = source.split('#', 2);
+  }
+  if (await fileExistsAndChecksumMatches(target, checksum)) {
     return target;
   }
 
@@ -23,7 +28,7 @@ export async function download(source, target, retries = 3) {
   while (retries >= 0) {
     try {
       await _download(source, target);
-      if (fileExistsAndSizeMatches(target, contentLength)) {
+      if (await fileExistsAndChecksumMatches(target, checksum)) {
         return target;
       }
     } catch (err) {
@@ -36,18 +41,25 @@ export async function download(source, target, retries = 3) {
   throw new Error(`Failed to download file ${source}: ${lastError}`);
 }
 
-function fileExistsAndSizeMatches(target, contentLength) {
+async function fileExistsAndChecksumMatches(filePath, checksum) {
   try {
-    if (contentLength > 0 && contentLength == fs.statSync(target)['size']) {
+    await fsAsync.access(filePath);
+    if ((await calculateFileHashsum(filePath)) === checksum) {
       return true;
     }
-    try {
-      fs.unlinkSync(target);
-    } catch (err) {
-      console.warn(err);
-    }
+    await fsAsync.unlink(filePath);
   } catch (err) {}
   return false;
+}
+
+async function calculateFileHashsum(filePath, algo = 'sha256') {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash(algo);
+    const fsStream = fs.createReadStream(filePath);
+    fsStream.on('data', data => hash.update(data));
+    fsStream.on('end', () => resolve(hash.digest('hex')));
+    fsStream.on('error', err => reject(err));
+  });
 }
 
 async function _download(source, target) {
@@ -87,34 +99,13 @@ async function _download(source, target) {
   });
 }
 
-function getContentLength(url) {
-  return new Promise(resolve => {
-    request.head(
-      {
-        url
-      },
-      (err, response) => {
-        if (
-          err ||
-          response.statusCode !== 200 ||
-          !response.headers ||
-          !response.headers['content-length']
-        ) {
-          resolve(-1);
-        }
-        resolve(parseInt(response.headers['content-length']));
-      }
-    );
-  });
-}
-
-export function extractTarGz(source, destination) {
+export async function extractTarGz(source, destination) {
   try {
-    fs.accessSync(destination);
+    await fsAsync.access(destination);
   } catch (err) {
-    fs.mkdirSync(destination, { recursive: true });
+    await fsAsync.mkdir(destination, { recursive: true });
   }
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     fs.createReadStream(source)
       .pipe(zlib.createGunzip())
       .on('error', err => reject(err))

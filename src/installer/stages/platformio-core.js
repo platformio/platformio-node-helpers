@@ -21,9 +21,9 @@ import tmp from 'tmp';
 export default class PlatformIOCoreStage extends BaseStage {
   static PORTABLE_PYTHON_URLS = {
     windows_x86:
-      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_x86-3.7.7.tar.gz',
+      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_x86-3.7.7.tar.gz#2e5845c2a1b06dd2832fe5341861b45e2ebaeea51d6bb42be241cf0319b61eb3',
     windows_amd64:
-      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_amd64-3.7.7.tar.gz'
+      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_amd64-3.7.7.tar.gz#61ff38127dd52bcec6ee93f2a6119faaf979a47bc0d62945fe6a56eaaaf76d06'
   };
 
   static getBuiltInPythonDir() {
@@ -170,7 +170,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       try {
         const tarballPath = await download(
           pythonTarGzUrl,
-          path.join(core.getCacheDir(), path.basename(pythonTarGzUrl))
+          path.join(core.getCacheDir(), path.basename(pythonTarGzUrl).split('#')[0])
         );
         await extractTarGz(tarballPath, builtInPythonDir);
         await this.ensurePythonExeExists(builtInPythonDir);
