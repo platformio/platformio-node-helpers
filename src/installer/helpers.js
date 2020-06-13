@@ -56,9 +56,9 @@ async function calculateFileHashsum(filePath, algo = 'sha256') {
   return new Promise((resolve, reject) => {
     const hash = crypto.createHash(algo);
     const fsStream = fs.createReadStream(filePath);
-    fsStream.on('data', data => hash.update(data));
+    fsStream.on('data', (data) => hash.update(data));
     fsStream.on('end', () => resolve(hash.digest('hex')));
-    fsStream.on('error', err => reject(err));
+    fsStream.on('error', (err) => reject(err));
   });
 }
 
@@ -70,7 +70,7 @@ async function _download(source, target) {
       '--no-color',
       'config',
       'get',
-      'https-proxy'
+      'https-proxy',
     ]);
     proxy = proxy.trim();
     if (proxy === 'null') {
@@ -85,16 +85,16 @@ async function _download(source, target) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(target);
     const options = {
-      url: source
+      url: source,
     };
     if (proxy) {
       options.proxy = proxy;
     }
     request
       .get(options)
-      .on('error', err => reject(err))
+      .on('error', (err) => reject(err))
       .pipe(file);
-    file.on('error', err => reject(err));
+    file.on('error', (err) => reject(err));
     file.on('finish', () => resolve(target));
   });
 }
@@ -108,13 +108,13 @@ export async function extractTarGz(source, destination) {
   return await new Promise((resolve, reject) => {
     fs.createReadStream(source)
       .pipe(zlib.createGunzip())
-      .on('error', err => reject(err))
+      .on('error', (err) => reject(err))
       .pipe(
         tar.extract({
-          cwd: destination
+          cwd: destination,
         })
       )
-      .on('error', err => reject(err))
+      .on('error', (err) => reject(err))
       .on('close', () => resolve(destination));
   });
 }

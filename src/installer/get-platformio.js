@@ -91,8 +91,8 @@ export async function callInstallerScript(pythonExecutable, args) {
     {
       spawnOptions: {
         cwd: core.getCacheDir(),
-        env: envClone
-      }
+        env: envClone,
+      },
     }
   );
 }

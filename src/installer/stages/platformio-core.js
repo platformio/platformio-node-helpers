@@ -23,7 +23,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     windows_x86:
       'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_x86-3.7.7.tar.gz#2e5845c2a1b06dd2832fe5341861b45e2ebaeea51d6bb42be241cf0319b61eb3',
     windows_amd64:
-      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_amd64-3.7.7.tar.gz#61ff38127dd52bcec6ee93f2a6119faaf979a47bc0d62945fe6a56eaaaf76d06'
+      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_amd64-3.7.7.tar.gz#61ff38127dd52bcec6ee93f2a6119faaf979a47bc0d62945fe6a56eaaaf76d06',
   };
 
   static getBuiltInPythonDir() {
@@ -190,7 +190,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   installPIOHome() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       core.runPIOCommand(
         ['home', '--host', '__do_not_start__'],
         (code, stdout, stderr) => {

@@ -26,7 +26,7 @@ export function getSysType() {
     linux_x32: 'linux_i686',
     linux_arm: 'linux_armv6l',
     linux_arm64: 'linux_aarch64',
-    freebsd_x64: 'freebsd_amd64'
+    freebsd_x64: 'freebsd_amd64',
   };
   const result = `${process.platform}_${process.arch}`;
   return js2python[result] || result;
@@ -43,7 +43,7 @@ export function patchOSEnviron({ caller, extraPath, extraVars }) {
   }
 
   if (extraVars) {
-    Object.keys(extraVars).forEach(name => (process.env[name] = extraVars[name]));
+    Object.keys(extraVars).forEach((name) => (process.env[name] = extraVars[name]));
   }
 
   // Fix for https://github.com/atom/atom/issues/11302
@@ -78,7 +78,7 @@ export function patchOSEnviron({ caller, extraPath, extraVars }) {
 }
 
 export function extendOSEnvironPath(items, prepend = true) {
-  items.reverse().forEach(item => {
+  items.reverse().forEach((item) => {
     if (!process.env.PATH.includes(item)) {
       process.env.PATH = (prepend
         ? [item, process.env.PATH]
@@ -101,10 +101,10 @@ export function runCommand(cmd, args, callback = undefined, options = {}) {
 
   try {
     const child = spawn(cmd, args, options.spawnOptions);
-    child.stdout.on('data', line => outputLines.push(line));
-    child.stderr.on('data', line => errorLines.push(line));
+    child.stdout.on('data', (line) => outputLines.push(line));
+    child.stderr.on('data', (line) => errorLines.push(line));
     child.on('close', onExit);
-    child.on('error', err => {
+    child.on('error', (err) => {
       errorLines.push(err.toString());
       onExit(-1);
     });
@@ -119,8 +119,8 @@ export function runCommand(cmd, args, callback = undefined, options = {}) {
     }
     completed = true;
 
-    const stdout = outputLines.map(x => x.toString()).join('');
-    const stderr = errorLines.map(x => x.toString()).join('');
+    const stdout = outputLines.map((x) => x.toString()).join('');
+    const stderr = errorLines.map((x) => x.toString()).join('');
     callback(code, stdout, stderr);
   }
 }
@@ -151,7 +151,7 @@ export async function findPythonExecutable(options = {}) {
   const pythonAssertCode = [
     'import sys',
     'assert sys.version_info >= (2, 7)',
-    'print(sys.executable)'
+    'print(sys.executable)',
   ];
   if (options.pioCoreSpec) {
     pythonAssertCode.push('import semantic_version');

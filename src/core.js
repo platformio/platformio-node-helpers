@@ -46,7 +46,7 @@ export function getCoreDir() {
     root: coreDirPathFormat.root,
     dir: coreDirPathFormat.root,
     base: '.platformio',
-    name: '.platformio'
+    name: '.platformio',
   });
   // if we already created it
   try {

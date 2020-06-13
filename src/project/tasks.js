@@ -14,85 +14,85 @@ export class ProjectTasks {
     {
       name: 'Build',
       args: ['run'],
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Upload',
       args: ['run', '--target', 'upload'],
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Monitor',
       args: ['device', 'monitor'],
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Upload and Monitor',
       args: ['run', '--target', 'upload', '--target', 'monitor'],
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Devices',
-      args: ['device', 'list']
+      args: ['device', 'list'],
     },
     {
       name: 'Clean',
       args: ['run', '--target', 'clean'],
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Test',
       args: ['test'],
       group: 'Advanced',
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Check',
       args: ['check'],
       group: 'Advanced',
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Pre-Debug',
       description: 'Build in debug mode',
       args: ['debug'],
       group: 'Advanced',
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Verbose Build',
       args: ['run', '--verbose'],
       group: 'Advanced',
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Verbose Upload',
       args: ['run', '--verbose', '--target', 'upload'],
       group: 'Advanced',
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Remote Upload',
       args: ['remote', 'run', '--target', 'upload'],
       group: 'PIO Remote',
-      multienv: true
+      multienv: true,
     },
     {
       name: 'Remote Monitor',
       args: ['remote', 'device', 'monitor'],
-      group: 'PIO Remote'
+      group: 'PIO Remote',
     },
     {
       name: 'Remote Devices',
       args: ['remote', 'device', 'list'],
-      group: 'PIO Remote'
+      group: 'PIO Remote',
     },
     {
       name: 'Remote Test',
       args: ['remote', 'test'],
       group: 'PIO Remote',
-      multienv: true
-    }
+      multienv: true,
+    },
   ];
 
   constructor(projectDir, ide) {
@@ -103,7 +103,8 @@ export class ProjectTasks {
   async getGenericTasks() {
     // Generic tasks
     const result = ProjectTasks.genericTasks.map(
-      task => new TaskItem(task.name, task.description, task.args.slice(0), task.group)
+      (task) =>
+        new TaskItem(task.name, task.description, task.args.slice(0), task.group)
     );
     // Miscellaneous tasks
     result.push(
@@ -174,15 +175,15 @@ export class ProjectTasks {
     const scriptLines = [
       'import json, os',
       'from platformio.project.helpers import load_project_ide_data',
-      `print(json.dumps(load_project_ide_data(os.getcwd(), '${name}')["targets"]))`
+      `print(json.dumps(load_project_ide_data(os.getcwd(), '${name}')["targets"]))`,
     ];
     const output = await proc.getCommandOutput(
       await core.getCorePythonExe(),
       ['-c', scriptLines.join(';')],
       {
         spawnOptions: {
-          cwd: this.projectDir
-        }
+          cwd: this.projectDir,
+        },
       }
     );
     return JSON.parse(output.trim());

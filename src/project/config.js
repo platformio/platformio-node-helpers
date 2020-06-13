@@ -82,8 +82,8 @@ export default class ProjectConfig {
       }
     }
 
-    this.getlist('platformio', 'extra_configs').forEach(pattern =>
-      glob.sync(pattern).forEach(async item => await this.read(item))
+    this.getlist('platformio', 'extra_configs').forEach((pattern) =>
+      glob.sync(pattern).forEach(async (item) => await this.read(item))
     );
   }
 
@@ -135,8 +135,8 @@ export default class ProjectConfig {
 
   envs() {
     return this.sections()
-      .filter(item => item.startsWith('env:'))
-      .map(item => item.substring(4));
+      .filter((item) => item.startsWith('env:'))
+      .map((item) => item.substring(4));
   }
 
   get(section, option, default_ = undefined) {

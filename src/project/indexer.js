@@ -61,7 +61,7 @@ export default class ProjectIndexer {
             '--ide',
             this.options.ide,
             '--project-dir',
-            this.projectDir
+            this.projectDir,
           ];
           if (envName) {
             args.push('--environment', envName);
@@ -116,7 +116,7 @@ export default class ProjectIndexer {
       return;
     }
     try {
-      (await this.fetchWatchDirs()).forEach(dir => {
+      (await this.fetchWatchDirs()).forEach((dir) => {
         const watcher = this.options.createDirSystemWatcher(dir);
         this.dirWatchSubscriptions.push(
           watcher,
@@ -138,15 +138,15 @@ export default class ProjectIndexer {
       'libdeps_dir = c.get_optional_dir("libdeps")',
       'watch_dirs = [c.get_optional_dir("globallib"), c.get_optional_dir("lib"), libdeps_dir]',
       'watch_dirs.extend(os.path.join(libdeps_dir, d) for d in (os.listdir(libdeps_dir) if os.path.isdir(libdeps_dir) else []) if os.path.isdir(os.path.join(libdeps_dir, d)))',
-      'print(":".join(watch_dirs))'
+      'print(":".join(watch_dirs))',
     ];
     const output = await proc.getCommandOutput(
       await core.getCorePythonExe(),
       ['-c', scriptLines.join(';')],
       {
         spawnOptions: {
-          cwd: this.projectDir
-        }
+          cwd: this.projectDir,
+        },
       }
     );
     return output.trim().split(':');

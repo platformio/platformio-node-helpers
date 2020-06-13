@@ -21,7 +21,7 @@ import ProjectObserver from './project/observer';
 
 const installer = {
   BaseStage,
-  PlatformIOCoreStage
+  PlatformIOCoreStage,
 };
 
 const project = {
@@ -29,7 +29,7 @@ const project = {
   ProjectIndexer,
   ProjectObserver,
   ProjectTasks,
-  TaskItem
+  TaskItem,
 };
 
 export { core, home, installer, misc, proc, project };

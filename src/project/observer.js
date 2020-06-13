@@ -16,12 +16,12 @@ export default class ProjectObserver {
   }
 
   getProjectIndexer(projectDir) {
-    return this._indexers.find(item => item.projectDir === projectDir);
+    return this._indexers.find((item) => item.projectDir === projectDir);
   }
 
   async update(projectDirs) {
     // remove non-existing
-    this._indexers = this._indexers.filter(item => {
+    this._indexers = this._indexers.filter((item) => {
       if (projectDirs.includes(item.projectDir)) {
         return true;
       }
@@ -30,7 +30,7 @@ export default class ProjectObserver {
     });
 
     for (const projectDir of projectDirs) {
-      if (this._indexers.some(item => item.projectDir === projectDir)) {
+      if (this._indexers.some((item) => item.projectDir === projectDir)) {
         continue;
       }
       const indexer = new ProjectIndexer(projectDir, this.options);
@@ -40,7 +40,7 @@ export default class ProjectObserver {
   }
 
   rebuildIndex() {
-    this._indexers.forEach(item => item.rebuild());
+    this._indexers.forEach((item) => item.rebuild());
   }
 
   dispose() {

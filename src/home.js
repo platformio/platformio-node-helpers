@@ -33,9 +33,9 @@ export function getFrontendUri(serverHost, serverPort, options) {
     start: options.start || '/',
     theme: stateStorage.theme || options.theme,
     workspace: stateStorage.workspace || options.workspace,
-    sid: SESSION_ID
+    sid: SESSION_ID,
   };
-  Object.keys(params).forEach(key => {
+  Object.keys(params).forEach((key) => {
     if ([undefined, null].includes(params[key])) {
       delete params[key];
     }
@@ -44,8 +44,8 @@ export function getFrontendUri(serverHost, serverPort, options) {
 }
 
 export async function getFrontendVersion(serverHost, serverPort) {
-  return await new Promise(resolve => {
-    request(`http://${serverHost}:${serverPort}/package.json`, function(
+  return await new Promise((resolve) => {
+    request(`http://${serverHost}:${serverPort}/package.json`, function (
       error,
       response,
       body
@@ -68,7 +68,7 @@ async function listenIDECommands(callback) {
   let coreVersion = '0.0.0';
   const coreVersionMsgId = Math.random().toString();
   const sock = new ws(`ws://${HTTP_HOST}:${HTTP_PORT}/wsrpc`, {
-    perMessageDeflate: false
+    perMessageDeflate: false,
   });
   sock.onopen = () => {
     IDECMDS_LISTENER_STATUS = 1;
@@ -79,7 +79,7 @@ async function listenIDECommands(callback) {
     IDECMDS_LISTENER_STATUS = 0;
   };
 
-  sock.onmessage = event => {
+  sock.onmessage = (event) => {
     try {
       const result = jsonrpc.parse(event.data);
       switch (result.type) {
@@ -102,7 +102,7 @@ async function listenIDECommands(callback) {
     let data = null;
     if (semver.gte(coreVersion, '4.0.1')) {
       data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands', [
-        SESSION_ID
+        SESSION_ID,
       ]);
     } else {
       data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands');
@@ -112,9 +112,9 @@ async function listenIDECommands(callback) {
 }
 
 async function isPortUsed(host, port) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     tcpPortUsed.check(port, host).then(
-      result => {
+      (result) => {
         return resolve(result);
       },
       () => {
@@ -172,7 +172,7 @@ async function _ensureServerStarted(options = {}) {
   }
   const params = {
     host: HTTP_HOST,
-    port: HTTP_PORT
+    port: HTTP_PORT,
   };
   if (!(await isServerStarted())) {
     await new Promise((resolve, reject) => {
@@ -183,7 +183,7 @@ async function _ensureServerStarted(options = {}) {
           HTTP_PORT,
           '--shutdown-timeout',
           SERVER_AUTOSHUTDOWN_TIMEOUT,
-          '--no-open'
+          '--no-open',
         ],
         (code, stdout, stderr) => {
           if (code !== 0) {
@@ -196,7 +196,7 @@ async function _ensureServerStarted(options = {}) {
         () => {
           resolve(true);
         },
-        err => {
+        (err) => {
           reject(new Error('Could not start PIO Home server: ' + err.toString()));
         }
       );

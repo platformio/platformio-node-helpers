@@ -12,7 +12,7 @@ import qs from 'querystringify';
 import request from 'request';
 
 export function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export function processHTTPRequest(url, callback, options) {
@@ -20,7 +20,7 @@ export function processHTTPRequest(url, callback, options) {
   options.url = url;
   if (!options.headers) {
     options.headers = {
-      'User-Agent': 'PlatformIO'
+      'User-Agent': 'PlatformIO',
     };
   }
   console.info('processHTTPRequest', options);
@@ -71,13 +71,13 @@ export function reportError(err) {
     an: `${os.type()}, ${os.release()}, ${os.arch()}`,
     t: 'exception',
     exd: err.toString(),
-    exf: 1
+    exf: 1,
   };
   if (process.env.PLATFORMIO_CALLER) {
     data['cd1'] = process.env.PLATFORMIO_CALLER;
   }
   request.post('https://www.google-analytics.com/collect', {
-    body: qs.stringify(data)
+    body: qs.stringify(data),
   });
 }
 
@@ -85,28 +85,28 @@ export function getErrorReportUrl(title, description) {
   const errorToUrls = [
     [
       'System: Darwin, 19.0.0',
-      'https://github.com/platformio/platformio-vscode-ide/issues/1108'
+      'https://github.com/platformio/platformio-vscode-ide/issues/1108',
     ],
     [
       'WindowsError: [Error 5]',
-      'https://github.com/platformio/platformio-vscode-ide/issues/884'
+      'https://github.com/platformio/platformio-vscode-ide/issues/884',
     ],
     [
       'Could not start PIO Home server: Error: timeout',
-      'https://github.com/platformio/platformio-vscode-ide/issues/205'
+      'https://github.com/platformio/platformio-vscode-ide/issues/205',
     ],
     [
       'Failed to download file',
-      'https://github.com/platformio/platformio-vscode-ide/issues/386'
+      'https://github.com/platformio/platformio-vscode-ide/issues/386',
     ],
     [
       'Conda Virtualenv',
-      'https://github.com/platformio/platformio-vscode-ide/issues/914'
+      'https://github.com/platformio/platformio-vscode-ide/issues/914',
     ],
     [
       "ModuleNotFoundError: No module named 'distutils",
-      'https://github.com/platformio/platformio-vscode-ide/issues/907'
-    ]
+      'https://github.com/platformio/platformio-vscode-ide/issues/907',
+    ],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
@@ -121,7 +121,7 @@ export function getErrorReportUrl(title, description) {
     {
       title,
       body: description,
-      labels: 'auto'
+      labels: 'auto',
     }
   )}`;
 }
