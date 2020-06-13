@@ -49,11 +49,8 @@ export default class PlatformIOCoreStage extends BaseStage {
     } catch (err) {
       throw new Error('PlatformIO Core has not been installed yet!');
     }
-    // check that PIO Core is installed and load its state
+    // check that PIO Core is installed and load its state an patch OS environ
     await this.loadCoreState();
-    // Add PIO Core virtualenv to global PATH
-    // Setup `platformio` CLI globally for a Node.JS process
-    proc.extendOSEnvironPath([core.getEnvBinDir(), core.getEnvDir()]);
     this.status = BaseStage.STATUS_SUCCESSED;
     return true;
   }
@@ -76,6 +73,8 @@ export default class PlatformIOCoreStage extends BaseStage {
         scriptArgs.push('--dev');
       }
       console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
+      // check that PIO Core is installed and load its state an patch OS environ
+      await this.loadCoreState();
       await this.installPIOHome();
     } catch (err) {
       misc.reportError(err);
@@ -112,6 +111,10 @@ export default class PlatformIOCoreStage extends BaseStage {
     console.info('PIO Core State', coreState);
     core.setCoreState(coreState);
     await fs.unlink(stateJSONPath); // cleanup
+
+    // Add PIO Core virtualenv to global PATH
+    // Setup `platformio` CLI globally for a Node.JS process
+    proc.extendOSEnvironPath([core.getEnvBinDir(), core.getEnvDir()]);
 
     return true;
   }
