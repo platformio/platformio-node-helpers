@@ -9,6 +9,7 @@
 import * as misc from './misc';
 import { getCoreDir, runPIOCommand } from './core';
 
+import fs from 'fs';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
@@ -26,8 +27,8 @@ const SESSION_ID = Math.round(Math.random() * 1000000);
 let HTTP_PORT = 0;
 let IDECMDS_LISTENER_STATUS = 0;
 
-export async function getFrontendUri(serverHost, serverPort, options) {
-  const stateStorage = ((await loadState()) || {}).storage || {};
+export function getFrontendUri(serverHost, serverPort, options) {
+  const stateStorage = (loadState() || {}).storage || {};
   const params = {
     start: options.start || '/',
     theme: stateStorage.theme || options.theme,
@@ -223,12 +224,12 @@ export async function shutdownAllServers() {
   await misc.sleep(2000); // wait for 2 secs while server stops
 }
 
-async function loadState() {
-  return await misc.loadJSON(path.join(getCoreDir(), 'homestate.json'));
+function loadState() {
+  return JSON.parse(fs.readFileSync(path.join(getCoreDir(), 'homestate.json'), 'utf8'));
 }
 
-export async function showAtStartup(caller) {
-  const state = await loadState();
+export function showAtStartup(caller) {
+  const state = loadState();
   return (
     !state ||
     !state.storage ||
