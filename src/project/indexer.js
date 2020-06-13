@@ -48,7 +48,7 @@ export default class ProjectIndexer {
     );
   }
 
-  rebuild() {
+  rebuild(envName) {
     if (this._inProgress || !ProjectIndexer.isPIOProjectSync(this.projectDir)) {
       return;
     }
@@ -56,16 +56,23 @@ export default class ProjectIndexer {
       this._inProgress = true;
       try {
         await new Promise((resolve, reject) => {
-          runPIOCommand(
-            ['init', '--ide', this.options.ide, '--project-dir', this.projectDir],
-            (code, stdout, stderr) => {
-              if (code === 0) {
-                resolve();
-              } else {
-                reject(new Error(stderr));
-              }
+          const args = [
+            'init',
+            '--ide',
+            this.options.ide,
+            '--project-dir',
+            this.projectDir
+          ];
+          if (envName) {
+            args.push('--environment', envName);
+          }
+          runPIOCommand(args, (code, stdout, stderr) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(stderr));
             }
-          );
+          });
         });
       } catch (err) {
         console.warn(err);

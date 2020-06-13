@@ -15,6 +15,10 @@ export default class ProjectObserver {
     this._indexers = [];
   }
 
+  getProjectIndexer(projectDir) {
+    return this._indexers.find(item => item.projectDir === projectDir);
+  }
+
   async update(projectDirs) {
     // remove non-existing
     this._indexers = this._indexers.filter(item => {
