@@ -97,12 +97,10 @@ export function runCommand(cmd, args, callback = undefined, options = {}) {
   const outputLines = [];
   const errorLines = [];
   let completed = false;
-
-  options.spawnOptions = options.spawnOptions || {};
+  options = options || {};
 
   try {
     const child = spawn(cmd, args, options.spawnOptions);
-
     child.stdout.on('data', line => outputLines.push(line));
     child.stderr.on('data', line => errorLines.push(line));
     child.on('close', onExit);
@@ -177,5 +175,17 @@ export async function findPythonExecutable(options = {}) {
       }
     }
   }
-  return undefined;
+  return null;
+}
+
+export function whereIsProgram(program) {
+  for (const location of process.env.PATH.split(path.delimiter)) {
+    const executable = path.normalize(path.join(location, program)).replace(/"/g, '');
+    try {
+      if (fs.existsSync(executable)) {
+        return executable;
+      }
+    } catch (err) {}
+  }
+  return null;
 }

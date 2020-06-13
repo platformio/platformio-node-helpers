@@ -106,20 +106,10 @@ export async function getCorePythonExe() {
   return result;
 }
 
-export function runPIOCommand(args, callback, options = {}) {
-  const baseArgs = ['-f'];
+export async function runPIOCommand(args, callback, options = {}) {
+  const baseArgs = ['-m', 'platformio', '-f'];
   if (process.env.PLATFORMIO_CALLER) {
-    baseArgs.push('-c');
-    baseArgs.push(process.env.PLATFORMIO_CALLER);
+    baseArgs.push('-c', process.env.PLATFORMIO_CALLER);
   }
-  options.spawnOptions = options.spawnOptions || {};
-  if (!options.spawnOptions.cwd) {
-    options.spawnOptions.cwd = getEnvBinDir();
-  }
-  proc.runCommand(
-    getCoreState().platformio_exe || 'platformio',
-    [...baseArgs, ...args],
-    callback,
-    options
-  );
+  proc.runCommand(await getCorePythonExe(), [...baseArgs, ...args], callback, options);
 }
