@@ -225,7 +225,11 @@ export async function shutdownAllServers() {
 }
 
 function loadState() {
-  return JSON.parse(fs.readFileSync(path.join(getCoreDir(), 'homestate.json'), 'utf8'));
+  try {
+    return JSON.parse(
+      fs.readFileSync(path.join(getCoreDir(), 'homestate.json'), 'utf8')
+    );
+  } catch (err) {}
 }
 
 export function showAtStartup(caller) {
