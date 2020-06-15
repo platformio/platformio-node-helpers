@@ -10,7 +10,7 @@ import * as core from '../core';
 import * as proc from '../proc';
 
 export class ProjectTasks {
-  static genericTasks = [
+  static generalTasks = [
     {
       name: 'Build',
       args: ['run'],
@@ -100,11 +100,17 @@ export class ProjectTasks {
     this.ide = ide;
   }
 
-  async getGenericTasks() {
-    // Generic tasks
-    const result = ProjectTasks.genericTasks.map(
+  async getGeneralTasks() {
+    // General tasks
+    const result = ProjectTasks.generalTasks.map(
       (task) =>
-        new TaskItem(task.name, task.description, task.args.slice(0), task.group)
+        new TaskItem(
+          task.name,
+          task.description,
+          task.args.slice(0),
+          task.group,
+          task.multienv
+        )
     );
     // Miscellaneous tasks
     result.push(
@@ -134,7 +140,7 @@ export class ProjectTasks {
   async fetchEnvTasks(name) {
     const result = [];
     const usedTitles = [];
-    for (const task of ProjectTasks.genericTasks) {
+    for (const task of ProjectTasks.generalTasks) {
       if (!task.multienv) {
         continue;
       }
@@ -144,7 +150,8 @@ export class ProjectTasks {
           task.name,
           task.description,
           [...task.args.slice(0), '--environment', name],
-          task.group
+          task.group,
+          true
         )
       );
     }
@@ -159,7 +166,8 @@ export class ProjectTasks {
             target.title || target.name,
             target.description,
             ['run', '--target', target.name, '--environment', name],
-            target.group
+            target.group,
+            true
           )
         );
       }
@@ -191,11 +199,12 @@ export class ProjectTasks {
 }
 
 export class TaskItem {
-  constructor(name, description, args, group = 'Generic') {
+  constructor(name, description, args, group = 'General', multienv = false) {
     this.name = name;
     this.description = description;
     this.args = args;
     this.group = group;
+    this.multienv = multienv;
   }
 
   get coreTarget() {
