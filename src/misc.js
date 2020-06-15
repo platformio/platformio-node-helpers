@@ -107,6 +107,10 @@ export function getErrorReportUrl(title, description) {
       "ModuleNotFoundError: No module named 'distutils",
       'https://github.com/platformio/platformio-vscode-ide/issues/907',
     ],
+    [
+      "ImportError: No module named",
+      'https://github.com/platformio/platformio-vscode-ide/issues/1787',
+    ],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
