@@ -50,28 +50,28 @@
   "dependencies": {
     "cross-spawn": "~7.0.3",
     "glob": "~7.1.6",
-    "jsonrpc-lite": "~2.1.0",
+    "jsonrpc-lite": "~2.1.1",
     "querystringify": "*",
     "request": "~2.88.2",
     "semver": "~7.3.2",
-    "tar": "~6.0.2",
+    "tar": "~6.0.5",
     "tcp-port-used": "~1.0.1",
     "tmp": "~0.2.1",
-    "ws": "~7.3.0"
+    "ws": "~7.3.1"
   },
   "devDependencies": {
-    "@babel/core": "~7.10.2",
-    "@babel/plugin-proposal-class-properties": "~7.10.1",
-    "@babel/plugin-transform-classes": "~7.10.1",
+    "@babel/core": "~7.11.4",
+    "@babel/plugin-proposal-class-properties": "~7.10.4",
+    "@babel/plugin-transform-classes": "~7.10.4",
     "@types/node": "~12",
     "babel-eslint": "~10.1.0",
     "babel-loader": "~8.1.0",
     "babel-preset-env": "~1.7.0",
-    "eslint": "~7.2.0",
-    "eslint-import-resolver-webpack": "~0.12.1",
-    "eslint-plugin-import": "~2.21.2",
-    "prettier": "~2.0.5",
-    "webpack": "~4.43.0",
-    "webpack-cli": "~3.3.11"
+    "eslint": "~7.7.0",
+    "eslint-import-resolver-webpack": "~0.12.2",
+    "eslint-plugin-import": "~2.22.0",
+    "prettier": "~2.1.1",
+    "webpack": "~4.44.1",
+    "webpack-cli": "~3.3.12"
   }
 }
