@@ -155,9 +155,10 @@ export async function findPythonExecutable(options = {}) {
   ];
   if (options.pioCoreSpec) {
     pythonAssertCode.push('import semantic_version');
-    pythonAssertCode.push('from platformio import __version__, util');
+    pythonAssertCode.push('from platformio import __version__');
+    pythonAssertCode.push('from platformio.package.version import pepver_to_semver');
     pythonAssertCode.push(
-      `assert semantic_version.Version(util.pepver_to_semver(__version__)) in semantic_version.Spec("${options.pioCoreSpec}")`
+      `assert pepver_to_semver(__version__) in semantic_version.Spec("${options.pioCoreSpec}")`
     );
   }
   for (const location of process.env.PATH.split(path.delimiter)) {
