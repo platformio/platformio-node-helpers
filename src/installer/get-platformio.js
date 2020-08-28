@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
 export async function getInstallerScript() {
   const scriptPath = path.join(
-    core.getCacheDir(),
+    core.getTmpDir(),
     `get-platformio-${PYTHON_SCRIPT_VERSION}.py`
   );
   try {

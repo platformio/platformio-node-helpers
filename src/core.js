@@ -77,6 +77,16 @@ export function getCacheDir() {
   return dir;
 }
 
+export function getTmpDir() {
+  const dir = path.join(getCacheDir(), 'tmp');
+  try {
+    fs.accessSync(dir);
+  } catch (err) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+}
+
 export function getEnvDir() {
   if (getCoreState().penv_dir) {
     return getCoreState().penv_dir;
@@ -107,7 +117,7 @@ export async function getCorePythonExe() {
 }
 
 export async function runPIOCommand(args, callback, options = {}) {
-  const baseArgs = ['-m', 'platformio', '-f'];
+  const baseArgs = ['-m', 'platformio'];
   if (process.env.PLATFORMIO_CALLER) {
     baseArgs.push('-c', process.env.PLATFORMIO_CALLER);
   }

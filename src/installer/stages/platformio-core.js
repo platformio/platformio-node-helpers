@@ -21,13 +21,15 @@ import tmp from 'tmp';
 export default class PlatformIOCoreStage extends BaseStage {
   static PORTABLE_PYTHON_URLS = {
     windows_x86:
-      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_x86-3.7.7.tar.gz#2e5845c2a1b06dd2832fe5341861b45e2ebaeea51d6bb42be241cf0319b61eb3',
+      'https://dl.bintray.com/platformio/dl-misc/python-portable-windows_x86-3.7.7.tar.gz#2e5845c2a1b06dd2832fe5341861b45e2ebaeea51d6bb42be241cf0319b61eb3',
     windows_amd64:
-      'https://github.com/platformio/platformio-core-installer/releases/download/v0.3.1/python-portable-windows_amd64-3.7.7.tar.gz#61ff38127dd52bcec6ee93f2a6119faaf979a47bc0d62945fe6a56eaaaf76d06',
+      'https://dl.bintray.com/platformio/dl-misc/python-portable-windows_amd64-3.7.7.tar.gz#61ff38127dd52bcec6ee93f2a6119faaf979a47bc0d62945fe6a56eaaaf76d06',
+    darwin_x86_64:
+      'https://dl.bintray.com/platformio/dl-misc/python-portable-darwin_x86_64-3.8.4.tar.gz#b1373e05815cd04b702dfcb2364c7b31e563b16d82bcb3a371ddc229b095b573',
   };
 
   static getBuiltInPythonDir() {
-    return path.join(core.getCoreDir(), 'python37');
+    return path.join(core.getCoreDir(), 'python3');
   }
 
   constructor() {
@@ -92,7 +94,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   async loadCoreState() {
     const stateJSONPath = path.join(
-      core.getCacheDir(),
+      core.getTmpDir(),
       `core-dump-${Math.round(Math.random() * 100000)}.json`
     );
     const scriptArgs = [];
@@ -149,12 +151,14 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async ensurePythonExeExists(pythonDir) {
-    if (proc.IS_WINDOWS) {
-      await fs.access(path.join(pythonDir, 'python.exe'));
-    } else {
-      await fs.access(path.join(pythonDir, 'bin', 'python'));
+    const binDir = proc.IS_WINDOWS ? pythonDir : path.join(pythonDir, 'bin');
+    for (const name of ['python.exe', 'python3', 'python']) {
+      try {
+        await fs.access(path.join(binDir, name));
+        return true;
+      } catch (err) {}
     }
-    return true;
+    return false;
   }
 
   async configurePreBuiltPython() {
@@ -173,7 +177,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       try {
         const tarballPath = await download(
           pythonTarGzUrl,
-          path.join(core.getCacheDir(), path.basename(pythonTarGzUrl).split('#')[0])
+          path.join(core.getTmpDir(), path.basename(pythonTarGzUrl).split('#')[0])
         );
         await extractTarGz(tarballPath, builtInPythonDir);
         await this.ensurePythonExeExists(builtInPythonDir);
@@ -185,7 +189,9 @@ export default class PlatformIOCoreStage extends BaseStage {
         } catch (err) {}
       }
     }
-    proc.extendOSEnvironPath([builtInPythonDir]);
+    proc.extendOSEnvironPath([
+      proc.IS_WINDOWS ? builtInPythonDir : path.join(builtInPythonDir, 'bin'),
+    ]);
     return builtInPythonDir;
   }
 

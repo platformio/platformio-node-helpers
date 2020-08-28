@@ -108,7 +108,7 @@ export function getErrorReportUrl(title, description) {
       'https://github.com/platformio/platformio-vscode-ide/issues/907',
     ],
     [
-      "ImportError: No module named",
+      'ImportError: No module named',
       'https://github.com/platformio/platformio-vscode-ide/issues/1787',
     ],
   ];
