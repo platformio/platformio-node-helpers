@@ -158,7 +158,7 @@ export default class PlatformIOCoreStage extends BaseStage {
         return true;
       } catch (err) {}
     }
-    return false;
+    throw new Error('Python executable does not exist!');
   }
 
   async configurePreBuiltPython() {
