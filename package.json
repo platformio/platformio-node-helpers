@@ -50,7 +50,7 @@
   "dependencies": {
     "cross-spawn": "~7.0.3",
     "glob": "~7.1.6",
-    "jsonrpc-lite": "~2.1.1",
+    "jsonrpc-lite": "~2.2.0",
     "querystringify": "*",
     "request": "~2.88.2",
     "semver": "~7.3.2",
@@ -60,14 +60,14 @@
     "ws": "~7.3.1"
   },
   "devDependencies": {
-    "@babel/core": "~7.11.4",
+    "@babel/core": "~7.11.6",
     "@babel/plugin-proposal-class-properties": "~7.10.4",
     "@babel/plugin-transform-classes": "~7.10.4",
     "@types/node": "~12",
     "babel-eslint": "~10.1.0",
     "babel-loader": "~8.1.0",
     "babel-preset-env": "~1.7.0",
-    "eslint": "~7.7.0",
+    "eslint": "~7.8.1",
     "eslint-import-resolver-webpack": "~0.12.2",
     "eslint-plugin-import": "~2.22.0",
     "prettier": "~2.1.1",
