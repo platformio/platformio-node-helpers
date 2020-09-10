@@ -68,7 +68,11 @@ export default class PlatformIOCoreStage extends BaseStage {
     return true;
   }
 
-  async install() {
+  async install(withProgress = undefined) {
+    if (!withProgress) {
+      withProgress = () => {};
+    }
+
     if (this.status === BaseStage.STATUS_SUCCESSED) {
       return true;
     }
@@ -77,31 +81,40 @@ export default class PlatformIOCoreStage extends BaseStage {
       return true;
     }
     this.status = BaseStage.STATUS_INSTALLING;
+    withProgress('Preparing for installation', 10);
+
     try {
       // shutdown all PIO Home servers which block python.exe on Windows
       await home.shutdownAllServers();
 
       if (this.params.useBuiltinPython) {
+        withProgress('Downloading portable Python interpreter', 10);
         try {
-          await this.installPreBuiltPython();
+          await this.fetchPreBuiltPython();
         } catch (err) {
           console.warn(err);
         }
       }
 
-      // run installer script
+      withProgress('Installing PlatformIO Core', 20);
       const scriptArgs = [];
       if (this.useDevCore()) {
         scriptArgs.push('--dev');
       }
       console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
+
       // check that PIO Core is installed and load its state an patch OS environ
+      withProgress('Loading PlatformIO Core state', 40);
       await this.loadCoreState();
+
+      withProgress('Installing PlatformIO Home', 10);
       await this.installPIOHome();
     } catch (err) {
       misc.reportError(err);
       throw err;
     }
+
+    withProgress('Completed!', 10);
     return true;
   }
 
@@ -123,7 +136,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     throw new Error('Python executable does not exist!');
   }
 
-  async installPreBuiltPython() {
+  async fetchPreBuiltPython() {
     const systype = proc.getSysType();
     const pythonTarGzUrl = PlatformIOCoreStage.PORTABLE_PYTHON_URLS[systype];
     if (!pythonTarGzUrl) {
