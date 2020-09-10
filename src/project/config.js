@@ -82,9 +82,11 @@ export default class ProjectConfig {
       }
     }
 
-    this.getlist('platformio', 'extra_configs').forEach((pattern) =>
-      glob.sync(pattern).forEach(async (item) => await this.read(item))
-    );
+    for (const pattern of this.getlist('platformio', 'extra_configs')) {
+      for (const item of glob.sync(pattern)) {
+        await this.read(item);
+      }
+    }
   }
 
   getraw(section, option) {

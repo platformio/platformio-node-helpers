@@ -50,7 +50,7 @@
   "dependencies": {
     "cross-spawn": "~7.0.3",
     "glob": "~7.1.6",
-    "jsonrpc-lite": "~2.2.0",
+    "jsonrpc-lite": "~2.1.1",
     "querystringify": "*",
     "request": "~2.88.2",
     "semver": "~7.3.2",
