@@ -109,7 +109,7 @@ export function getEnvBinDir() {
 export async function getCorePythonExe() {
   const result =
     getCoreState().python_exe ||
-    (await proc.findPythonExecutable({ pioCoreSpec: '>=4' }));
+    (await proc.findPythonExecutable({ pioCoreSpec: '>=5' }));
   if (!result) {
     throw new Error('PlatformIO Core is not installed');
   }

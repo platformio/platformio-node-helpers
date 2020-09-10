@@ -35,10 +35,21 @@ export default class PlatformIOCoreStage extends BaseStage {
   constructor() {
     super(...arguments);
     tmp.setGracefulCleanup();
+    this.configurePreBuiltPython();
   }
 
   get name() {
     return 'PlatformIO Core';
+  }
+
+  configurePreBuiltPython() {
+    if (!this.params.useBuiltinPython) {
+      return;
+    }
+    const builtInPythonDir = PlatformIOCoreStage.getBuiltInPythonDir();
+    proc.extendOSEnvironPath([
+      proc.IS_WINDOWS ? builtInPythonDir : path.join(builtInPythonDir, 'bin'),
+    ]);
   }
 
   async check() {
@@ -69,6 +80,15 @@ export default class PlatformIOCoreStage extends BaseStage {
     try {
       // shutdown all PIO Home servers which block python.exe on Windows
       await home.shutdownAllServers();
+
+      if (this.params.useBuiltinPython) {
+        try {
+          await this.installPreBuiltPython();
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+
       // run installer script
       const scriptArgs = [];
       if (this.useDevCore()) {
@@ -90,6 +110,48 @@ export default class PlatformIOCoreStage extends BaseStage {
       this.params.useDevelopmentPIOCore ||
       (this.params.pioCoreVersionSpec || '').includes('-')
     );
+  }
+
+  async ensurePythonExeExists(pythonDir) {
+    const binDir = proc.IS_WINDOWS ? pythonDir : path.join(pythonDir, 'bin');
+    for (const name of ['python.exe', 'python3', 'python']) {
+      try {
+        await fs.access(path.join(binDir, name));
+        return true;
+      } catch (err) {}
+    }
+    throw new Error('Python executable does not exist!');
+  }
+
+  async installPreBuiltPython() {
+    const systype = proc.getSysType();
+    const pythonTarGzUrl = PlatformIOCoreStage.PORTABLE_PYTHON_URLS[systype];
+    if (!pythonTarGzUrl) {
+      console.info(
+        `There is no built-in Python for ${systype} platform, we will use a system Python`
+      );
+      return;
+    }
+    const builtInPythonDir = PlatformIOCoreStage.getBuiltInPythonDir();
+    try {
+      await this.ensurePythonExeExists(builtInPythonDir);
+    } catch (err) {
+      try {
+        const tarballPath = await download(
+          pythonTarGzUrl,
+          path.join(core.getTmpDir(), path.basename(pythonTarGzUrl).split('#')[0])
+        );
+        await extractTarGz(tarballPath, builtInPythonDir);
+        await this.ensurePythonExeExists(builtInPythonDir);
+      } catch (err) {
+        console.error(err);
+        // cleanup
+        try {
+          await fs.rmdir(builtInPythonDir, { recursive: true });
+        } catch (err) {}
+      }
+    }
+    return builtInPythonDir;
   }
 
   async loadCoreState() {
@@ -123,14 +185,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   async whereIsPython() {
     let status = this.params.pythonPrompt.STATUS_TRY_AGAIN;
-
-    if (this.params.useBuiltinPython) {
-      try {
-        await this.configurePreBuiltPython();
-      } catch (err) {
-        console.warn(err);
-      }
-    }
+    this.configurePreBuiltPython();
 
     do {
       const pythonExecutable = await proc.findPythonExecutable();
@@ -148,51 +203,6 @@ export default class PlatformIOCoreStage extends BaseStage {
     throw new Error(
       'Can not find Python Interpreter. Please install Python 3.5 or above manually'
     );
-  }
-
-  async ensurePythonExeExists(pythonDir) {
-    const binDir = proc.IS_WINDOWS ? pythonDir : path.join(pythonDir, 'bin');
-    for (const name of ['python.exe', 'python3', 'python']) {
-      try {
-        await fs.access(path.join(binDir, name));
-        return true;
-      } catch (err) {}
-    }
-    throw new Error('Python executable does not exist!');
-  }
-
-  async configurePreBuiltPython() {
-    const systype = proc.getSysType();
-    const pythonTarGzUrl = PlatformIOCoreStage.PORTABLE_PYTHON_URLS[systype];
-    if (!pythonTarGzUrl) {
-      console.info(
-        `There is no built-in Python for ${systype} platform, we will use a system Python`
-      );
-      return;
-    }
-    const builtInPythonDir = PlatformIOCoreStage.getBuiltInPythonDir();
-    try {
-      await this.ensurePythonExeExists(builtInPythonDir);
-    } catch (err) {
-      try {
-        const tarballPath = await download(
-          pythonTarGzUrl,
-          path.join(core.getTmpDir(), path.basename(pythonTarGzUrl).split('#')[0])
-        );
-        await extractTarGz(tarballPath, builtInPythonDir);
-        await this.ensurePythonExeExists(builtInPythonDir);
-      } catch (err) {
-        console.error(err);
-        // cleanup
-        try {
-          await fs.rmdir(builtInPythonDir, { recursive: true });
-        } catch (err) {}
-      }
-    }
-    proc.extendOSEnvironPath([
-      proc.IS_WINDOWS ? builtInPythonDir : path.join(builtInPythonDir, 'bin'),
-    ]);
-    return builtInPythonDir;
   }
 
   installPIOHome() {
