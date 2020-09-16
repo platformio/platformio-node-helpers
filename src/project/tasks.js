@@ -74,23 +74,23 @@ export class ProjectTasks {
     {
       name: 'Remote Upload',
       args: ['remote', 'run', '--target', 'upload'],
-      group: 'PIO Remote',
+      group: 'Remote Development',
       multienv: true,
     },
     {
       name: 'Remote Monitor',
       args: ['remote', 'device', 'monitor'],
-      group: 'PIO Remote',
+      group: 'Remote Development',
     },
     {
       name: 'Remote Devices',
       args: ['remote', 'device', 'list'],
-      group: 'PIO Remote',
+      group: 'Remote Development',
     },
     {
       name: 'Remote Test',
       args: ['remote', 'test'],
-      group: 'PIO Remote',
+      group: 'Remote Development',
       multienv: true,
     },
   ];
