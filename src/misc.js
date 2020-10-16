@@ -84,10 +84,6 @@ export function reportError(err) {
 export function getErrorReportUrl(title, description) {
   const errorToUrls = [
     [
-      'System: Darwin, 19.0.0',
-      'https://github.com/platformio/platformio-vscode-ide/issues/1108',
-    ],
-    [
       'WindowsError: [Error 5]',
       'https://github.com/platformio/platformio-vscode-ide/issues/884',
     ],
@@ -96,20 +92,16 @@ export function getErrorReportUrl(title, description) {
       'https://github.com/platformio/platformio-vscode-ide/issues/205',
     ],
     [
-      'Failed to download file',
-      'https://github.com/platformio/platformio-vscode-ide/issues/386',
+      'python3-distutils',
+      'https://github.com/platformio/platformio-core-installer/issues/85',
     ],
     [
-      'Conda Virtualenv',
-      'https://github.com/platformio/platformio-vscode-ide/issues/914',
+      'HTTPSConnectionPool',
+      'https://github.com/platformio/platformio-core-installer/issues/152',
     ],
     [
-      "ModuleNotFoundError: No module named 'distutils",
-      'https://github.com/platformio/platformio-vscode-ide/issues/907',
-    ],
-    [
-      'ImportError: No module named',
-      'https://github.com/platformio/platformio-vscode-ide/issues/1787',
+      'NewConnectionError',
+      'https://github.com/platformio/platformio-core-installer/issues/152',
     ],
   ];
   for (const item of errorToUrls) {
