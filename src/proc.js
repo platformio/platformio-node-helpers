@@ -46,30 +46,31 @@ export function patchOSEnviron({ caller, extraPath, extraVars }) {
     Object.keys(extraVars).forEach((name) => (process.env[name] = extraVars[name]));
   }
 
+  // copy system PATH
+  process.env.PLATFORMIO_PATH = process.env.PATH;
+
   // Fix for https://github.com/atom/atom/issues/11302
   if (process.env.Path) {
-    if (process.env.PATH) {
-      process.env.PATH += path.delimiter + process.env.Path;
+    if (process.env.PLATFORMIO_PATH) {
+      process.env.PLATFORMIO_PATH += path.delimiter + process.env.Path;
     } else {
-      process.env.PATH = process.env.Path;
+      process.env.PLATFORMIO_PATH = process.env.Path;
     }
   }
 
   if (extraPath) {
-    extendOSEnvironPath(extraPath.split(path.delimiter));
+    extendOSEnvironPath('PLATFORMIO_PATH', extraPath.split(path.delimiter));
   }
 
   // Expand Windows environment variables in %xxx% format
   const reWindowsEnvVar = /\%([^\%]+)\%/g;
-  while (IS_WINDOWS && reWindowsEnvVar.test(process.env.PATH)) {
-    process.env.PATH = process.env.PATH.replace(reWindowsEnvVar, (_, envvar) => {
-      return process.env[envvar] || '';
-    });
-  }
-
-  // copy PATH to Path (Windows issue)
-  if (process.env.Path) {
-    process.env.Path = process.env.PATH;
+  while (IS_WINDOWS && reWindowsEnvVar.test(process.env.PLATFORMIO_PATH)) {
+    process.env.PLATFORMIO_PATH = process.env.PLATFORMIO_PATH.replace(
+      reWindowsEnvVar,
+      (_, envvar) => {
+        return process.env[envvar] || '';
+      }
+    );
   }
 
   // Configure NO_PROXY for PIO Home
@@ -77,19 +78,15 @@ export function patchOSEnviron({ caller, extraPath, extraVars }) {
     '127.0.0.1' + (process.env.NO_PROXY ? `,${process.env.NO_PROXY}` : '');
 }
 
-export function extendOSEnvironPath(items, prepend = true) {
+export function extendOSEnvironPath(name, items, prepend = true) {
   items.reverse().forEach((item) => {
-    if (!process.env.PATH.includes(item)) {
-      process.env.PATH = (prepend
-        ? [item, process.env.PATH]
-        : [process.env.PATH, item]
+    if (!process.env[name].includes(item)) {
+      process.env[name] = (prepend
+        ? [item, process.env[name]]
+        : [process.env[name], item]
       ).join(path.delimiter);
     }
   });
-  // copy PATH to Path (Windows issue)
-  if (process.env.Path) {
-    process.env.Path = process.env.PATH;
-  }
 }
 
 export function runCommand(cmd, args, callback = undefined, options = {}) {
@@ -97,7 +94,17 @@ export function runCommand(cmd, args, callback = undefined, options = {}) {
   const outputLines = [];
   const errorLines = [];
   let completed = false;
+
   options = options || {};
+  options.spawnOptions = options.spawnOptions || {};
+
+  // path PlatformIO's PATH
+  const envClone = Object.create(options.spawnOptions.env || process.env);
+  if (process.env.PLATFORMIO_PATH) {
+    envClone.PATH = process.env.PLATFORMIO_PATH;
+    envClone.Path = process.env.PLATFORMIO_PATH;
+  }
+  options.spawnOptions.env = envClone;
 
   try {
     const child = spawn(cmd, args, options.spawnOptions);
@@ -161,7 +168,8 @@ export async function findPythonExecutable(options = {}) {
       `assert pepver_to_semver(__version__) in semantic_version.Spec("${options.pioCoreSpec}")`
     );
   }
-  for (const location of process.env.PATH.split(path.delimiter)) {
+  const envPath = process.env.PLATFORMIO_PATH || process.env.PATH;
+  for (const location of envPath.split(path.delimiter)) {
     for (const exename of exenames) {
       const executable = path.normalize(path.join(location, exename)).replace(/"/g, '');
       try {
@@ -180,7 +188,8 @@ export async function findPythonExecutable(options = {}) {
 }
 
 export function whereIsProgram(program) {
-  for (const location of process.env.PATH.split(path.delimiter)) {
+  const envPath = process.env.PLATFORMIO_PATH || process.env.PATH;
+  for (const location of envPath.split(path.delimiter)) {
     const executable = path.normalize(path.join(location, program)).replace(/"/g, '');
     try {
       if (fs.existsSync(executable)) {

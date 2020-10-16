@@ -47,7 +47,7 @@ export default class PlatformIOCoreStage extends BaseStage {
       return;
     }
     const builtInPythonDir = PlatformIOCoreStage.getBuiltInPythonDir();
-    proc.extendOSEnvironPath([
+    proc.extendOSEnvironPath('PLATFORMIO_PATH', [
       proc.IS_WINDOWS ? builtInPythonDir : path.join(builtInPythonDir, 'bin'),
     ]);
   }
@@ -191,7 +191,10 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     // Add PIO Core virtualenv to global PATH
     // Setup `platformio` CLI globally for a Node.JS process
-    proc.extendOSEnvironPath([core.getEnvBinDir(), core.getEnvDir()]);
+    proc.extendOSEnvironPath('PLATFORMIO_PATH', [
+      core.getEnvBinDir(),
+      core.getEnvDir(),
+    ]);
 
     return true;
   }
@@ -208,7 +211,9 @@ export default class PlatformIOCoreStage extends BaseStage {
       const result = await this.params.pythonPrompt.prompt();
       status = result.status;
       if (status === this.params.pythonPrompt.STATUS_CUSTOMEXE) {
-        proc.extendOSEnvironPath([path.dirname(result.pythonExecutable)]);
+        proc.extendOSEnvironPath('PLATFORMIO_PATH', [
+          path.dirname(result.pythonExecutable),
+        ]);
       }
     } while (status !== this.params.pythonPrompt.STATUS_ABORT);
 
