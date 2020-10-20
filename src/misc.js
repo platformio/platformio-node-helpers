@@ -103,6 +103,10 @@ export function getErrorReportUrl(title, description) {
       'NewConnectionError',
       'https://github.com/platformio/platformio-core-installer/issues/152',
     ],
+    [
+      'subprocess.CalledProcessError',
+      'https://github.com/platformio/platformio-core-installer/issues/221',
+    ],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
