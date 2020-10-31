@@ -43,7 +43,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   configurePreBuiltPython() {
-    if (!this.params.useBuiltinPython) {
+    if (!this.params.useBuiltinPython || !this.params.useBuiltinPIOCore) {
       return;
     }
     const builtInPythonDir = PlatformIOCoreStage.getBuiltInPythonDir();
