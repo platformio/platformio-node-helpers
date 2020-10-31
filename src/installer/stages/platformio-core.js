@@ -176,11 +176,17 @@ export default class PlatformIOCoreStage extends BaseStage {
     if (this.useDevCore()) {
       scriptArgs.push('--dev');
     }
-    scriptArgs.push(...['check', 'core', '--auto-upgrade']);
-    scriptArgs.push(...['--dump-state', stateJSONPath]);
+    scriptArgs.push(
+      ...[
+        'check',
+        'core',
+        this.params.disableAutoUpdates ? '--no-auto-upgrade' : '--auto-upgrade',
+      ]
+    );
     if (this.params.pioCoreVersionSpec) {
       scriptArgs.push(...['--version-spec', this.params.pioCoreVersionSpec]);
     }
+    scriptArgs.push(...['--dump-state', stateJSONPath]);
     console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
 
     // Load PIO Core state
