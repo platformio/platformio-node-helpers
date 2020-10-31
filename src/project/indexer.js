@@ -31,11 +31,16 @@ export default class ProjectIndexer {
     this.subscriptions = [];
     this.dirWatchSubscriptions = [];
 
+    this._activeEnvName = undefined;
     this._rebuildTimeout = undefined;
     this._updateDirWatchersTimeout = undefined;
     this._inProgress = false;
 
     this.setupWatchers();
+  }
+
+  setActiveEnv(name) {
+    this._activeEnvName = name;
   }
 
   requestRebuild() {
@@ -48,7 +53,7 @@ export default class ProjectIndexer {
     );
   }
 
-  rebuild(envName) {
+  rebuild() {
     if (this._inProgress || !ProjectIndexer.isPIOProjectSync(this.projectDir)) {
       return;
     }
@@ -56,23 +61,25 @@ export default class ProjectIndexer {
       this._inProgress = true;
       try {
         await new Promise((resolve, reject) => {
-          const args = [
-            'init',
-            '--ide',
-            this.options.ide,
-            '--project-dir',
-            this.projectDir,
-          ];
-          if (envName) {
-            args.push('--environment', envName);
+          const args = ['init', '--ide', this.options.ide];
+          if (this._activeEnvName) {
+            args.push('--environment', this._activeEnvName);
           }
-          runPIOCommand(args, (code, stdout, stderr) => {
-            if (code === 0) {
-              resolve();
-            } else {
-              reject(new Error(stderr));
+          runPIOCommand(
+            args,
+            (code, stdout, stderr) => {
+              if (code === 0) {
+                resolve();
+              } else {
+                reject(new Error(stderr));
+              }
+            },
+            {
+              spawnOptions: {
+                cwd: this.projectDir,
+              },
             }
-          });
+          );
         });
       } catch (err) {
         console.warn(err);
@@ -132,13 +139,13 @@ export default class ProjectIndexer {
 
   async fetchWatchDirs() {
     const scriptLines = [
-      'import os',
+      'import json, os',
       'from platformio.project.config import ProjectConfig',
       'c = ProjectConfig()',
       'libdeps_dir = c.get_optional_dir("libdeps")',
       'watch_dirs = [c.get_optional_dir("globallib"), c.get_optional_dir("lib"), libdeps_dir]',
       'watch_dirs.extend(os.path.join(libdeps_dir, d) for d in (os.listdir(libdeps_dir) if os.path.isdir(libdeps_dir) else []) if os.path.isdir(os.path.join(libdeps_dir, d)))',
-      'print(":".join(watch_dirs))',
+      'print(json.dumps(watch_dirs))',
     ];
     const output = await proc.getCommandOutput(
       await core.getCorePythonExe(),
@@ -149,7 +156,7 @@ export default class ProjectIndexer {
         },
       }
     );
-    return output.trim().split(':');
+    return JSON.parse(output.trim());
   }
 
   dispose() {
