@@ -100,7 +100,7 @@ export class ProjectTasks {
     this.ide = ide;
   }
 
-  async getGeneralTasks() {
+  async getDefaultTasks() {
     // General tasks
     const result = ProjectTasks.generalTasks.map(
       (task) =>
