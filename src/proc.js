@@ -154,10 +154,10 @@ export function getCommandOutput(cmd, args, options = {}) {
 }
 
 export async function findPythonExecutable(options = {}) {
-  const exenames = IS_WINDOWS ? ['python.exe'] : ['python3', 'python', 'python2'];
+  const exenames = IS_WINDOWS ? ['python.exe'] : ['python3', 'python'];
   const pythonAssertCode = [
     'import sys',
-    'assert sys.version_info >= (2, 7)',
+    'assert sys.version_info >= (3, 6)',
     'print(sys.executable)',
   ];
   if (options.pioCoreSpec) {
