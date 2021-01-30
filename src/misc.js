@@ -96,11 +96,7 @@ export function getErrorReportUrl(title, description) {
       'https://github.com/platformio/platformio-core-installer/issues/85',
     ],
     [
-      'HTTPSConnectionPool',
-      'https://github.com/platformio/platformio-core-installer/issues/152',
-    ],
-    [
-      'NewConnectionError',
+      'after connection broken by',
       'https://github.com/platformio/platformio-core-installer/issues/152',
     ],
     [
