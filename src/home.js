@@ -45,19 +45,18 @@ export function getFrontendUri(serverHost, serverPort, options) {
 
 export async function getFrontendVersion(serverHost, serverPort) {
   return await new Promise((resolve) => {
-    request(`http://${serverHost}:${serverPort}/package.json`, function (
-      error,
-      response,
-      body
-    ) {
-      if (error || !response || response.statusCode !== 200) {
+    request(
+      `http://${serverHost}:${serverPort}/package.json`,
+      function (error, response, body) {
+        if (error || !response || response.statusCode !== 200) {
+          return resolve(undefined);
+        }
+        try {
+          return resolve(JSON.parse(body).version);
+        } catch (err) {}
         return resolve(undefined);
       }
-      try {
-        return resolve(JSON.parse(body).version);
-      } catch (err) {}
-      return resolve(undefined);
-    });
+    );
   });
 }
 
