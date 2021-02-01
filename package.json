@@ -1,6 +1,6 @@
 {
   "name": "platformio-node-helpers",
-  "version": "8.1.1",
+  "version": "9.0.0-alpha.1",
   "description": "Collection of Node.JS helpers for PlatformIO",
   "main": "dist/index.js",
   "scripts": {
@@ -54,25 +54,25 @@
     "os-tmpdir": "*",
     "querystringify": "*",
     "request": "~2.88.2",
-    "semver": "~7.3.2",
-    "tar": "~6.0.5",
-    "tcp-port-used": "~1.0.1",
+    "semver": "~7.3.4",
+    "tar": "~6.1.0",
+    "tcp-port-used": "~1.0.2",
     "tmp": "~0.2.1",
-    "ws": "~7.4.0"
+    "ws": "~7.4.2"
   },
   "devDependencies": {
-    "@babel/core": "~7.12.3",
+    "@babel/core": "~7.12.10",
     "@babel/plugin-proposal-class-properties": "~7.12.1",
     "@babel/plugin-transform-classes": "~7.12.1",
     "@types/node": "~12",
     "babel-eslint": "~10.1.0",
-    "babel-loader": "~8.2.1",
+    "babel-loader": "~8.2.2",
     "babel-preset-env": "~1.7.0",
-    "eslint": "~7.13.0",
+    "eslint": "~7.19.0",
     "eslint-import-resolver-webpack": "~0.13.0",
     "eslint-plugin-import": "~2.22.1",
-    "prettier": "~2.1.2",
-    "webpack": "~5.4.0",
-    "webpack-cli": "~4.2.0"
+    "prettier": "~2.2.1",
+    "webpack": "~5.19.0",
+    "webpack-cli": "~4.4.0"
   }
 }
