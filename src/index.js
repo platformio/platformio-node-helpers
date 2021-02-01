@@ -16,8 +16,7 @@ import { ProjectTasks, TaskItem } from './project/tasks';
 import BaseStage from './installer/stages/base';
 import PlatformIOCoreStage from './installer/stages/platformio-core';
 import ProjectConfig from './project/config';
-import ProjectIndexer from './project/indexer';
-import ProjectObserver from './project/observer';
+import ProjectPool from './project/pool';
 
 const installer = {
   BaseStage,
@@ -26,8 +25,7 @@ const installer = {
 
 const project = {
   ProjectConfig,
-  ProjectIndexer,
-  ProjectObserver,
+  ProjectPool,
   ProjectTasks,
   TaskItem,
 };
