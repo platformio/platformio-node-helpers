@@ -61,6 +61,7 @@ export default class ProjectIndexer {
               spawnOptions: {
                 cwd: this.projectDir,
               },
+              runInQueue: true,
             }
           );
         });

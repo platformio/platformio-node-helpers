@@ -89,14 +89,29 @@ export function extendOSEnvironPath(name, items, prepend = true) {
   });
 }
 
+const __RUN_CMD_QUEUE = [];
+
 export function runCommand(cmd, args, callback = undefined, options = {}) {
+  options = options || {};
+  options.spawnOptions = options.spawnOptions || {};
+  if (!options._id) {
+    options._id = `${cmd}-${Math.random()}`;
+  }
+  if (options.runInQueue) {
+    console.info('Put command in queue', cmd, args, options);
+    __RUN_CMD_QUEUE.push([cmd, args, callback, options]);
+    if (__RUN_CMD_QUEUE.length > 1) {
+      return;
+    }
+  }
+  return _runCommand(cmd, args, callback, options);
+}
+
+function _runCommand(cmd, args, callback, options) {
   console.info('runCommand', cmd, args, options);
   const outputLines = [];
   const errorLines = [];
   let completed = false;
-
-  options = options || {};
-  options.spawnOptions = options.spawnOptions || {};
 
   // path PlatformIO's PATH
   const envClone = Object.create(options.spawnOptions.env || process.env);
@@ -121,14 +136,33 @@ export function runCommand(cmd, args, callback = undefined, options = {}) {
   }
 
   function onExit(code) {
-    if (completed || !callback) {
+    if (completed) {
+      return;
+    }
+    if (options.runInQueue) {
+      _removeComletedCmdfromQueue(options._id);
+      _runNextCmdFromQueue();
+    }
+    if (!callback) {
       return;
     }
     completed = true;
-
     const stdout = outputLines.map((x) => x.toString()).join('');
     const stderr = errorLines.map((x) => x.toString()).join('');
     callback(code, stdout, stderr);
+  }
+}
+
+function _removeComletedCmdfromQueue(id) {
+  const index = __RUN_CMD_QUEUE.findIndex((item) => item[3]._id === id);
+  if (index > -1) {
+    __RUN_CMD_QUEUE.splice(index, 1);
+  }
+}
+
+function _runNextCmdFromQueue() {
+  if (__RUN_CMD_QUEUE.length > 0) {
+    _runCommand(...__RUN_CMD_QUEUE.pop());
   }
 }
 

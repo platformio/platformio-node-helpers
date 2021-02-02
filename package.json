@@ -1,6 +1,6 @@
 {
   "name": "platformio-node-helpers",
-  "version": "9.0.0-alpha.1",
+  "version": "9.0.0-alpha.2",
   "description": "Collection of Node.JS helpers for PlatformIO",
   "main": "dist/index.js",
   "scripts": {
@@ -73,6 +73,6 @@
     "eslint-plugin-import": "~2.22.1",
     "prettier": "~2.2.1",
     "webpack": "~5.19.0",
-    "webpack-cli": "~4.4.0"
+    "webpack-cli": "~4.5.0"
   }
 }

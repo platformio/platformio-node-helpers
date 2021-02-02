@@ -192,6 +192,7 @@ export class ProjectTasks {
         spawnOptions: {
           cwd: this.projectDir,
         },
+        runInQueue: true,
       }
     );
     return JSON.parse(output.trim());
