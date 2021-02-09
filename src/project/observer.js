@@ -42,13 +42,13 @@ export default class ProjectObserver {
     if (this._updateDirWatchersTimeout) {
       clearTimeout(this._updateDirWatchersTimeout);
     }
+    if (this._indexer) {
+      this._indexer.dispose();
+    }
   }
 
   activate() {
     console.info('Activating project', this.projectDir);
-    if (!this._indexer && this.getSetting('autoRebuild')) {
-      this.getIndexer().rebuild();
-    }
   }
 
   deactivate() {
@@ -63,12 +63,27 @@ export default class ProjectObserver {
     this._cache.clear();
   }
 
-  get activeEnvName() {
+  rebuildIndex({ force = false, delayed = false } = {}) {
+    if (!force && !this.getSetting('autoRebuild')) {
+      return;
+    }
+    if (!this._indexer) {
+      this._indexer = new ProjectIndexer(this.projectDir, this.options, this);
+    }
+    return delayed ? this._indexer.requestRebuild() : this._indexer.rebuild();
+  }
+
+  getActiveEnvName() {
     return this._activeEnvName;
   }
 
-  set activeEnvName(activeEnvName) {
-    this._activeEnvName = activeEnvName;
+  async switchProjectEnv(name) {
+    const validNames = (await this.getProjectEnvs()).map((item) => item.name);
+    if (!validNames.includes(name)) {
+      name = undefined;
+    }
+    this._activeEnvName = name;
+    this.rebuildIndex({ delayed: true });
   }
 
   async getProjectEnvs() {
@@ -111,7 +126,7 @@ export default class ProjectObserver {
     const lazyLoading =
       options.preload ||
       this.getSetting('autoPreloadEnvTasks') ||
-      this.activeEnvName === name ||
+      this._activeEnvName === name ||
       (await this.getProjectEnvs()).length === 1;
     if (!lazyLoading) {
       return undefined;
@@ -134,28 +149,19 @@ export default class ProjectObserver {
     return this._cache.get(cacheKey);
   }
 
-  getIndexer() {
-    if (!this._indexer) {
-      this._indexer = new ProjectIndexer(this.projectDir, this.options, this);
-    }
-    return this._indexer;
-  }
-
-  rebuildIndex() {
-    return this.getIndexer().rebuild();
-  }
-
   onDidChangeProjectConfig() {
     this.resetCache();
+    // reset to `undefined` if env was removed from conf
+    // rebuildIndex
+    this.switchProjectEnv(this._activeEnvName);
+    this.requestUpdateDirWatchers();
     if ((this.options.api || {}).onDidChangeProjectConfig) {
       this.options.api.onDidChangeProjectConfig(this.projectDir);
     }
-    this.getIndexer().requestRebuild();
-    this.requestUpdateDirWatchers();
   }
 
   onDidChangeLibDirs() {
-    this.getIndexer().requestRebuild();
+    this.rebuildIndex({ delayed: true });
   }
 
   setupFSWatchers() {

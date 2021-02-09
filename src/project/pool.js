@@ -20,7 +20,16 @@ export default class ProjectPool {
     return this._activeProjectDir;
   }
 
+  getActiveObserver() {
+    return this._activeProjectDir
+      ? this.getObserver(this._activeProjectDir)
+      : undefined;
+  }
+
   getObserver(projectDir) {
+    if (!projectDir) {
+      return undefined;
+    }
     let observer = this._observers.find(
       (observer) => observer.projectDir === projectDir
     );
@@ -40,11 +49,9 @@ export default class ProjectPool {
     this._observers
       .filter((observer) => observer.projectDir !== projectDir)
       .forEach((observer) => observer.deactivate());
-    this.getObserver(projectDir).activate();
-  }
-
-  rebuildIndex(projectDir) {
-    return this.getObserver(projectDir).rebuildIndex();
+    const observer = this.getObserver(projectDir);
+    observer.activate();
+    return observer;
   }
 
   dispose() {

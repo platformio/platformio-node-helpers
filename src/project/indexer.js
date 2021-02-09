@@ -6,10 +6,13 @@
  * the root directory of this source tree.
  */
 
+import path from 'path';
 import { runPIOCommand } from '../core';
 
 export default class ProjectIndexer {
-  static AUTO_REBUILD_DELAY = 3000;
+  static AUTO_REBUILD_DELAY = 3; // 3 seconds
+  static FLOOD_TIME_WINDOW = 60 * 10; // 10 minutes
+  static FLOOD_MAX_ATTEMPTS = 30;
 
   constructor(projectDir, options, observer) {
     this.projectDir = projectDir;
@@ -18,6 +21,8 @@ export default class ProjectIndexer {
 
     this._rebuildTimeout = undefined;
     this._inProgress = false;
+    this._floodStartedAt = Date.now();
+    this._floodAttempts = 0;
   }
 
   dispose() {
@@ -27,12 +32,37 @@ export default class ProjectIndexer {
   }
 
   requestRebuild() {
+    if (Date.now() - this._floodStartedAt < ProjectIndexer.FLOOD_TIME_WINDOW * 1000) {
+      this._floodAttempts++;
+    } else {
+      this._floodAttempts = 0;
+      this._floodStartedAt = Date.now();
+    }
     if (this._rebuildTimeout) {
       clearTimeout(this._rebuildTimeout);
+      this._rebuildTimeout = undefined;
     }
+
+    if (this._floodAttempts >= ProjectIndexer.FLOOD_MAX_ATTEMPTS) {
+      if (
+        this._floodAttempts === ProjectIndexer.FLOOD_MAX_ATTEMPTS &&
+        this.options.api.onDidNotifyError
+      ) {
+        const msg =
+          `Multiple requests to rebuild the project "${path.basename(
+            this.projectDir
+          )}" index have been detected!\n` +
+          `Automatic index rebuilding process has been terminated for ${
+            ProjectIndexer.FLOOD_TIME_WINDOW / 60
+          } minutes.`;
+        this.options.api.onDidNotifyError(msg, new Error(msg));
+      }
+      return;
+    }
+
     this._rebuildTimeout = setTimeout(
       this.rebuild.bind(this),
-      ProjectIndexer.AUTO_REBUILD_DELAY
+      ProjectIndexer.AUTO_REBUILD_DELAY * 1000
     );
   }
 
@@ -40,13 +70,13 @@ export default class ProjectIndexer {
     if (this._inProgress) {
       return;
     }
-    return this.options.api.withWindowProgress(async () => {
+    return this.options.api.withIndexRebuildingProgress(async () => {
       this._inProgress = true;
       try {
         await new Promise((resolve, reject) => {
           const args = ['init', '--ide', this.options.ide];
-          if (this.observer.activeEnvName) {
-            args.push('--environment', this.observer.activeEnvName);
+          if (this.observer.getActiveEnvName()) {
+            args.push('--environment', this.observer.getActiveEnvName());
           }
           runPIOCommand(
             args,
@@ -69,6 +99,6 @@ export default class ProjectIndexer {
         console.warn(err);
       }
       this._inProgress = false;
-    }, 'PlatformIO: Rebuilding IntelliSense Index');
+    });
   }
 }

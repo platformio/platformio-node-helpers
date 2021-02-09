@@ -84,6 +84,10 @@ export function reportError(err) {
 export function getErrorReportUrl(title, description) {
   const errorToUrls = [
     [
+      'Multiple requests to rebuild the project',
+      'https://github.com/platformio/platformio-vscode-ide/issues/2363',
+    ],
+    [
       'WindowsError: [Error 5]',
       'https://github.com/platformio/platformio-vscode-ide/issues/884',
     ],
