@@ -9,44 +9,59 @@
 import * as misc from './misc';
 import { getCoreDir, runPIOCommand } from './core';
 
+import crypto from 'crypto';
 import fs from 'fs';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
 import request from 'request';
-import semver from 'semver';
 import tcpPortUsed from 'tcp-port-used';
 import ws from 'ws';
 
-const SERVER_LAUNCH_TIMEOUT = 5 * 60; // 5 minutes
+const SERVER_LAUNCH_TIMEOUT = 30; // 30 seconds
 const SERVER_AUTOSHUTDOWN_TIMEOUT = 3600; // 1 hour
 const HTTP_HOST = '127.0.0.1';
 const HTTP_PORT_BEGIN = 8010;
 const HTTP_PORT_END = 8050;
-const SESSION_ID = Math.round(Math.random() * 1000000);
-let HTTP_PORT = 0;
-let IDECMDS_LISTENER_STATUS = 0;
+const SESSION_ID = crypto
+  .createHash('sha1')
+  .update(crypto.randomBytes(512))
+  .digest('hex');
+let _HTTP_PORT = 0;
+let _IDECMDS_LISTENER_STATUS = 0;
 
-export function getFrontendUri(serverHost, serverPort, options) {
+export function constructServerUrl({
+  scheme = 'http',
+  host = undefined,
+  port = undefined,
+  path = undefined,
+  query = undefined,
+  includeSID = true,
+} = {}) {
+  return `${scheme}://${host || HTTP_HOST}:${port || _HTTP_PORT}${
+    includeSID ? `/session/${SESSION_ID}` : ''
+  }${path || '/'}${query ? `?${qs.stringify(query)}` : ''}`;
+}
+
+export function getFrontendUrl(options) {
   const stateStorage = (loadState() || {}).storage || {};
   const params = {
     start: options.start || '/',
     theme: stateStorage.theme || options.theme,
     workspace: stateStorage.workspace || options.workspace,
-    sid: SESSION_ID,
   };
   Object.keys(params).forEach((key) => {
     if ([undefined, null].includes(params[key])) {
       delete params[key];
     }
   });
-  return `http://${serverHost}:${serverPort}?${qs.stringify(params)}`;
+  return constructServerUrl({ query: params });
 }
 
-export async function getFrontendVersion(serverHost, serverPort) {
+export async function getFrontendVersion() {
   return await new Promise((resolve) => {
     request(
-      `http://${serverHost}:${serverPort}/package.json`,
+      constructServerUrl({ path: '/package.json' }),
       function (error, response, body) {
         if (error || !response || response.statusCode !== 200) {
           return resolve(undefined);
@@ -61,21 +76,22 @@ export async function getFrontendVersion(serverHost, serverPort) {
 }
 
 async function listenIDECommands(callback) {
-  if (IDECMDS_LISTENER_STATUS > 0) {
+  if (_IDECMDS_LISTENER_STATUS > 0) {
     return;
   }
-  let coreVersion = '0.0.0';
-  const coreVersionMsgId = Math.random().toString();
-  const sock = new ws(`ws://${HTTP_HOST}:${HTTP_PORT}/wsrpc`, {
+  const sock = new ws(constructServerUrl({ scheme: 'ws', path: '/wsrpc' }), {
     perMessageDeflate: false,
   });
   sock.onopen = () => {
-    IDECMDS_LISTENER_STATUS = 1;
-    sock.send(JSON.stringify(jsonrpc.request(coreVersionMsgId, 'core.version')));
+    _IDECMDS_LISTENER_STATUS = 1;
+    // "ping" message to initiate 'ide.listen_commands'
+    sock.send(
+      JSON.stringify(jsonrpc.request(Math.random().toString(), 'core.version'))
+    );
   };
 
   sock.onclose = () => {
-    IDECMDS_LISTENER_STATUS = 0;
+    _IDECMDS_LISTENER_STATUS = 0;
   };
 
   sock.onmessage = (event) => {
@@ -83,11 +99,7 @@ async function listenIDECommands(callback) {
       const result = jsonrpc.parse(event.data);
       switch (result.type) {
         case 'success':
-          if (result.payload.id === coreVersionMsgId) {
-            coreVersion = misc.PEPverToSemver(result.payload.result);
-          } else {
-            callback(result.payload.result.method, result.payload.result.params);
-          }
+          callback(result.payload.result.method, result.payload.result.params);
           break;
 
         case 'error':
@@ -97,16 +109,9 @@ async function listenIDECommands(callback) {
     } catch (err) {
       console.error('Invalid RPC message: ' + err.toString());
     }
-
-    let data = null;
-    if (semver.gte(coreVersion, '4.0.1')) {
-      data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands', [
-        SESSION_ID,
-      ]);
-    } else {
-      data = jsonrpc.request(Math.random().toString(), 'ide.listen_commands');
-    }
-    sock.send(JSON.stringify(data));
+    sock.send(
+      JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands'))
+    );
   };
 }
 
@@ -129,20 +134,16 @@ async function findFreePort() {
     if (!(await isPortUsed(HTTP_HOST, port))) {
       return port;
     }
-    // reuse opened from other IDE window/session
-    if (await getFrontendVersion(HTTP_HOST, port)) {
-      return port;
-    }
     port++;
   }
   return 0;
 }
 
 export async function isServerStarted() {
-  if (!(await isPortUsed(HTTP_HOST, HTTP_PORT))) {
+  if (!(await isPortUsed(HTTP_HOST, _HTTP_PORT))) {
     return false;
   }
-  return !!(await getFrontendVersion(HTTP_HOST, HTTP_PORT));
+  return !!(await getFrontendVersion());
 }
 
 export async function ensureServerStarted(options = {}) {
@@ -155,7 +156,7 @@ export async function ensureServerStarted(options = {}) {
     } catch (err) {
       lastError = err;
       console.warn(err);
-      HTTP_PORT = 0;
+      _HTTP_PORT = 0;
       // stop all PIO Home servers
       await shutdownAllServers();
     }
@@ -166,32 +167,30 @@ export async function ensureServerStarted(options = {}) {
 }
 
 async function _ensureServerStarted(options = {}) {
-  if (HTTP_PORT === 0) {
-    HTTP_PORT = options.port || (await findFreePort());
+  if (_HTTP_PORT === 0) {
+    _HTTP_PORT = options.port || (await findFreePort());
   }
-  const params = {
-    host: HTTP_HOST,
-    port: HTTP_PORT,
-  };
   if (!(await isServerStarted())) {
     await new Promise((resolve, reject) => {
       runPIOCommand(
         [
           'home',
           '--port',
-          HTTP_PORT,
+          _HTTP_PORT,
+          '--session-id',
+          SESSION_ID,
           '--shutdown-timeout',
           SERVER_AUTOSHUTDOWN_TIMEOUT,
           '--no-open',
         ],
         (code, stdout, stderr) => {
           if (code !== 0) {
-            HTTP_PORT = 0;
+            _HTTP_PORT = 0;
             return reject(new Error(stderr));
           }
         }
       );
-      tcpPortUsed.waitUntilUsed(HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000).then(
+      tcpPortUsed.waitUntilUsed(_HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000).then(
         () => {
           resolve(true);
         },
@@ -204,20 +203,24 @@ async function _ensureServerStarted(options = {}) {
   if (options.onIDECommand) {
     listenIDECommands(options.onIDECommand);
   }
-  return params;
+  return true;
 }
 
 export function shutdownServer() {
-  if (!HTTP_PORT) {
+  if (!_HTTP_PORT) {
     return;
   }
-  return request.get(`http://${HTTP_HOST}:${HTTP_PORT}?__shutdown__=1`);
+  return request.post(constructServerUrl({ path: '/__shutdown__' }));
 }
 
 export async function shutdownAllServers() {
   let port = HTTP_PORT_BEGIN;
   while (port < HTTP_PORT_END) {
-    request.get(`http://${HTTP_HOST}:${port}?__shutdown__=1`).on('error', () => {});
+    request
+      .get(
+        constructServerUrl({ port, includeSID: false, query: { __shutdown__: '1' } })
+      )
+      .on('error', () => {});
     port++;
   }
   await misc.sleep(2000); // wait for 2 secs while server stops
