@@ -51,7 +51,7 @@ export default class ProjectIndexer {
         const msg =
           `Multiple requests to rebuild the project "${path.basename(
             this.projectDir
-          )}" index have been detected!\n` +
+          )}" index have been received!\n` +
           `Automatic index rebuilding process has been terminated for ${
             ProjectIndexer.FLOOD_TIME_WINDOW / 60
           } minutes.`;
