@@ -54,25 +54,24 @@
     "os-tmpdir": "*",
     "querystringify": "*",
     "request": "~2.88.2",
-    "semver": "~7.3.4",
     "tar": "~6.1.0",
     "tcp-port-used": "~1.0.2",
     "tmp": "~0.2.1",
     "ws": "~7.4.3"
   },
   "devDependencies": {
-    "@babel/core": "~7.12.13",
-    "@babel/plugin-proposal-class-properties": "~7.12.13",
-    "@babel/plugin-transform-classes": "~7.12.13",
+    "@babel/core": "~7.13.8",
+    "@babel/plugin-proposal-class-properties": "~7.13.0",
+    "@babel/plugin-transform-classes": "~7.13.0",
     "@types/node": "~12",
     "babel-eslint": "~10.1.0",
     "babel-loader": "~8.2.2",
     "babel-preset-env": "~1.7.0",
-    "eslint": "~7.19.0",
+    "eslint": "~7.21.0",
     "eslint-import-resolver-webpack": "~0.13.0",
     "eslint-plugin-import": "~2.22.1",
     "prettier": "~2.2.1",
-    "webpack": "~5.21.2",
+    "webpack": "~5.24.2",
     "webpack-cli": "~4.5.0"
   }
 }
