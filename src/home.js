@@ -11,10 +11,10 @@ import { getCoreDir, runPIOCommand } from './core';
 
 import crypto from 'crypto';
 import fs from 'fs';
+import got from 'got';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
-import request from 'request';
 import tcpPortUsed from 'tcp-port-used';
 import ws from 'ws';
 
@@ -59,20 +59,11 @@ export function getFrontendUrl(options) {
 }
 
 export async function getFrontendVersion() {
-  return await new Promise((resolve) => {
-    request(
-      constructServerUrl({ path: '/package.json' }),
-      function (error, response, body) {
-        if (error || !response || response.statusCode !== 200) {
-          return resolve(undefined);
-        }
-        try {
-          return resolve(JSON.parse(body).version);
-        } catch (err) {}
-        return resolve(undefined);
-      }
-    );
-  });
+  try {
+    return (
+      await got(constructServerUrl({ path: '/package.json' }), { timeout: 1000 }).json()
+    ).version;
+  } catch (err) {}
 }
 
 async function listenIDECommands(callback) {
@@ -206,21 +197,24 @@ async function _ensureServerStarted(options = {}) {
   return true;
 }
 
-export function shutdownServer() {
+export async function shutdownServer() {
   if (!_HTTP_PORT) {
     return;
   }
-  return request.post(constructServerUrl({ path: '/__shutdown__' }));
+  return await got.post(constructServerUrl({ path: '/__shutdown__' }), {
+    timeout: 1000,
+  });
 }
 
 export async function shutdownAllServers() {
   let port = HTTP_PORT_BEGIN;
   while (port < HTTP_PORT_END) {
-    request
-      .get(
-        constructServerUrl({ port, includeSID: false, query: { __shutdown__: '1' } })
-      )
-      .on('error', () => {});
+    try {
+      got(
+        constructServerUrl({ port, includeSID: false, query: { __shutdown__: '1' } }),
+        { timeout: 1000, throwHttpErrors: false }
+      );
+    } catch (err) {}
     port++;
   }
   await misc.sleep(2000); // wait for 2 secs while server stops

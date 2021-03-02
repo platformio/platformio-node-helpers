@@ -7,26 +7,12 @@
  */
 
 import { promises as fs } from 'fs';
+import got from 'got';
 import os from 'os';
 import qs from 'querystringify';
-import request from 'request';
 
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export function processHTTPRequest(url, callback, options) {
-  options = options || {};
-  options.url = url;
-  if (!options.headers) {
-    options.headers = {
-      'User-Agent': 'PlatformIO',
-    };
-  }
-  console.info('processHTTPRequest', options);
-  return request(options, (err, response, body) => {
-    return callback(err, response, body);
-  });
 }
 
 export async function loadJSON(filePath) {
@@ -61,7 +47,7 @@ function uuid() {
   return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
 }
 
-export function reportError(err) {
+export async function reportError(err) {
   const data = {
     v: 1,
     tid: 'UA-1768265-13',
@@ -76,8 +62,9 @@ export function reportError(err) {
   if (process.env.PLATFORMIO_CALLER) {
     data['cd1'] = process.env.PLATFORMIO_CALLER;
   }
-  request.post('https://www.google-analytics.com/collect', {
+  await got.post('https://www.google-analytics.com/collect', {
     body: qs.stringify(data),
+    timeout: 2000,
   });
 }
 
