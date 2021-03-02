@@ -10,24 +10,15 @@ import * as core from '../../core';
 import * as home from '../../home';
 import * as misc from '../../misc';
 import * as proc from '../../proc';
-import { download, extractTarGz } from '../helpers';
 
 import BaseStage from './base';
 import { callInstallerScript } from '../get-platformio';
 import { promises as fs } from 'fs';
+import { installPortablePython } from '../get-python';
 import path from 'path';
 import tmp from 'tmp';
 
 export default class PlatformIOCoreStage extends BaseStage {
-  static PORTABLE_PYTHON_URLS = {
-    windows_x86:
-      'https://dl.bintray.com/platformio/dl-misc/python-portable-windows_x86-3.7.7.tar.gz#2e5845c2a1b06dd2832fe5341861b45e2ebaeea51d6bb42be241cf0319b61eb3',
-    windows_amd64:
-      'https://dl.bintray.com/platformio/dl-misc/python-portable-windows_amd64-3.7.7.tar.gz#61ff38127dd52bcec6ee93f2a6119faaf979a47bc0d62945fe6a56eaaaf76d06',
-    darwin_x86_64:
-      'https://dl.bintray.com/platformio/dl-misc/python-portable-darwin_x86_64-3.8.4.tar.gz#b1373e05815cd04b702dfcb2364c7b31e563b16d82bcb3a371ddc229b095b573',
-  };
-
   static getBuiltInPythonDir() {
     return path.join(core.getCoreDir(), 'python3');
   }
@@ -35,14 +26,14 @@ export default class PlatformIOCoreStage extends BaseStage {
   constructor() {
     super(...arguments);
     tmp.setGracefulCleanup();
-    this.configurePreBuiltPython();
+    this.configureBuiltInPython();
   }
 
   get name() {
     return 'PlatformIO Core';
   }
 
-  configurePreBuiltPython() {
+  configureBuiltInPython() {
     if (!this.params.useBuiltinPython || !this.params.useBuiltinPIOCore) {
       return;
     }
@@ -90,9 +81,15 @@ export default class PlatformIOCoreStage extends BaseStage {
       if (this.params.useBuiltinPython) {
         withProgress('Downloading portable Python interpreter', 10);
         try {
-          await this.fetchPreBuiltPython();
+          await installPortablePython(PlatformIOCoreStage.getBuiltInPythonDir());
         } catch (err) {
           console.warn(err);
+          // cleanup
+          try {
+            await fs.rmdir(PlatformIOCoreStage.getBuiltInPythonDir(), {
+              recursive: true,
+            });
+          } catch (err) {}
         }
       }
 
@@ -123,48 +120,6 @@ export default class PlatformIOCoreStage extends BaseStage {
       this.params.useDevelopmentPIOCore ||
       (this.params.pioCoreVersionSpec || '').includes('-')
     );
-  }
-
-  async ensurePythonExeExists(pythonDir) {
-    const binDir = proc.IS_WINDOWS ? pythonDir : path.join(pythonDir, 'bin');
-    for (const name of ['python.exe', 'python3', 'python']) {
-      try {
-        await fs.access(path.join(binDir, name));
-        return true;
-      } catch (err) {}
-    }
-    throw new Error('Python executable does not exist!');
-  }
-
-  async fetchPreBuiltPython() {
-    const systype = proc.getSysType();
-    const pythonTarGzUrl = PlatformIOCoreStage.PORTABLE_PYTHON_URLS[systype];
-    if (!pythonTarGzUrl) {
-      console.info(
-        `There is no built-in Python for ${systype} platform, we will use a system Python`
-      );
-      return;
-    }
-    const builtInPythonDir = PlatformIOCoreStage.getBuiltInPythonDir();
-    try {
-      await this.ensurePythonExeExists(builtInPythonDir);
-    } catch (err) {
-      try {
-        const tarballPath = await download(
-          pythonTarGzUrl,
-          path.join(core.getTmpDir(), path.basename(pythonTarGzUrl).split('#')[0])
-        );
-        await extractTarGz(tarballPath, builtInPythonDir);
-        await this.ensurePythonExeExists(builtInPythonDir);
-      } catch (err) {
-        console.error(err);
-        // cleanup
-        try {
-          await fs.rmdir(builtInPythonDir, { recursive: true });
-        } catch (err) {}
-      }
-    }
-    return builtInPythonDir;
   }
 
   async loadCoreState() {
@@ -207,7 +162,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   async whereIsPython() {
     let status = this.params.pythonPrompt.STATUS_TRY_AGAIN;
-    this.configurePreBuiltPython();
+    this.configurePortablePython();
 
     do {
       const pythonExecutable = await proc.findPythonExecutable();
@@ -225,7 +180,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     this.status = BaseStage.STATUS_FAILED;
     throw new Error(
-      'Can not find Python Interpreter. Please install Python 3.5 or above manually'
+      'Can not find Python Interpreter. Please install Python 3.6 or above manually'
     );
   }
 

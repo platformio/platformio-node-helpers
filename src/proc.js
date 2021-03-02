@@ -22,6 +22,7 @@ export function getSysType() {
     win32_ia32: 'windows_x86',
     darwin_x64: 'darwin_x86_64',
     darwin_x32: 'darwin_i686',
+    darwin_arm64: 'darwin_arm64',
     linux_x64: 'linux_x86_64',
     linux_x32: 'linux_i686',
     linux_arm: 'linux_armv6l',

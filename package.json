@@ -50,10 +50,12 @@
   "dependencies": {
     "cross-spawn": "~7.0.3",
     "glob": "~7.1.6",
+    "global-agent": "^2.1.12",
+    "got": "^11.8.2",
     "jsonrpc-lite": "~2.1.1",
     "os-tmpdir": "*",
     "querystringify": "*",
-    "request": "~2.88.2",
+    "semver": "^7.3.4",
     "tar": "~6.1.0",
     "tcp-port-used": "~1.0.2",
     "tmp": "~0.2.1",
