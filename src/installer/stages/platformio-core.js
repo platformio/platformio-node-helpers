@@ -171,7 +171,10 @@ export default class PlatformIOCoreStage extends BaseStage {
       }
       const result = await this.params.pythonPrompt.prompt();
       status = result.status;
-      if (status === this.params.pythonPrompt.STATUS_CUSTOMEXE) {
+      if (
+        status === this.params.pythonPrompt.STATUS_CUSTOMEXE &&
+        result.pythonExecutable
+      ) {
         proc.extendOSEnvironPath('PLATFORMIO_PATH', [
           path.dirname(result.pythonExecutable),
         ]);

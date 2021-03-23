@@ -83,7 +83,7 @@ export function getErrorReportUrl(title, description) {
       'https://github.com/platformio/platformio-vscode-ide/issues/205',
     ],
     [
-      'python3-distutils',
+      'missed `distutils`',
       'https://github.com/platformio/platformio-core-installer/issues/85',
     ],
     [
