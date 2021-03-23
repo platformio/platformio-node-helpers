@@ -29,6 +29,7 @@ export default class ProjectObserver {
     this._indexer = undefined;
     this._projectTasks = new ProjectTasks(this.projectDir, this.options.ide);
     this._updateDirWatchersTimeout = undefined;
+    this._previousActiveEnvName = Object.create(null);
     this._activeEnvName = undefined;
 
     if (this.getSetting('autoRebuild')) {
@@ -83,7 +84,10 @@ export default class ProjectObserver {
       name = undefined;
     }
     this._activeEnvName = name;
-    this.rebuildIndex({ delayed: true });
+    if (this._previousActiveEnvName !== this._activeEnvName) {
+      this._previousActiveEnvName = this._activeEnvName;
+      this.rebuildIndex({ delayed: true });
+    }
   }
 
   async getProjectEnvs() {

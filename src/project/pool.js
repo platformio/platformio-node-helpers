@@ -41,9 +41,6 @@ export default class ProjectPool {
   }
 
   switch(projectDir) {
-    if (!projectDir || projectDir == this._activeProjectDir) {
-      return;
-    }
     this._activeProjectDir = projectDir;
     console.info('Switching project to', projectDir);
     this._observers
