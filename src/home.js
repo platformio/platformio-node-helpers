@@ -28,6 +28,7 @@ const SESSION_ID = crypto
   .update(crypto.randomBytes(512))
   .digest('hex');
 let _HTTP_PORT = 0;
+let _HTTP_HOST = HTTP_HOST;
 let _IDECMDS_LISTENER_STATUS = 0;
 
 export function constructServerUrl({
@@ -38,7 +39,7 @@ export function constructServerUrl({
   query = undefined,
   includeSID = true,
 } = {}) {
-  return `${scheme}://${host || HTTP_HOST}:${port || _HTTP_PORT}${
+  return `${scheme}://${host || _HTTP_HOST}:${port || _HTTP_PORT}${
     includeSID ? `/session/${SESSION_ID}` : ''
   }${path || '/'}${query ? `?${qs.stringify(query)}` : ''}`;
 }
@@ -131,7 +132,7 @@ async function findFreePort() {
 }
 
 export async function isServerStarted() {
-  if (!(await isPortUsed(HTTP_HOST, _HTTP_PORT))) {
+  if (!(await isPortUsed(_HTTP_HOST, _HTTP_PORT))) {
     return false;
   }
   return !!(await getFrontendVersion());
@@ -161,6 +162,7 @@ async function _ensureServerStarted(options = {}) {
   if (_HTTP_PORT === 0) {
     _HTTP_PORT = options.port || (await findFreePort());
   }
+  _HTTP_HOST = options.host || HTTP_HOST;
   if (!(await isServerStarted())) {
     await new Promise((resolve, reject) => {
       runPIOCommand(
@@ -168,6 +170,8 @@ async function _ensureServerStarted(options = {}) {
           'home',
           '--port',
           _HTTP_PORT,
+          '--host',
+          _HTTP_HOST,
           '--session-id',
           SESSION_ID,
           '--shutdown-timeout',
@@ -181,7 +185,7 @@ async function _ensureServerStarted(options = {}) {
           }
         }
       );
-      tcpPortUsed.waitUntilUsed(_HTTP_PORT, 500, SERVER_LAUNCH_TIMEOUT * 1000).then(
+      tcpPortUsed.waitUntilUsed(_HTTP_PORT, _HTTP_HOST, 500, SERVER_LAUNCH_TIMEOUT * 1000).then(
         () => {
           resolve(true);
         },
