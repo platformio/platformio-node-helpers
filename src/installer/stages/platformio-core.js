@@ -160,9 +160,13 @@ export default class PlatformIOCoreStage extends BaseStage {
     return true;
   }
 
-  async whereIsPython() {
+  async whereIsPython({prompt = false} = {}) {
     let status = this.params.pythonPrompt.STATUS_TRY_AGAIN;
     this.configureBuiltInPython();
+
+    if (!prompt) {
+      return await proc.findPythonExecutable();
+    }
 
     do {
       const pythonExecutable = await proc.findPythonExecutable();
