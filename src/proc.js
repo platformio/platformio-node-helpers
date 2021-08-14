@@ -87,9 +87,8 @@ export function patchOSEnviron({ caller, extraPath, extraVars }) {
 export function extendOSEnvironPath(name, items, prepend = true) {
   items.reverse().forEach((item) => {
     if (!process.env[name].includes(item)) {
-      process.env[name] = (prepend
-        ? [item, process.env[name]]
-        : [process.env[name], item]
+      process.env[name] = (
+        prepend ? [item, process.env[name]] : [process.env[name], item]
       ).join(path.delimiter);
     }
   });
