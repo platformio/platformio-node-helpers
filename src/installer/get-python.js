@@ -9,6 +9,7 @@
 import * as core from '../core';
 import * as proc from '../proc';
 
+import { callInstallerScript } from './get-platformio';
 import crypto from 'crypto';
 import fs from 'fs';
 import got from 'got';
@@ -18,6 +19,38 @@ import semver from 'semver';
 import stream from 'stream';
 import tar from 'tar';
 import zlib from 'zlib';
+
+export async function findPythonExecutable() {
+  const exenames = proc.IS_WINDOWS ? ['python.exe'] : ['python3', 'python'];
+  const envPath = process.env.PLATFORMIO_PATH || process.env.PATH;
+  for (const location of envPath.split(path.delimiter)) {
+    for (const exename of exenames) {
+      const executable = path.normalize(path.join(location, exename)).replace(/"/g, '');
+      try {
+        if (
+          fs.existsSync(executable) &&
+          (await callInstallerScript(executable, ['check', 'python']))
+        ) {
+          return executable;
+        }
+      } catch (err) {
+        console.warn(executable, err);
+      }
+    }
+  }
+  return null;
+}
+
+async function ensurePythonExeExists(pythonDir) {
+  const binDir = proc.IS_WINDOWS ? pythonDir : path.join(pythonDir, 'bin');
+  for (const name of ['python.exe', 'python3', 'python']) {
+    try {
+      await fs.promises.access(path.join(binDir, name));
+      return true;
+    } catch (err) {}
+  }
+  throw new Error('Python executable does not exist!');
+}
 
 export async function installPortablePython(destinationDir) {
   const registryFile = await getRegistryFile();
@@ -148,15 +181,4 @@ async function extractTarGz(source, destination) {
       .on('error', (err) => reject(err))
       .on('close', () => resolve(destination));
   });
-}
-
-async function ensurePythonExeExists(pythonDir) {
-  const binDir = proc.IS_WINDOWS ? pythonDir : path.join(pythonDir, 'bin');
-  for (const name of ['python.exe', 'python3', 'python']) {
-    try {
-      await fs.promises.access(path.join(binDir, name));
-      return true;
-    } catch (err) {}
-  }
-  throw new Error('Python executable does not exist!');
 }

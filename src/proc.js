@@ -192,40 +192,6 @@ export function getCommandOutput(cmd, args, options = {}) {
   });
 }
 
-export async function findPythonExecutable(options = {}) {
-  const exenames = IS_WINDOWS ? ['python.exe'] : ['python3', 'python'];
-  const pythonAssertCode = [
-    'import sys',
-    'assert sys.version_info >= (3, 6)',
-    'print(sys.executable)',
-  ];
-  if (options.pioCoreSpec) {
-    pythonAssertCode.push('import semantic_version');
-    pythonAssertCode.push('from platformio import __version__');
-    pythonAssertCode.push('from platformio.package.version import pepver_to_semver');
-    pythonAssertCode.push(
-      `assert pepver_to_semver(__version__) in semantic_version.Spec("${options.pioCoreSpec}")`
-    );
-  }
-  const envPath = process.env.PLATFORMIO_PATH || process.env.PATH;
-  for (const location of envPath.split(path.delimiter)) {
-    for (const exename of exenames) {
-      const executable = path.normalize(path.join(location, exename)).replace(/"/g, '');
-      try {
-        if (
-          fs.existsSync(executable) &&
-          (await getCommandOutput(executable, ['-c', pythonAssertCode.join(';')]))
-        ) {
-          return executable;
-        }
-      } catch (err) {
-        console.warn(executable, err);
-      }
-    }
-  }
-  return null;
-}
-
 export function whereIsProgram(program) {
   const envPath = process.env.PLATFORMIO_PATH || process.env.PATH;
   for (const location of envPath.split(path.delimiter)) {

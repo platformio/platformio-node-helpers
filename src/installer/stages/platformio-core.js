@@ -10,11 +10,11 @@ import * as core from '../../core';
 import * as home from '../../home';
 import * as misc from '../../misc';
 import * as proc from '../../proc';
+import { findPythonExecutable, installPortablePython } from '../get-python';
 
 import BaseStage from './base';
 import { callInstallerScript } from '../get-platformio';
 import { promises as fs } from 'fs';
-import { installPortablePython } from '../get-python';
 import path from 'path';
 import tmp from 'tmp';
 
@@ -170,11 +170,11 @@ export default class PlatformIOCoreStage extends BaseStage {
     this.configureBuiltInPython();
 
     if (!prompt) {
-      return await proc.findPythonExecutable();
+      return await findPythonExecutable();
     }
 
     do {
-      const pythonExecutable = await proc.findPythonExecutable();
+      const pythonExecutable = await findPythonExecutable();
       if (pythonExecutable) {
         return pythonExecutable;
       }
