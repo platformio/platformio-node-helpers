@@ -98,7 +98,12 @@ export default class PlatformIOCoreStage extends BaseStage {
       if (this.useDevCore()) {
         scriptArgs.push('--dev');
       }
-      console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
+      console.info(
+        await callInstallerScript(
+          await this.whereIsPython({ prompt: true }),
+          scriptArgs
+        )
+      );
 
       // check that PIO Core is installed and load its state an patch OS environ
       withProgress('Loading PlatformIO Core state', 40);
