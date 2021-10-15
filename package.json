@@ -62,18 +62,18 @@
     "ws": "~7.4.4"
   },
   "devDependencies": {
-    "@babel/core": "~7.15.0",
+    "@babel/core": "~7.15.8",
     "@babel/plugin-proposal-class-properties": "~7.14.5",
-    "@babel/plugin-transform-classes": "~7.14.9",
+    "@babel/plugin-transform-classes": "~7.15.4",
     "@types/node": "~12",
     "babel-eslint": "~10.1.0",
     "babel-loader": "~8.2.2",
     "babel-preset-env": "~1.7.0",
     "eslint": "~7.32.0",
     "eslint-import-resolver-webpack": "~0.13.1",
-    "eslint-plugin-import": "~2.24.0",
-    "prettier": "~2.3.2",
-    "webpack": "~5.50.0",
-    "webpack-cli": "~4.7.2"
+    "eslint-plugin-import": "~2.25.2",
+    "prettier": "~2.4.1",
+    "webpack": "~5.58.2",
+    "webpack-cli": "~4.9.0"
   }
 }
