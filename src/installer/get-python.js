@@ -13,6 +13,7 @@ import { callInstallerScript } from './get-platformio';
 import crypto from 'crypto';
 import fs from 'fs';
 import got from 'got';
+import os from 'os';
 import path from 'path';
 import { promisify } from 'util';
 import semver from 'semver';
@@ -61,6 +62,13 @@ export async function installPortablePython(destinationDir) {
   if (!archivePath) {
     throw new Error('Could not download portable Python');
   }
+  try {
+    await fs.promises.rmdir(destinationDir, {
+      recursive: true,
+    });
+  } catch (err) {
+    console.warn(err);
+  }
   await extractTarGz(archivePath, destinationDir);
   await ensurePythonExeExists(destinationDir);
   return destinationDir;
@@ -88,6 +96,20 @@ async function getRegistryFile() {
 }
 
 function isVersionSystemCompatible(version, systype) {
+  // ignore Python >=3.9 on <= Win7
+  try {
+    const originVersion = parseInt(version.name.split('.')[1]);
+    if (
+      proc.IS_WINDOWS &&
+      originVersion >= 30900 &&
+      semver.satisfies(os.release(), '<=6.1')
+    ) {
+      return false;
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+
   for (const item of version.files) {
     if (item.system.includes(systype)) {
       return true;
