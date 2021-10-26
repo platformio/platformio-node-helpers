@@ -72,6 +72,12 @@ export class ProjectTasks {
       multienv: true,
     },
     {
+      name: 'Verbose Check',
+      args: ['check', '--verbose'],
+      group: 'Advanced',
+      multienv: true,
+    },
+    {
       name: 'Remote Upload',
       args: ['remote', 'run', '--target', 'upload'],
       group: 'Remote Development',
