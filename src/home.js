@@ -85,20 +85,27 @@ async function listenIDECommands(callback) {
     _IDECMDS_LISTENER_STATUS = 0;
   };
 
-  sock.onmessage = (event) => {
+  sock.onmessage = async (event) => {
     try {
-      const result = jsonrpc.parse(event.data);
-      switch (result.type) {
-        case 'success':
-          callback(result.payload.result.method, result.payload.result.params);
-          break;
-
-        case 'error':
-          console.error('Errored result: ' + result.payload.toString());
-          break;
+      const msg = jsonrpc.parse(event.data);
+      if (msg.type === 'success' && msg.payload.result.method) {
+        const result = await callback(
+          msg.payload.result.method,
+          msg.payload.result.params
+        );
+        sock.send(
+          JSON.stringify(
+            jsonrpc.request(Math.random().toString(), 'ide.on_command_result', [
+              msg.payload.result.id,
+              result,
+            ])
+          )
+        );
+      } else if (msg.type === 'error') {
+        console.error('Errored WS result: ', msg.payload);
       }
     } catch (err) {
-      console.error('Invalid RPC message: ' + err.toString());
+      console.error('Invalid RPC message: ', err);
     }
     sock.send(
       JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands'))
