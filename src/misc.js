@@ -83,7 +83,7 @@ export function getErrorReportUrl(title, description) {
       'https://github.com/platformio/platformio-vscode-ide/issues/205',
     ],
     [
-      'missed `distutils`',
+      'Could not find distutils module',
       'https://github.com/platformio/platformio-core-installer/issues/85',
     ],
     [

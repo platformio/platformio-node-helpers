@@ -24,6 +24,7 @@ import zlib from 'zlib';
 export async function findPythonExecutable() {
   const exenames = proc.IS_WINDOWS ? ['python.exe'] : ['python3', 'python'];
   const envPath = process.env.PLATFORMIO_PATH || process.env.PATH;
+  const errors = [];
   for (const location of envPath.split(path.delimiter)) {
     for (const exename of exenames) {
       const executable = path.normalize(path.join(location, exename)).replace(/"/g, '');
@@ -36,7 +37,13 @@ export async function findPythonExecutable() {
         }
       } catch (err) {
         console.warn(executable, err);
+        errors.push(err);
       }
+    }
+  }
+  for (const err of errors) {
+    if (err.toString().includes('Could not find distutils module')) {
+      throw err;
     }
   }
   return null;
