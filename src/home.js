@@ -9,6 +9,7 @@
 import * as misc from './misc';
 import { getCoreDir, runPIOCommand } from './core';
 
+import WebSocket from 'ws'; // eslint-disable-line import/no-unresolved
 import crypto from 'crypto';
 import fs from 'fs';
 import got from 'got';
@@ -16,7 +17,6 @@ import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
 import qs from 'querystringify';
 import tcpPortUsed from 'tcp-port-used';
-import ws from 'ws';
 
 const SERVER_LAUNCH_TIMEOUT = 30; // 30 seconds
 const SERVER_AUTOSHUTDOWN_TIMEOUT = 3600; // 1 hour
@@ -70,30 +70,26 @@ async function listenIDECommands(callback) {
   if (_IDECMDS_LISTENER_STATUS > 0) {
     return;
   }
-  const sock = new ws(constructServerUrl({ scheme: 'ws', path: '/wsrpc' }), {
+  const ws = new WebSocket(constructServerUrl({ scheme: 'ws', path: '/wsrpc' }), {
     perMessageDeflate: false,
   });
-  sock.onopen = () => {
+  ws.on('open', () => {
     _IDECMDS_LISTENER_STATUS = 1;
     // "ping" message to initiate 'ide.listen_commands'
-    sock.send(
-      JSON.stringify(jsonrpc.request(Math.random().toString(), 'core.version'))
-    );
-  };
-
-  sock.onclose = () => {
+    ws.send(JSON.stringify(jsonrpc.request(Math.random().toString(), 'core.version')));
+  });
+  ws.on('close', () => {
     _IDECMDS_LISTENER_STATUS = 0;
-  };
-
-  sock.onmessage = async (event) => {
+  });
+  ws.on('message', async (data) => {
     try {
-      const msg = jsonrpc.parse(event.data);
+      const msg = jsonrpc.parse(data);
       if (msg.type === 'success' && msg.payload.result.method) {
         const result = await callback(
           msg.payload.result.method,
           msg.payload.result.params
         );
-        sock.send(
+        ws.send(
           JSON.stringify(
             jsonrpc.request(Math.random().toString(), 'ide.on_command_result', [
               msg.payload.result.id,
@@ -107,10 +103,10 @@ async function listenIDECommands(callback) {
     } catch (err) {
       console.error('Invalid RPC message: ', err);
     }
-    sock.send(
+    ws.send(
       JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands'))
     );
-  };
+  });
 }
 
 async function isPortUsed(host, port) {
