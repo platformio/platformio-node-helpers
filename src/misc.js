@@ -94,6 +94,10 @@ export function getErrorReportUrl(title, description) {
       'subprocess.CalledProcessError',
       'https://github.com/platformio/platformio-core-installer/issues/221',
     ],
+    [
+      'Can not find Python Interpreter',
+      'https://github.com/platformio/platformio-core-installer/issues/1774',
+    ],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
