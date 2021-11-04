@@ -70,34 +70,13 @@ export async function reportError(err) {
 
 export function getErrorReportUrl(title, description) {
   const errorToUrls = [
-    [
-      'Multiple requests to rebuild the project',
-      'https://github.com/platformio/platformio-vscode-ide/issues/2363',
-    ],
-    [
-      'WindowsError: [Error 5]',
-      'https://github.com/platformio/platformio-vscode-ide/issues/884',
-    ],
-    [
-      'Could not start PIO Home server: Error: timeout',
-      'https://github.com/platformio/platformio-vscode-ide/issues/205',
-    ],
-    [
-      'Could not find distutils module',
-      'https://github.com/platformio/platformio-core-installer/issues/85',
-    ],
-    [
-      'after connection broken by',
-      'https://github.com/platformio/platformio-core-installer/issues/152',
-    ],
-    [
-      'subprocess.CalledProcessError',
-      'https://github.com/platformio/platformio-core-installer/issues/221',
-    ],
-    [
-      'Can not find Python Interpreter',
-      'https://github.com/platformio/platformio-core-installer/issues/1774',
-    ],
+    ['Multiple requests to rebuild the project', 'https://bit.ly/3mMTOgB'],
+    ['WindowsError: [Error 5]', 'https://bit.ly/3GTAtlG'],
+    ['Could not start PIO Home server: Error: timeout', 'https://bit.ly/2Yfl65C'],
+    ['Could not find distutils module', 'https://bit.ly/3bK6zlH'],
+    ['after connection broken by', 'https://bit.ly/3q6StTV'],
+    ['subprocess.CalledProcessError', 'https://bit.ly/3EFlxWq'],
+    ['Can not find Python Interpreter', 'https://bit.ly/3wkz0Qv'],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
