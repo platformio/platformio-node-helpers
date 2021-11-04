@@ -78,13 +78,13 @@ export default class ProjectObserver {
     return this._activeEnvName;
   }
 
-  async switchProjectEnv(name) {
+  async switchProjectEnv(name, forceRebuildIndex = false) {
     const validNames = (await this.getProjectEnvs()).map((item) => item.name);
     if (!validNames.includes(name)) {
       name = undefined;
     }
     this._activeEnvName = name;
-    if (this._previousActiveEnvName !== this._activeEnvName) {
+    if (this._previousActiveEnvName !== this._activeEnvName || forceRebuildIndex) {
       this._previousActiveEnvName = this._activeEnvName;
       this.rebuildIndex({ delayed: true });
     }
@@ -157,7 +157,7 @@ export default class ProjectObserver {
     this.resetCache();
     // reset to `undefined` if env was removed from conf
     // rebuildIndex
-    this.switchProjectEnv(this._activeEnvName);
+    this.switchProjectEnv(this._activeEnvName, true);
     this.requestUpdateDirWatchers();
     if ((this.options.api || {}).onDidChangeProjectConfig) {
       this.options.api.onDidChangeProjectConfig(this.projectDir);
