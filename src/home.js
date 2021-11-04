@@ -83,7 +83,7 @@ async function listenIDECommands(callback) {
   });
   ws.on('message', async (data) => {
     try {
-      const msg = jsonrpc.parse(data);
+      const msg = jsonrpc.parse(data.toString());
       if (msg.type === 'success' && msg.payload.result.method) {
         const result = await callback(
           msg.payload.result.method,
