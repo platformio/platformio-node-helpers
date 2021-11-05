@@ -34,7 +34,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   configureBuiltInPython() {
-    if (!this.params.useBuiltinPython || !this.params.useBuiltinPIOCore) {
+    if (!this.params.useBuiltinPython) {
       return;
     }
     const builtInPythonDir = PlatformIOCoreStage.getBuiltInPythonDir();
@@ -44,14 +44,12 @@ export default class PlatformIOCoreStage extends BaseStage {
   }
 
   async check() {
-    if (!this.params.useBuiltinPIOCore) {
-      this.status = BaseStage.STATUS_SUCCESSED;
-      return true;
-    }
-    try {
-      await fs.access(core.getEnvBinDir());
-    } catch (err) {
-      throw new Error('PlatformIO Core has not been installed yet!');
+    if (this.params.useBuiltinPIOCore) {
+      try {
+        await fs.access(core.getEnvBinDir());
+      } catch (err) {
+        throw new Error('PlatformIO Core has not been installed yet!');
+      }
     }
     // check that PIO Core is installed and load its state an patch OS environ
     await this.loadCoreState();
@@ -59,21 +57,105 @@ export default class PlatformIOCoreStage extends BaseStage {
     return true;
   }
 
-  async install(withProgress = undefined) {
-    if (!withProgress) {
-      withProgress = () => {};
+  async loadCoreState() {
+    const stateJSONPath = path.join(
+      core.getTmpDir(),
+      `core-dump-${Math.round(Math.random() * 100000)}.json`
+    );
+    const scriptArgs = [];
+    if (this.useDevCore()) {
+      scriptArgs.push('--dev');
+    }
+    scriptArgs.push(
+      ...[
+        'check',
+        'core',
+        this.params.disableAutoUpdates || !this.params.useBuiltinPIOCore
+          ? '--no-auto-upgrade'
+          : '--auto-upgrade',
+      ]
+    );
+    if (this.params.pioCoreVersionSpec) {
+      scriptArgs.push(...['--version-spec', this.params.pioCoreVersionSpec]);
+    }
+    if (!this.params.useBuiltinPIOCore) {
+      scriptArgs.push('--global');
+    }
+    scriptArgs.push(...['--dump-state', stateJSONPath]);
+    console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
+
+    // Load PIO Core state
+    const coreState = await misc.loadJSON(stateJSONPath);
+    console.info('PIO Core State', coreState);
+    core.setCoreState(coreState);
+    await fs.unlink(stateJSONPath); // cleanup
+
+    // Add PIO Core virtualenv to global PATH
+    // Setup `platformio` CLI globally for a Node.JS process
+    if (this.params.useBuiltinPIOCore) {
+      proc.extendOSEnvironPath('PLATFORMIO_PATH', [
+        core.getEnvBinDir(),
+        core.getEnvDir(),
+      ]);
     }
 
+    return true;
+  }
+
+  useDevCore() {
+    return (
+      this.params.useDevelopmentPIOCore ||
+      (this.params.pioCoreVersionSpec || '').includes('-')
+    );
+  }
+
+  async whereIsPython({ prompt = false } = {}) {
+    let status = this.params.pythonPrompt.STATUS_TRY_AGAIN;
+    this.configureBuiltInPython();
+
+    if (!prompt) {
+      return await findPythonExecutable();
+    }
+
+    do {
+      const pythonExecutable = await findPythonExecutable();
+      if (pythonExecutable) {
+        return pythonExecutable;
+      }
+      const result = await this.params.pythonPrompt.prompt();
+      status = result.status;
+      if (
+        status === this.params.pythonPrompt.STATUS_CUSTOMEXE &&
+        result.pythonExecutable
+      ) {
+        proc.extendOSEnvironPath('PLATFORMIO_PATH', [
+          path.dirname(result.pythonExecutable),
+        ]);
+      }
+    } while (status !== this.params.pythonPrompt.STATUS_ABORT);
+
+    this.status = BaseStage.STATUS_FAILED;
+    throw new Error(
+      'Can not find Python Interpreter. Please install Python 3.6 or above manually'
+    );
+  }
+
+  async install(withProgress = undefined) {
     if (this.status === BaseStage.STATUS_SUCCESSED) {
       return true;
     }
     if (!this.params.useBuiltinPIOCore) {
-      this.status = BaseStage.STATUS_SUCCESSED;
-      return true;
+      this.status = BaseStage.STATUS_FAILED;
+      throw new Error(
+        'Could not find compatible PlatformIO Core. Please enable `platformio-ide.useBuiltinPIOCore` setting and restart IDE.'
+      );
     }
     this.status = BaseStage.STATUS_INSTALLING;
-    withProgress('Preparing for installation', 10);
 
+    if (!withProgress) {
+      withProgress = () => {};
+    }
+    withProgress('Preparing for installation', 10);
     try {
       // shutdown all PIO Home servers which block python.exe on Windows
       await home.shutdownAllServers();
@@ -118,82 +200,6 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     withProgress('Completed!', 10);
     return true;
-  }
-
-  useDevCore() {
-    return (
-      this.params.useDevelopmentPIOCore ||
-      (this.params.pioCoreVersionSpec || '').includes('-')
-    );
-  }
-
-  async loadCoreState() {
-    const stateJSONPath = path.join(
-      core.getTmpDir(),
-      `core-dump-${Math.round(Math.random() * 100000)}.json`
-    );
-    const scriptArgs = [];
-    if (this.useDevCore()) {
-      scriptArgs.push('--dev');
-    }
-    scriptArgs.push(
-      ...[
-        'check',
-        'core',
-        this.params.disableAutoUpdates ? '--no-auto-upgrade' : '--auto-upgrade',
-      ]
-    );
-    if (this.params.pioCoreVersionSpec) {
-      scriptArgs.push(...['--version-spec', this.params.pioCoreVersionSpec]);
-    }
-    scriptArgs.push(...['--dump-state', stateJSONPath]);
-    console.info(await callInstallerScript(await this.whereIsPython(), scriptArgs));
-
-    // Load PIO Core state
-    const coreState = await misc.loadJSON(stateJSONPath);
-    console.info('PIO Core State', coreState);
-    core.setCoreState(coreState);
-    await fs.unlink(stateJSONPath); // cleanup
-
-    // Add PIO Core virtualenv to global PATH
-    // Setup `platformio` CLI globally for a Node.JS process
-    proc.extendOSEnvironPath('PLATFORMIO_PATH', [
-      core.getEnvBinDir(),
-      core.getEnvDir(),
-    ]);
-
-    return true;
-  }
-
-  async whereIsPython({ prompt = false } = {}) {
-    let status = this.params.pythonPrompt.STATUS_TRY_AGAIN;
-    this.configureBuiltInPython();
-
-    if (!prompt) {
-      return await findPythonExecutable();
-    }
-
-    do {
-      const pythonExecutable = await findPythonExecutable();
-      if (pythonExecutable) {
-        return pythonExecutable;
-      }
-      const result = await this.params.pythonPrompt.prompt();
-      status = result.status;
-      if (
-        status === this.params.pythonPrompt.STATUS_CUSTOMEXE &&
-        result.pythonExecutable
-      ) {
-        proc.extendOSEnvironPath('PLATFORMIO_PATH', [
-          path.dirname(result.pythonExecutable),
-        ]);
-      }
-    } while (status !== this.params.pythonPrompt.STATUS_ABORT);
-
-    this.status = BaseStage.STATUS_FAILED;
-    throw new Error(
-      'Can not find Python Interpreter. Please install Python 3.6 or above manually'
-    );
   }
 
   installPIOHome() {

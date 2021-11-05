@@ -8,7 +8,6 @@
 
 import * as proc from './proc';
 
-import { findPythonExecutable } from './installer/get-python';
 import fs from 'fs';
 import path from 'path';
 
@@ -108,7 +107,7 @@ export function getEnvBinDir() {
 }
 
 export async function getCorePythonExe() {
-  const result = getCoreState().python_exe || (await findPythonExecutable());
+  const result = getCoreState().python_exe;
   if (!result) {
     throw new Error('PlatformIO Core is not installed');
   }
