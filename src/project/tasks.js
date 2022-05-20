@@ -72,6 +72,12 @@ export class ProjectTasks {
       multienv: true,
     },
     {
+      name: 'Verbose Test',
+      args: ['test', '--verbose'],
+      group: 'Advanced',
+      multienv: true,
+    },    
+    {
       name: 'Verbose Check',
       args: ['check', '--verbose'],
       group: 'Advanced',
