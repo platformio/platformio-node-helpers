@@ -211,26 +211,13 @@ export default class ProjectObserver {
   async fetchLibDirs() {
     const script = `
 import json
-import os
 
-result = []
 try:
-    from platformio.project.helpers import get_project_all_lib_dirs
-
-    result = get_project_all_lib_dirs()
+    from platformio.public import get_project_watch_lib_dirs
 except ImportError:
-    from platformio.project.config import ProjectConfig
+  from platformio.project.helpers import get_project_all_lib_dirs as get_project_watch_lib_dirs
 
-    c = ProjectConfig()
-    libdeps_dir = c.get_optional_dir("libdeps")
-    result = [c.get_optional_dir("globallib"), c.get_optional_dir("lib"), libdeps_dir]
-    result.extend(
-        os.path.join(libdeps_dir, d)
-        for d in (os.listdir(libdeps_dir) if os.path.isdir(libdeps_dir) else [])
-        if os.path.isdir(os.path.join(libdeps_dir, d))
-    )
-
-print(json.dumps(result))
+print(json.dumps(get_project_watch_lib_dirs()))
 `;
     const output = await proc.getCommandOutput(
       await core.getCorePythonExe(),
