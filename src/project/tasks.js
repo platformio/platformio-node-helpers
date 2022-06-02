@@ -76,7 +76,7 @@ export class ProjectTasks {
       args: ['test', '--verbose'],
       group: 'Advanced',
       multienv: true,
-    },    
+    },
     {
       name: 'Verbose Check',
       args: ['check', '--verbose'],
@@ -194,8 +194,8 @@ export class ProjectTasks {
   async fetchEnvTargets(name) {
     const scriptLines = [
       'import json, os',
-      'from platformio.project.helpers import load_project_ide_data',
-      `print(json.dumps(load_project_ide_data(os.getcwd(), '${name}')["targets"]))`,
+      'from platformio.public import load_build_metadata',
+      `print(json.dumps(load_build_metadata(os.getcwd(), '${name}')["targets"]))`,
     ];
     const output = await proc.getCommandOutput(
       await core.getCorePythonExe(),
