@@ -49,31 +49,31 @@
   "homepage": "http://platformio.org",
   "dependencies": {
     "cross-spawn": "~7.0.3",
-    "glob": "~7.2.0",
+    "glob": "~8.0.3",
     "global-agent": "^3.0.0",
-    "got": "^11.8.3",
+    "got": "^11.8.5",
     "jsonrpc-lite": "~2.1.1",
     "os-tmpdir": "*",
     "querystringify": "*",
-    "semver": "^7.3.5",
+    "semver": "^7.3.7",
     "tar": "~6.1.11",
     "tcp-port-used": "~1.0.2",
     "tmp": "~0.2.1",
-    "ws": "~8.5.0"
+    "ws": "~8.8.0"
   },
   "devDependencies": {
-    "@babel/core": "~7.17.2",
-    "@babel/eslint-parser": "~7.17.0",
-    "@babel/plugin-proposal-class-properties": "~7.16.7",
-    "@babel/plugin-transform-classes": "~7.16.7",
-    "@babel/preset-env": "~7.16.11",
+    "@babel/core": "~7.18.5",
+    "@babel/eslint-parser": "~7.18.2",
+    "@babel/plugin-proposal-class-properties": "~7.17.12",
+    "@babel/plugin-transform-classes": "~7.18.4",
+    "@babel/preset-env": "~7.18.2",
     "@types/node": "~12",
-    "babel-loader": "~8.2.3",
-    "eslint": "~8.11.0",
+    "babel-loader": "~8.2.5",
+    "eslint": "~8.18.0",
     "eslint-import-resolver-webpack": "~0.13.2",
-    "eslint-plugin-import": "~2.25.4",
-    "prettier": "~2.6.0",
-    "webpack": "~5.70.0",
-    "webpack-cli": "~4.9.2"
+    "eslint-plugin-import": "~2.26.0",
+    "prettier": "~2.7.1",
+    "webpack": "~5.73.0",
+    "webpack-cli": "~4.10.0"
   }
 }
