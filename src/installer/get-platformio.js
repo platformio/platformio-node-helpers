@@ -92,8 +92,12 @@ export async function getInstallerScript() {
   );
   try {
     await fs.access(scriptPath);
+    const cachedContents = await fs.readFile(scriptPath, { encoding: 'utf-8' });
+    if (cachedContents.trim() !== PYTHON_SCRIPT_CODE.trim()) {
+      throw Error('Broken script');
+    }
   } catch (err) {
-    await fs.writeFile(scriptPath, PYTHON_SCRIPT_CODE);
+    await fs.writeFile(scriptPath, PYTHON_SCRIPT_CODE, { encoding: 'utf-8' });
   }
   return scriptPath;
 }
