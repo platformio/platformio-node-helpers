@@ -224,16 +224,20 @@ async function downloadRegistryFile(regfile, destinationDir) {
       return archivePath;
     }
     const pipeline = promisify(stream.pipeline);
-    await pipeline(
-      got.stream(url, {
-        https: {
-          certificateAuthority: HTTPS_CA_CERTIFICATES,
-        },
-      }),
-      fs.createWriteStream(archivePath)
-    );
-    if (await fileExistsAndChecksumMatches(archivePath, checksum)) {
-      return archivePath;
+    try {
+      await pipeline(
+        got.stream(url, {
+          https: {
+            certificateAuthority: HTTPS_CA_CERTIFICATES,
+          },
+        }),
+        fs.createWriteStream(archivePath)
+      );
+      if (await fileExistsAndChecksumMatches(archivePath, checksum)) {
+        return archivePath;
+      }
+    } catch (err) {
+      console.error(err);
     }
   }
 }
