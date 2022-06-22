@@ -49,7 +49,9 @@ export default class ProjectConfig {
     this._parsed.push(path);
     let section = null;
     let option = null;
-    for (let line of (await fs.readFile(path, 'utf-8')).split(this.reLines)) {
+    for (let line of (await fs.readFile(path, { encoding: 'utf-8' })).split(
+      this.reLines
+    )) {
       // Remove comments
       line = line.replace(this.reComment, '');
       if (!line) {

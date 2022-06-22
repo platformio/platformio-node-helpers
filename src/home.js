@@ -233,7 +233,7 @@ export async function shutdownAllServers() {
 function loadState() {
   try {
     return JSON.parse(
-      fs.readFileSync(path.join(getCoreDir(), 'homestate.json'), 'utf8')
+      fs.readFileSync(path.join(getCoreDir(), 'homestate.json'), { encoding: 'utf-8' })
     );
   } catch (err) {}
 }

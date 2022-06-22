@@ -18,7 +18,7 @@ export function sleep(ms) {
 export async function loadJSON(filePath) {
   try {
     await fs.access(filePath);
-    return JSON.parse(await fs.readFile(filePath, 'utf8'));
+    return JSON.parse(await fs.readFile(filePath, { encoding: 'utf-8' }));
   } catch (err) {
     console.error(err);
     return null;
