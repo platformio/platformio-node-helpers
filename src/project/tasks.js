@@ -41,6 +41,30 @@ export class ProjectTasks {
       multienv: true,
     },
     {
+      name: 'Clean All',
+      description: 'Clean a build environment and installed library dependencies',
+      args: ['run', '--target', 'cleanall'],
+      multienv: true,
+    },
+    {
+      name: 'List',
+      args: ['pkg', 'list'],
+      group: 'Dependencies',
+      multienv: true,
+    },
+    {
+      name: 'Outdated',
+      args: ['pkg', 'outdated'],
+      group: 'Dependencies',
+      multienv: true,
+    },
+    {
+      name: 'Update',
+      args: ['pkg', 'update'],
+      group: 'Dependencies',
+      multienv: true,
+    },
+    {
       name: 'Test',
       args: ['test'],
       group: 'Advanced',
@@ -80,6 +104,13 @@ export class ProjectTasks {
     {
       name: 'Verbose Check',
       args: ['check', '--verbose'],
+      group: 'Advanced',
+      multienv: true,
+    },
+    {
+      name: 'Compilation Database',
+      description: 'Generate compilation database `compile_commands.json`',
+      args: ['run', '--target', 'compiledb'],
       group: 'Advanced',
       multienv: true,
     },
@@ -130,18 +161,6 @@ export class ProjectTasks {
         'Rebuild IntelliSense Index',
         undefined,
         ['init', '--ide', this.ide],
-        'Miscellaneous'
-      ),
-      new TaskItem(
-        'Update Project Libraries',
-        undefined,
-        ['lib', 'update'],
-        'Miscellaneous'
-      ),
-      new TaskItem(
-        'Update All',
-        'Update All (libraries, dev-platforms, and packages)',
-        ['update'],
         'Miscellaneous'
       ),
       new TaskItem('Upgrade PlatformIO Core', undefined, ['upgrade'], 'Miscellaneous')
