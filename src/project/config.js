@@ -119,14 +119,21 @@ export default class ProjectConfig {
     if (!value.includes('${') || !value.includes('}')) {
       return value;
     }
-    return value.replace(this.reInterpolation, (_, section, option) =>
-      this._reInterpolationHandler(section, option)
+    return value.replace(this.reInterpolation, (_, _section, _option) =>
+      this._reInterpolationHandler(section, _section, _option)
     );
   }
 
-  _reInterpolationHandler(section, option) {
-    if (section == 'sysenv') {
+  _reInterpolationHandler(parentSection, section, option) {
+    if (section === 'sysenv') {
       return process.env[option] || '';
+    }
+    // handle ${this.*}
+    if (section === 'this') {
+      section = parentSection;
+      if (option === '__env__') {
+        return parentSection.substring(4);
+      }
     }
     return this.get(section, option);
   }
