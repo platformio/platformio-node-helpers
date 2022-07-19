@@ -46,7 +46,7 @@
   "bugs": {
     "url": "https://github.com/platformio/platformio-node-helpers/issues"
   },
-  "homepage": "http://platformio.org",
+  "homepage": "https://platformio.org",
   "dependencies": {
     "cross-spawn": "~7.0.3",
     "glob": "~8.0.3",
@@ -59,17 +59,17 @@
     "tar": "~6.1.11",
     "tcp-port-used": "~1.0.2",
     "tmp": "~0.2.1",
-    "ws": "~8.8.0"
+    "ws": "~8.8.1"
   },
   "devDependencies": {
-    "@babel/core": "~7.18.5",
-    "@babel/eslint-parser": "~7.18.2",
-    "@babel/plugin-proposal-class-properties": "~7.17.12",
-    "@babel/plugin-transform-classes": "~7.18.4",
-    "@babel/preset-env": "~7.18.2",
+    "@babel/core": "~7.18.9",
+    "@babel/eslint-parser": "~7.18.9",
+    "@babel/plugin-proposal-class-properties": "~7.18.6",
+    "@babel/plugin-transform-classes": "~7.18.9",
+    "@babel/preset-env": "~7.18.9",
     "@types/node": "~12",
     "babel-loader": "~8.2.5",
-    "eslint": "~8.18.0",
+    "eslint": "~8.20.0",
     "eslint-import-resolver-webpack": "~0.13.2",
     "eslint-plugin-import": "~2.26.0",
     "prettier": "~2.7.1",
