@@ -143,12 +143,16 @@ async function ensurePythonExeExists(pythonDir) {
   throw new Error('Python executable does not exist!');
 }
 
-export async function installPortablePython(destinationDir) {
+export async function installPortablePython(destinationDir, options = undefined) {
   const registryFile = await getRegistryFile();
   if (!registryFile) {
     throw new Error(`Could not find portable Python for ${proc.getSysType()}`);
   }
-  const archivePath = await downloadRegistryFile(registryFile, core.getTmpDir());
+  const archivePath = await downloadRegistryFile(
+    registryFile,
+    core.getTmpDir(),
+    options
+  );
   if (!archivePath) {
     throw new Error('Could not download portable Python');
   }
@@ -214,11 +218,24 @@ function isVersionSystemCompatible(version, systype) {
   return false;
 }
 
-async function downloadRegistryFile(regfile, destinationDir) {
+async function downloadRegistryFile(regfile, destinationDir, options = undefined) {
+  options = options || {};
+  let archivePath = undefined;
+
+  if (options.predownloadedPackageDir) {
+    archivePath = path.join(options.predownloadedPackageDir, regfile.name);
+    if (
+      await fileExistsAndChecksumMatches(archivePath, (regfile.checksum || {}).sha256)
+    ) {
+      console.info('Using predownloaded package from ' + archivePath);
+      return archivePath;
+    }
+  }
+
   for await (const { url, checksum } of registryFileMirrorIterator(
     regfile.download_url
   )) {
-    const archivePath = path.join(destinationDir, regfile.name);
+    archivePath = path.join(destinationDir, regfile.name);
     // if already downloaded
     if (await fileExistsAndChecksumMatches(archivePath, checksum)) {
       return archivePath;
@@ -275,6 +292,7 @@ async function* registryFileMirrorIterator(downloadUrl) {
 }
 
 async function fileExistsAndChecksumMatches(filePath, checksum) {
+  console.log('fileExistsAndChecksumMatches', filePath, checksum);
   try {
     await fs.promises.access(filePath);
     if ((await calculateFileHashsum(filePath)) === checksum) {

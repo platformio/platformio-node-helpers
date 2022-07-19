@@ -163,7 +163,9 @@ export default class PlatformIOCoreStage extends BaseStage {
       if (this.params.useBuiltinPython) {
         withProgress('Downloading portable Python interpreter', 10);
         try {
-          await installPortablePython(PlatformIOCoreStage.getBuiltInPythonDir());
+          await installPortablePython(PlatformIOCoreStage.getBuiltInPythonDir(), {
+            predownloadedPackageDir: this.params.predownloadedPackageDir,
+          });
         } catch (err) {
           console.warn(err);
           // cleanup
