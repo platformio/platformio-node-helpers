@@ -223,6 +223,9 @@ export async function shutdownAllServers() {
       got(
         constructServerUrl({ port, includeSID: false, query: { __shutdown__: '1' } }),
         { timeout: 1000, throwHttpErrors: false }
+      ).then(
+        () => {},
+        () => {}
       );
     } catch (err) {}
     port++;
