@@ -70,35 +70,44 @@ export default class ProjectIndexer {
     if (this._inProgress) {
       return;
     }
-    return this.options.api.withIndexRebuildingProgress(async () => {
-      this._inProgress = true;
-      try {
-        await new Promise((resolve, reject) => {
-          const args = ['init', '--ide', this.options.ide];
-          if (this.observer.getActiveEnvName()) {
-            args.push('--environment', this.observer.getActiveEnvName());
-          }
-          runPIOCommand(
-            args,
-            (code, stdout, stderr) => {
-              if (code === 0) {
-                resolve();
-              } else {
-                reject(new Error(stderr));
-              }
-            },
-            {
-              spawnOptions: {
-                cwd: this.projectDir,
-              },
-              runInQueue: true,
+    return this.options.api.withIndexRebuildingProgress(async (withProgress) =>
+      this._rebuildWithProgress(withProgress)
+    );
+  }
+
+  async _rebuildWithProgress(withProgress = undefined) {
+    if (!withProgress) {
+      withProgress = () => {};
+    }
+    this._inProgress = true;
+    try {
+      await new Promise((resolve, reject) => {
+        const args = ['project', 'init', '--ide', this.options.ide];
+        if (this.observer.getActiveEnvName()) {
+          args.push('--environment', this.observer.getActiveEnvName());
+        }
+        runPIOCommand(
+          args,
+          (code, stdout, stderr) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(stderr));
             }
-          );
-        });
-      } catch (err) {
-        console.warn(err);
-      }
-      this._inProgress = false;
-    });
+          },
+          {
+            spawnOptions: {
+              cwd: this.projectDir,
+            },
+            runInQueue: true,
+            onProcStdout: (data) => withProgress(data.toString().trim()),
+            onProcStderr: (data) => withProgress(data.toString().trim()),
+          }
+        );
+      });
+    } catch (err) {
+      console.warn(err);
+    }
+    this._inProgress = false;
   }
 }
