@@ -80,6 +80,20 @@ export default class ProjectIndexer {
       withProgress = () => {};
     }
     this._inProgress = true;
+    if (this.options.api.logOutputChannel) {
+      this.options.api.logOutputChannel.clear();
+    }
+    const logMessage = (value, isError = false) => {
+      withProgress(value.toString().trim());
+      if (this.options.api.logOutputChannel) {
+        this.options.api.logOutputChannel.append(value.toString());
+        if (isError) {
+          this.options.api.logOutputChannel.appendLine('');
+          this.options.api.logOutputChannel.show();
+        }
+      }
+    };
+
     try {
       await new Promise((resolve, reject) => {
         const args = ['project', 'init', '--ide', this.options.ide];
@@ -100,13 +114,14 @@ export default class ProjectIndexer {
               cwd: this.projectDir,
             },
             runInQueue: true,
-            onProcStdout: (data) => withProgress(data.toString().trim()),
-            onProcStderr: (data) => withProgress(data.toString().trim()),
+            onProcStdout: (data) => logMessage(data),
+            onProcStderr: (data) => logMessage(data, true),
           }
         );
       });
     } catch (err) {
       console.warn(err);
+      logMessage(err, true);
     }
     this._inProgress = false;
   }
