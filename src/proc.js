@@ -9,7 +9,7 @@
 import { bootstrap } from 'global-agent';
 import fs from 'fs';
 import path from 'path';
-import spawn from 'cross-spawn';
+const { spawn } = require('child_process');
 
 export const IS_WINDOWS = process.platform.startsWith('win');
 
@@ -118,28 +118,6 @@ function _runCommand(cmd, args, callback, options) {
   const errorLines = [];
   let completed = false;
 
-  // path PlatformIO's PATH
-  const envClone = Object.create(options.spawnOptions.env || process.env);
-  if (process.env.PLATFORMIO_PATH) {
-    envClone.PATH = process.env.PLATFORMIO_PATH;
-    envClone.Path = process.env.PLATFORMIO_PATH;
-  }
-  options.spawnOptions.env = envClone;
-
-  try {
-    const child = spawn(cmd, args, options.spawnOptions);
-    child.stdout.on('data', (line) => outputLines.push(line));
-    child.stderr.on('data', (line) => errorLines.push(line));
-    child.on('close', onExit);
-    child.on('error', (err) => {
-      errorLines.push(err.toString());
-      onExit(-1);
-    });
-  } catch (err) {
-    errorLines.push(err.toString());
-    onExit(-1);
-  }
-
   function onExit(code) {
     if (completed) {
       return;
@@ -152,9 +130,41 @@ function _runCommand(cmd, args, callback, options) {
       return;
     }
     completed = true;
-    const stdout = outputLines.map((x) => x.toString()).join('');
-    const stderr = errorLines.map((x) => x.toString()).join('');
+    const stdout = outputLines.join('');
+    const stderr = errorLines.join('');
     callback(code, stdout, stderr);
+  }
+
+  // path PlatformIO's PATH
+  const envClone = Object.create(options.spawnOptions.env || process.env);
+  if (process.env.PLATFORMIO_PATH) {
+    envClone.PATH = process.env.PLATFORMIO_PATH;
+    envClone.Path = process.env.PLATFORMIO_PATH;
+  }
+  options.spawnOptions.env = envClone;
+
+  try {
+    const child = spawn(cmd, args, options.spawnOptions);
+    child.stdout.on('data', (data) => {
+      outputLines.push(data.toString());
+      if (options.onProcStdout) {
+        options.onProcStdout(data);
+      }
+    });
+    child.stderr.on('data', (data) => {
+      errorLines.push(data.toString());
+      if (options.onProcStderr) {
+        options.onProcStderr(data);
+      }
+    });
+    child.on('close', onExit);
+    child.on('error', (err) => {
+      errorLines.push(err.toString());
+      onExit(-1);
+    });
+  } catch (err) {
+    errorLines.push(err.toString());
+    onExit(-1);
   }
 }
 

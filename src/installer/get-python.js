@@ -292,7 +292,6 @@ async function* registryFileMirrorIterator(downloadUrl) {
 }
 
 async function fileExistsAndChecksumMatches(filePath, checksum) {
-  console.log('fileExistsAndChecksumMatches', filePath, checksum);
   try {
     await fs.promises.access(filePath);
     if ((await calculateFileHashsum(filePath)) === checksum) {
