@@ -214,7 +214,7 @@ export class ProjectTasks {
     const scriptLines = [
       'import json, os',
       'from platformio.public import load_build_metadata',
-      `print(json.dumps(load_build_metadata(os.getcwd(), '${name}')["targets"], cache=True))`,
+      `print(json.dumps(load_build_metadata(os.getcwd(), '${name}', cache=True)["targets"]))`,
     ];
     const output = await proc.getCommandOutput(
       await core.getCorePythonExe(),
