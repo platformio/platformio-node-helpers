@@ -31,6 +31,7 @@ export default class ProjectObserver {
     this._updateDirWatchersTimeout = undefined;
     this._previousActiveEnvName = Object.create(null);
     this._activeEnvName = undefined;
+    this._apiConfigChangedTimeout = undefined;
 
     if (this.getSetting('autoRebuild')) {
       this.setupFSWatchers();
@@ -78,15 +79,15 @@ export default class ProjectObserver {
     return this._activeEnvName;
   }
 
-  async switchProjectEnv(name, forceRebuildIndex = false) {
+  async switchProjectEnv(name, { delayedRebuildIndex = false } = {}) {
     const validNames = (await this.getProjectEnvs()).map((item) => item.name);
     if (!validNames.includes(name)) {
       name = undefined;
     }
     this._activeEnvName = name;
-    if (this._previousActiveEnvName !== this._activeEnvName || forceRebuildIndex) {
+    if (this._previousActiveEnvName !== this._activeEnvName || delayedRebuildIndex) {
       this._previousActiveEnvName = this._activeEnvName;
-      this.rebuildIndex({ delayed: true });
+      this.rebuildIndex({ delayed: delayedRebuildIndex });
     }
   }
 
@@ -154,13 +155,20 @@ export default class ProjectObserver {
   }
 
   onDidChangeProjectConfig() {
-    this.resetCache();
     // reset to `undefined` if env was removed from conf
+    this.resetCache();
     // rebuildIndex
-    this.switchProjectEnv(this._activeEnvName, true);
+    this.switchProjectEnv(this._activeEnvName, { delayedRebuildIndex: true });
     this.requestUpdateDirWatchers();
     if ((this.options.api || {}).onDidChangeProjectConfig) {
-      this.options.api.onDidChangeProjectConfig(this.projectDir);
+      if (this._apiConfigChangedTimeout) {
+        clearTimeout(this._apiConfigChangedTimeout);
+        this._apiConfigChangedTimeout = undefined;
+      }
+      this._apiConfigChangedTimeout = setTimeout(
+        () => this.options.api.onDidChangeProjectConfig(this.projectDir),
+        (ProjectIndexer.AUTO_REBUILD_DELAY + 1) * 1000
+      );
     }
   }
 
