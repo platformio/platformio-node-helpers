@@ -70,12 +70,12 @@ export default class ProjectIndexer {
     if (this._inProgress) {
       return;
     }
-    return this.options.api.withIndexRebuildingProgress(async (withProgress) =>
-      this._rebuildWithProgress(withProgress)
+    return this.options.api.withIndexRebuildingProgress(
+      this._rebuildWithProgress.bind(this)
     );
   }
 
-  async _rebuildWithProgress(withProgress = undefined) {
+  async _rebuildWithProgress(withProgress = undefined, token = undefined) {
     if (!withProgress) {
       withProgress = () => {};
     }
@@ -87,9 +87,11 @@ export default class ProjectIndexer {
       withProgress(value.toString().trim());
       if (this.options.api.logOutputChannel) {
         this.options.api.logOutputChannel.append(value.toString());
+        if (isError || value.toString().includes('Manager: Installing')) {
+          this.options.api.logOutputChannel.show();
+        }
         if (isError) {
           this.options.api.logOutputChannel.appendLine('');
-          this.options.api.logOutputChannel.show();
         }
       }
     };
@@ -129,7 +131,9 @@ export default class ProjectIndexer {
       });
     } catch (err) {
       console.warn(err);
-      logMessage(err, true);
+      if (!token && !token.isCancellationRequested) {
+        logMessage(err, true);
+      }
     }
     this._inProgress = false;
   }
