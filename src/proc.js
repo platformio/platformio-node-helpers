@@ -144,21 +144,24 @@ function _runCommand(cmd, args, callback, options) {
   options.spawnOptions.env = envClone;
 
   try {
-    const child = spawn(cmd, args, options.spawnOptions);
-    child.stdout.on('data', (data) => {
+    const subprocess = spawn(cmd, args, options.spawnOptions);
+    if (options.onProcCreated) {
+      options.onProcCreated(subprocess);
+    }
+    subprocess.stdout.on('data', (data) => {
       outputLines.push(data.toString());
       if (options.onProcStdout) {
         options.onProcStdout(data);
       }
     });
-    child.stderr.on('data', (data) => {
+    subprocess.stderr.on('data', (data) => {
       errorLines.push(data.toString());
       if (options.onProcStderr) {
         options.onProcStderr(data);
       }
     });
-    child.on('close', onExit);
-    child.on('error', (err) => {
+    subprocess.on('close', onExit);
+    subprocess.on('error', (err) => {
       errorLines.push(err.toString());
       onExit(-1);
     });

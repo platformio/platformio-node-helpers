@@ -114,6 +114,14 @@ export default class ProjectIndexer {
               cwd: this.projectDir,
             },
             runInQueue: true,
+            onProcCreated: (subprocess) => {
+              if (token) {
+                token.onCancellationRequested(() => {
+                  logMessage('Configuration process has been terminated!', true);
+                  subprocess.kill();
+                });
+              }
+            },
             onProcStdout: (data) => logMessage(data),
             onProcStderr: (data) => logMessage(data, true),
           }
