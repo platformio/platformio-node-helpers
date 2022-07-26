@@ -6,6 +6,7 @@
  * the root directory of this source tree.
  */
 
+import { cleanCmdQueue } from '../proc';
 import path from 'path';
 import { runPIOCommand } from '../core';
 
@@ -120,6 +121,7 @@ export default class ProjectIndexer {
               if (token) {
                 token.onCancellationRequested(() => {
                   logMessage('Configuration process has been terminated!', true);
+                  cleanCmdQueue();
                   subprocess.kill();
                 });
               }

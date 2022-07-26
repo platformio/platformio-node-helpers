@@ -94,7 +94,33 @@ export function extendOSEnvironPath(name, items, prepend = true) {
   });
 }
 
+/**
+ * Run command helpers
+ */
+
 const __RUN_CMD_QUEUE = [];
+
+export function cleanCmdQueue() {
+  while (__RUN_CMD_QUEUE.length) {
+    const callback = __RUN_CMD_QUEUE.pop()[2];
+    if (callback) {
+      callback(-1, undefined, new Error('Terminated by user'));
+    }
+  }
+}
+
+function _removeComletedCmdfromQueue(id) {
+  const index = __RUN_CMD_QUEUE.findIndex((item) => item[3]._id === id);
+  if (index > -1) {
+    __RUN_CMD_QUEUE.splice(index, 1);
+  }
+}
+
+function _runNextCmdFromQueue() {
+  if (__RUN_CMD_QUEUE.length > 0) {
+    _runCommand(...__RUN_CMD_QUEUE.pop());
+  }
+}
 
 export function runCommand(cmd, args, callback = undefined, options = {}) {
   options = options || {};
@@ -171,18 +197,9 @@ function _runCommand(cmd, args, callback, options) {
   }
 }
 
-function _removeComletedCmdfromQueue(id) {
-  const index = __RUN_CMD_QUEUE.findIndex((item) => item[3]._id === id);
-  if (index > -1) {
-    __RUN_CMD_QUEUE.splice(index, 1);
-  }
-}
-
-function _runNextCmdFromQueue() {
-  if (__RUN_CMD_QUEUE.length > 0) {
-    _runCommand(...__RUN_CMD_QUEUE.pop());
-  }
-}
+/**
+ * End run command helpers
+ */
 
 export function getCommandOutput(cmd, args, options = {}) {
   return new Promise((resolve, reject) => {
