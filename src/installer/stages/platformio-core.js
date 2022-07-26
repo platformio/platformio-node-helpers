@@ -16,7 +16,6 @@ import BaseStage from './base';
 import { callInstallerScript } from '../get-platformio';
 import { promises as fs } from 'fs';
 import path from 'path';
-import tmp from 'tmp';
 
 export default class PlatformIOCoreStage extends BaseStage {
   static getBuiltInPythonDir() {
@@ -25,7 +24,6 @@ export default class PlatformIOCoreStage extends BaseStage {
 
   constructor() {
     super(...arguments);
-    tmp.setGracefulCleanup();
     this.configureBuiltInPython();
   }
 
