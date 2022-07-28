@@ -6,9 +6,9 @@
  * the root directory of this source tree.
  */
 
-import { cleanCmdQueue } from '../proc';
 import path from 'path';
 import { runPIOCommand } from '../core';
+import { terminateCmdsInQueue } from '../proc';
 
 export default class ProjectIndexer {
   static AUTO_REBUILD_DELAY = 3; // 3 seconds
@@ -121,7 +121,7 @@ export default class ProjectIndexer {
               if (token) {
                 token.onCancellationRequested(() => {
                   logMessage('Configuration process has been terminated!', true);
-                  cleanCmdQueue();
+                  terminateCmdsInQueue();
                   subprocess.kill();
                 });
               }

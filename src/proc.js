@@ -100,7 +100,7 @@ export function extendOSEnvironPath(name, items, prepend = true) {
 
 const __RUN_CMD_QUEUE = [];
 
-export function cleanCmdQueue() {
+export function terminateCmdsInQueue() {
   while (__RUN_CMD_QUEUE.length) {
     const callback = __RUN_CMD_QUEUE.pop()[2];
     if (callback) {
