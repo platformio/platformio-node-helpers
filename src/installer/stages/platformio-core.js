@@ -191,14 +191,14 @@ export default class PlatformIOCoreStage extends BaseStage {
       withProgress('Loading PlatformIO Core state', 40);
       await this.loadCoreState();
 
-      withProgress('Installing PlatformIO Home', 10);
+      withProgress('Installing PlatformIO Home', 80);
       await this.installPIOHome();
     } catch (err) {
       misc.reportError(err);
       throw err;
     }
 
-    withProgress('Completed!', 10);
+    withProgress('Completed!', 100);
     return true;
   }
 
