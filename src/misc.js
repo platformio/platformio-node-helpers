@@ -77,6 +77,7 @@ export function getErrorReportUrl(title, description) {
     ['after connection broken by', 'https://bit.ly/3q6StTV'],
     ['subprocess.CalledProcessError', 'https://bit.ly/3EFlxWq'],
     ['Can not find Python Interpreter', 'https://bit.ly/3wkz0Qv'],
+    ['platformio-ide.useBuiltinPIOCore', 'https://bit.ly/3AhJHHe'],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
