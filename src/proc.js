@@ -162,7 +162,7 @@ function _runCommand(cmd, args, callback, options) {
   }
 
   // path PlatformIO's PATH
-  const envClone = Object.create(options.spawnOptions.env || process.env);
+  const envClone = Object.assign({}, options.spawnOptions.env || process.env);
   if (process.env.PLATFORMIO_PATH) {
     envClone.PATH = process.env.PLATFORMIO_PATH;
     envClone.Path = process.env.PLATFORMIO_PATH;

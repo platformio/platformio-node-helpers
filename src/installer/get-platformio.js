@@ -103,7 +103,7 @@ export async function getInstallerScript() {
 }
 
 export async function callInstallerScript(pythonExecutable, args) {
-  const envClone = Object.create(process.env);
+  const envClone = Object.assign({}, process.env);
   envClone.PLATFORMIO_CORE_DIR = core.getCoreDir();
   return await getCommandOutput(
     pythonExecutable,
