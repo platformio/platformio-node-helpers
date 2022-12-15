@@ -119,5 +119,30 @@ export async function runPIOCommand(args, callback, options = {}) {
   if (process.env.PLATFORMIO_CALLER) {
     baseArgs.push('-c', process.env.PLATFORMIO_CALLER);
   }
+  if (options.projectDir) {
+    options.spawnOptions = options.spawnOptions || {};
+    options.spawnOptions.cwd = options.projectDir;
+    delete options.projectDir;
+  }
   proc.runCommand(await getCorePythonExe(), [...baseArgs, ...args], callback, options);
+}
+
+export async function getPIOCommandOutput(args, options = {}) {
+  return new Promise((resolve, reject) => {
+    runPIOCommand(
+      args,
+      (code, stdout, stderr) => {
+        if (code === 0) {
+          return resolve(stdout);
+        } else {
+          const errMessage = stdout ? `${stderr} -> ${stdout}` : stderr;
+          const err = new Error(errMessage);
+          err.stderr = stderr;
+          err.stdout = stdout;
+          return reject(err);
+        }
+      },
+      options
+    );
+  });
 }

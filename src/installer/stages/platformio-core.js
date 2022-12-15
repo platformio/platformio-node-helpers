@@ -202,17 +202,11 @@ export default class PlatformIOCoreStage extends BaseStage {
     return true;
   }
 
-  installPIOHome() {
-    return new Promise((resolve) => {
-      core.runPIOCommand(
-        ['home', '--host', '__do_not_start__'],
-        (code, stdout, stderr) => {
-          if (code !== 0) {
-            console.warn(stdout, stderr);
-          }
-          return resolve(true);
-        }
-      );
-    });
+  async installPIOHome() {
+    try {
+      await core.getPIOCommandOutput(['home', '--host', '__do_not_start__']);
+    } catch (err) {
+      console.warn(err);
+    }
   }
 }

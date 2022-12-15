@@ -6,8 +6,8 @@
  * the root directory of this source tree.
  */
 
+import { getPIOCommandOutput } from '../core';
 import path from 'path';
-import { runPIOCommand } from '../core';
 import { terminateCmdsInQueue } from '../proc';
 
 export default class ProjectIndexer {
@@ -98,38 +98,24 @@ export default class ProjectIndexer {
     };
 
     try {
-      await new Promise((resolve, reject) => {
-        const args = ['project', 'init', '--ide', this.options.ide];
-        if (this.observer.getActiveEnvName()) {
-          args.push('--environment', this.observer.getActiveEnvName());
-        }
-        runPIOCommand(
-          args,
-          (code, stdout, stderr) => {
-            if (code === 0) {
-              resolve();
-            } else {
-              reject(new Error(stderr));
-            }
-          },
-          {
-            spawnOptions: {
-              cwd: this.projectDir,
-            },
-            runInQueue: true,
-            onProcCreated: (subprocess) => {
-              if (token) {
-                token.onCancellationRequested(() => {
-                  logMessage('Configuration process has been terminated!', true);
-                  terminateCmdsInQueue();
-                  subprocess.kill();
-                });
-              }
-            },
-            onProcStdout: (data) => logMessage(data),
-            onProcStderr: (data) => logMessage(data, true),
+      const args = ['project', 'init', '--ide', this.options.ide];
+      if (this.observer.getActiveEnvName()) {
+        args.push('--environment', this.observer.getActiveEnvName());
+      }
+      await getPIOCommandOutput(args, {
+        projectDir: this.projectDir,
+        runInQueue: true,
+        onProcCreated: (subprocess) => {
+          if (token) {
+            token.onCancellationRequested(() => {
+              logMessage('Configuration process has been terminated!', true);
+              terminateCmdsInQueue();
+              subprocess.kill();
+            });
           }
-        );
+        },
+        onProcStdout: (data) => logMessage(data),
+        onProcStderr: (data) => logMessage(data, true),
       });
     } catch (err) {
       console.warn(err);
