@@ -18,16 +18,19 @@ export class ProjectTasks {
     {
       name: 'Upload',
       args: ['run', '--target', 'upload'],
+      optionalPortArgs: ['--upload-port'],
       multienv: true,
     },
     {
       name: 'Monitor',
       args: ['device', 'monitor'],
+      optionalPortArgs: ['--port'],
       multienv: true,
     },
     {
       name: 'Upload and Monitor',
       args: ['run', '--target', 'upload', '--target', 'monitor'],
+      optionalPortArgs: ['--upload-port', '--monitor-port'],
       multienv: true,
     },
     {
@@ -66,6 +69,7 @@ export class ProjectTasks {
     {
       name: 'Test',
       args: ['test'],
+      optionalPortArgs: ['--upload-port', '--test-port'],
       group: 'Advanced',
       multienv: true,
     },
@@ -91,6 +95,7 @@ export class ProjectTasks {
     {
       name: 'Verbose Upload',
       args: ['run', '--verbose', '--target', 'upload'],
+      optionalPortArgs: ['--upload-port'],
       group: 'Advanced',
       multienv: true,
     },
@@ -144,25 +149,21 @@ export class ProjectTasks {
 
   async getDefaultTasks() {
     // General tasks
-    const result = ProjectTasks.generalTasks.map(
-      (task) =>
-        new TaskItem(
-          task.name,
-          task.description,
-          task.args.slice(0),
-          task.group,
-          task.multienv
-        )
-    );
+    const result = ProjectTasks.generalTasks.map((task) => {
+      const item = new TaskItem(task.name, task.args.slice(0), task.group);
+      item.description = task.description;
+      item.multienv = !!task.multienv;
+      item.optionalPortArgs = task.optionalPortArgs;
+      return item;
+    });
     // Miscellaneous tasks
     result.push(
       new TaskItem(
         'Rebuild IntelliSense Index',
-        undefined,
         ['project', 'init', '--ide', this.ide],
         'Miscellaneous'
       ),
-      new TaskItem('Upgrade PlatformIO Core', undefined, ['upgrade'], 'Miscellaneous')
+      new TaskItem('Upgrade PlatformIO Core', ['upgrade'], 'Miscellaneous')
     );
     return result;
   }
@@ -175,15 +176,15 @@ export class ProjectTasks {
         continue;
       }
       usedTitles.push(task.name);
-      result.push(
-        new TaskItem(
-          task.name,
-          task.description,
-          [...task.args.slice(0), '--environment', name],
-          task.group,
-          true
-        )
+      const item = new TaskItem(
+        task.name,
+        [...task.args.slice(0), '--environment', name],
+        task.group
       );
+      item.description = task.description;
+      item.multienv = true;
+      item.optionalPortArgs = task.optionalPortArgs;
+      result.push(item);
     }
     // dev-platform targets
     try {
@@ -191,15 +192,14 @@ export class ProjectTasks {
         if (usedTitles.includes(target.title)) {
           continue;
         }
-        result.push(
-          new TaskItem(
-            target.title || target.name,
-            target.description,
-            ['run', '--target', target.name, '--environment', name],
-            target.group,
-            true
-          )
+        const item = new TaskItem(
+          target.title || target.name,
+          ['run', '--target', target.name, '--environment', name],
+          target.group
         );
+        item.description = target.description;
+        item.multienv = true;
+        result.push(item);
       }
     } catch (err) {
       console.error(
@@ -226,12 +226,25 @@ print(json.dumps(load_build_metadata(os.getcwd(), '${name}', cache=True)["target
 }
 
 export class TaskItem {
-  constructor(name, description, args, group = 'General', multienv = false) {
+  constructor(name, args, group = 'General') {
     this.name = name;
-    this.description = description;
     this.args = args;
     this.group = group;
-    this.multienv = multienv;
+    this.description = undefined;
+    this.multienv = false;
+    this.optionalPortArgs = undefined;
+  }
+
+  isBuild() {
+    return this.name.startsWith('Build');
+  }
+
+  isClean() {
+    return this.name.startsWith('Clean');
+  }
+
+  isTest() {
+    return this.name.startsWith('Test');
   }
 
   get coreTarget() {
@@ -258,15 +271,14 @@ export class TaskItem {
     return env ? `${title} (${env})` : title;
   }
 
-  isBuild() {
-    return this.name.startsWith('Build');
-  }
-
-  isClean() {
-    return this.name.startsWith('Clean');
-  }
-
-  isTest() {
-    return this.name.startsWith('Test');
+  getCoreArgs(options = {}) {
+    const args = this.args.slice(0);
+    if (this.optionalPortArgs && options.port) {
+      this.optionalPortArgs.forEach((arg) => {
+        args.push(arg);
+        args.push(options.port);
+      });
+    }
+    return args;
   }
 }
