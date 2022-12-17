@@ -7,7 +7,6 @@
  */
 
 import * as core from '../core';
-import * as proc from '../proc';
 
 import ProjectConfig from './config';
 import ProjectIndexer from './indexer';
@@ -227,15 +226,9 @@ except ImportError:
 
 print(json.dumps(get_project_watch_lib_dirs()))
 `;
-    const output = await proc.getCommandOutput(
-      await core.getCorePythonExe(),
-      ['-c', script],
-      {
-        spawnOptions: {
-          cwd: this.projectDir,
-        },
-      }
-    );
+    const output = await core.getCorePythonCommandOutput(['-c', script], {
+      projectDir: this.projectDir,
+    });
     return JSON.parse(output.trim());
   }
 }

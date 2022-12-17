@@ -124,7 +124,6 @@ function _runNextCmdFromQueue() {
 
 export function runCommand(cmd, args, callback = undefined, options = {}) {
   options = options || {};
-  options.spawnOptions = options.spawnOptions || {};
   if (!options._id) {
     options._id = `${cmd}-${Math.random()}`;
   }
@@ -159,6 +158,12 @@ function _runCommand(cmd, args, callback, options) {
     const stdout = outputLines.join('');
     const stderr = errorLines.join('');
     callback(code, stdout, stderr);
+  }
+
+  options.spawnOptions = options.spawnOptions || {};
+
+  if (options.projectDir) {
+    options.spawnOptions.cwd = options.projectDir;
   }
 
   // path PlatformIO's PATH

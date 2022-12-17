@@ -7,7 +7,6 @@
  */
 
 import * as core from '../core';
-import * as proc from '../proc';
 
 export class ProjectTasks {
   static generalTasks = [
@@ -211,21 +210,17 @@ export class ProjectTasks {
   }
 
   async fetchEnvTargets(name) {
-    const scriptLines = [
-      'import json, os',
-      'from platformio.public import load_build_metadata',
-      `print(json.dumps(load_build_metadata(os.getcwd(), '${name}', cache=True)["targets"]))`,
-    ];
-    const output = await proc.getCommandOutput(
-      await core.getCorePythonExe(),
-      ['-c', scriptLines.join(';')],
-      {
-        spawnOptions: {
-          cwd: this.projectDir,
-        },
-        runInQueue: true,
-      }
-    );
+    const script = `
+import json
+import os
+from platformio.public import load_build_metadata
+
+print(json.dumps(load_build_metadata(os.getcwd(), '${name}', cache=True)["targets"]))
+  `;
+    const output = await core.getCorePythonCommandOutput(['-c', script], {
+      projectDir: this.projectDir,
+      runInQueue: true,
+    });
     return JSON.parse(output.trim());
   }
 }
