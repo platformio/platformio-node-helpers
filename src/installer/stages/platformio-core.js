@@ -7,7 +7,6 @@
  */
 
 import * as core from '../../core';
-import * as home from '../../home';
 import * as misc from '../../misc';
 import * as proc from '../../proc';
 import { findPythonExecutable, installPortablePython } from '../get-python';
@@ -155,9 +154,6 @@ export default class PlatformIOCoreStage extends BaseStage {
     }
     withProgress('Preparing for installation', 10);
     try {
-      // shutdown all PIO Home servers which block python.exe on Windows
-      await home.shutdownAllServers();
-
       if (this.params.useBuiltinPython) {
         withProgress('Downloading portable Python interpreter', 10);
         try {

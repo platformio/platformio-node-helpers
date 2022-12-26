@@ -19,8 +19,8 @@ import tcpPortUsed from 'tcp-port-used';
 
 const SERVER_LAUNCH_TIMEOUT = 30; // 30 seconds
 const SERVER_AUTOSHUTDOWN_TIMEOUT = 3600; // 1 hour
-const HTTP_PORT_BEGIN = 8010;
-const HTTP_PORT_END = 8050;
+const HTTP_PORT_MIN = 45000;
+const HTTP_PORT_MAX = 45999;
 const SESSION_ID = crypto
   .createHash('sha1')
   .update(crypto.randomBytes(512))
@@ -116,7 +116,7 @@ async function listenIDECommands(callback) {
   });
 }
 
-async function isPortUsed(host, port) {
+async function isPortUsed(port, host) {
   return new Promise((resolve) => {
     tcpPortUsed.check(port, host).then(
       (result) => {
@@ -130,18 +130,21 @@ async function isPortUsed(host, port) {
 }
 
 async function findFreePort() {
-  let port = HTTP_PORT_BEGIN;
-  while (port < HTTP_PORT_END) {
-    if (!(await isPortUsed(_HTTP_HOST, port))) {
+  let attemptNums = 0;
+  while (attemptNums < 13) {
+    const port = Math.floor(
+      Math.random() * (HTTP_PORT_MAX - HTTP_PORT_MIN) + HTTP_PORT_MIN
+    );
+    if (!(await isPortUsed(port, _HTTP_HOST))) {
       return port;
     }
-    port++;
+    attemptNums++;
   }
   return 0;
 }
 
 export async function isServerStarted() {
-  if (!(await isPortUsed(_HTTP_HOST, _HTTP_PORT))) {
+  if (!(await isPortUsed(_HTTP_PORT, _HTTP_HOST))) {
     return false;
   }
   return !!(await getFrontendVersion());
@@ -155,11 +158,9 @@ export async function ensureServerStarted(options = {}) {
     try {
       return await _ensureServerStarted(options);
     } catch (err) {
+      _HTTP_PORT = 0;
       lastError = err;
       console.warn(err);
-      _HTTP_PORT = 0;
-      // stop all PIO Home servers
-      await shutdownAllServers();
     }
     attemptNums++;
   }
@@ -176,6 +177,11 @@ async function _ensureServerStarted(options = {}) {
   }
   if (!(await isServerStarted())) {
     await new Promise((resolve, reject) => {
+      const timeoutID = setTimeout(
+        () => reject(new Error('Could not start PIO Home server: Timeout error')),
+        SERVER_LAUNCH_TIMEOUT * 1000
+      );
+      let output = '';
       runPIOCommand(
         [
           'home',
@@ -194,38 +200,43 @@ async function _ensureServerStarted(options = {}) {
             _HTTP_PORT = 0;
             return reject(new Error(stderr));
           }
+        },
+        {
+          onProcStdout: (data) => {
+            output += data.toString();
+            if (output.includes('PIO Home has been started')) {
+              clearTimeout(timeoutID);
+              resolve(true);
+            }
+          },
         }
       );
-      tcpPortUsed
-        .waitUntilUsedOnHost(_HTTP_PORT, _HTTP_HOST, 500, SERVER_LAUNCH_TIMEOUT * 1000)
-        .then(
-          () => {
-            resolve(true);
-          },
-          (err) => {
-            reject(new Error('Could not start PIO Home server: ' + err.toString()));
-          }
-        );
     });
   }
   if (options.onIDECommand) {
     listenIDECommands(options.onIDECommand);
   }
-  return true;
+  return {
+    host: _HTTP_HOST,
+    port: _HTTP_PORT,
+    sessionId: SESSION_ID,
+  };
 }
 
 export async function shutdownServer() {
   if (!_HTTP_PORT) {
     return;
   }
-  return await got.post(constructServerUrl({ path: '/__shutdown__' }), {
-    timeout: 1000,
-  });
+  try {
+    await got.post(constructServerUrl({ path: '/__shutdown__' }), {
+      timeout: 1000,
+    });
+  } catch (err) {}
 }
 
 export async function shutdownAllServers() {
-  let port = HTTP_PORT_BEGIN;
-  while (port < HTTP_PORT_END) {
+  let port = HTTP_PORT_MIN;
+  while (port < HTTP_PORT_MAX) {
     try {
       got(
         constructServerUrl({ port, includeSID: false, query: { __shutdown__: '1' } }),
