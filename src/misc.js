@@ -9,7 +9,6 @@
 import { promises as fs } from 'fs';
 import got from 'got';
 import os from 'os';
-import qs from 'querystringify';
 
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -48,22 +47,21 @@ function uuid() {
 }
 
 export async function reportError(err) {
-  const data = {
-    v: 1,
-    tid: 'UA-1768265-13',
-    cid: uuid(),
-    aid: 'node.helpers',
-    av: PACKAGE_VERSION,
-    an: `${os.type()}, ${os.release()}, ${os.arch()}`,
-    t: 'exception',
-    exd: err.toString(),
-    exf: 1,
-  };
+  const data = new URLSearchParams();
+  data.set('v', 1);
+  data.set('tid', 'UA-1768265-13');
+  data.set('cid', uuid());
+  data.set('aid', 'node.helpers');
+  data.set('av', PACKAGE_VERSION);
+  data.set('an', `${os.type()}, ${os.release()}, ${os.arch()}`);
+  data.set('t', 'exception');
+  data.set('exd', err.toString());
+  data.set('exf', 1);
   if (process.env.PLATFORMIO_CALLER) {
-    data['cd1'] = process.env.PLATFORMIO_CALLER;
+    data.set('cd1', process.env.PLATFORMIO_CALLER);
   }
   await got.post('https://www.google-analytics.com/collect', {
-    body: qs.stringify(data),
+    body: data.toString(),
     timeout: 2000,
   });
 }
@@ -88,11 +86,9 @@ export function getErrorReportUrl(title, description) {
   if (title.includes('Installation Manager')) {
     repoName = 'core-installer';
   }
-  return `https://github.com/platformio/platformio-${repoName}/issues/new?${qs.stringify(
-    {
-      title,
-      body: description,
-      labels: 'auto',
-    }
-  )}`;
+  const qs = new URLSearchParams();
+  qs.set('title', title);
+  qs.set('body', description);
+  qs.set('labels', 'auto');
+  return `https://github.com/platformio/platformio-${repoName}/issues/new?${qs.toString()}`;
 }

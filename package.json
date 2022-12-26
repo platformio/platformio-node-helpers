@@ -52,7 +52,6 @@
     "global-agent": "^3.0.0",
     "got": "^11.8.5",
     "jsonrpc-lite": "~2.1.1",
-    "querystringify": "*",
     "semver": "^7.3.8",
     "tar": "~6.1.13",
     "tcp-port-used": "~1.0.2",

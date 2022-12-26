@@ -15,7 +15,6 @@ import fs from 'fs';
 import got from 'got';
 import jsonrpc from 'jsonrpc-lite';
 import path from 'path';
-import qs from 'querystringify';
 import tcpPortUsed from 'tcp-port-used';
 
 const SERVER_LAUNCH_TIMEOUT = 30; // 30 seconds
@@ -38,9 +37,17 @@ export function constructServerUrl({
   query = undefined,
   includeSID = true,
 } = {}) {
-  return `${scheme}://${host || _HTTP_HOST}:${port || _HTTP_PORT}${
-    includeSID ? `/session/${SESSION_ID}` : ''
-  }${path || '/'}${query ? `?${qs.stringify(query)}` : ''}`;
+  let url = `${scheme}://${host || _HTTP_HOST}:${port || _HTTP_PORT}`;
+  if (includeSID) {
+    url += `/session/${SESSION_ID}`;
+  }
+  url += path || '/';
+  if (query) {
+    const qs = new URLSearchParams();
+    Object.keys(query).forEach((key) => qs.set(key, query[key]));
+    url += `?${qs.toString()}`;
+  }
+  return url;
 }
 
 export function getFrontendUrl(options) {
