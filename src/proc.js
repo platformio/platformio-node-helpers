@@ -66,12 +66,16 @@ export function patchOSEnviron({ caller, extraPath, extraVars }) {
 
   // Expand Windows environment variables in %xxx% format
   const reWindowsEnvVar = /\%([^\%]+)\%/g;
-  while (IS_WINDOWS && reWindowsEnvVar.test(process.env.PLATFORMIO_PATH)) {
+  const expandedEnvVars = [];
+  while (IS_WINDOWS) {
+    const matchedEnvVar = reWindowsEnvVar.exec(process.env.PLATFORMIO_PATH);
+    if (!matchedEnvVar || expandedEnvVars.includes(matchedEnvVar[1])) {
+      break;
+    }
+    expandedEnvVars.push(matchedEnvVar[1]);
     process.env.PLATFORMIO_PATH = process.env.PLATFORMIO_PATH.replace(
-      reWindowsEnvVar,
-      (_, envvar) => {
-        return process.env[envvar] || '';
-      }
+      matchedEnvVar[0],
+      process.env[matchedEnvVar[1]] || ''
     );
   }
 
