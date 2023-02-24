@@ -76,6 +76,7 @@ export function getErrorReportUrl(title, description) {
     ['subprocess.CalledProcessError', 'https://bit.ly/3EFlxWq'],
     ['Can not find Python Interpreter', 'https://bit.ly/3wkz0Qv'],
     ['platformio-ide.useBuiltinPIOCore', 'https://bit.ly/3AhJHHe'],
+    ['Could not start PIO Home server: Timeout error', 'https://bit.ly/3m2Tbl9'],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
