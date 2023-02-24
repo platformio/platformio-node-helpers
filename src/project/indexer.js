@@ -88,7 +88,7 @@ export default class ProjectIndexer {
       withProgress(value.toString().trim());
       if (this.options.api.logOutputChannel) {
         this.options.api.logOutputChannel.append(value.toString());
-        if (isError || value.toString().includes('Manager: Installing')) {
+        if (isError) {
           this.options.api.logOutputChannel.show();
         }
         if (isError) {
