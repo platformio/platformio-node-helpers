@@ -28,8 +28,8 @@ export default class ProjectObserver {
     this._indexer = undefined;
     this._projectTasks = new ProjectTasks(this.projectDir, this.options.ide);
     this._updateDirWatchersTimeout = undefined;
-    this._previousActiveEnvName = Object.create(null);
-    this._activeEnvName = undefined;
+    this._previousSelectedEnv = Object.create(null);
+    this._selectedEnv = undefined;
     this._apiConfigChangedTimeout = undefined;
 
     if (this.getSetting('autoRebuild')) {
@@ -74,20 +74,20 @@ export default class ProjectObserver {
     return delayed ? this._indexer.requestRebuild() : this._indexer.rebuild();
   }
 
-  getActiveEnvName() {
-    return this._activeEnvName;
-  }
-
   async switchProjectEnv(name, { delayedRebuildIndex = false } = {}) {
     const validNames = (await this.getProjectEnvs()).map((item) => item.name);
     if (!validNames.includes(name)) {
       name = undefined;
     }
-    this._activeEnvName = name;
-    if (this._previousActiveEnvName !== this._activeEnvName || delayedRebuildIndex) {
-      this._previousActiveEnvName = this._activeEnvName;
+    this._selectedEnv = name;
+    if (this._previousSelectedEnv !== this._selectedEnv || delayedRebuildIndex) {
+      this._previousSelectedEnv = this._selectedEnv;
       this.rebuildIndex({ delayed: delayedRebuildIndex });
     }
+  }
+
+  getSelectedEnv() {
+    return this._selectedEnv;
   }
 
   async getProjectEnvs() {
@@ -130,7 +130,7 @@ export default class ProjectObserver {
     const lazyLoading =
       options.preload ||
       this.getSetting('autoPreloadEnvTasks') ||
-      this._activeEnvName === name ||
+      this._selectedEnv === name ||
       (await this.getProjectEnvs()).length === 1;
     if (!lazyLoading) {
       return undefined;
@@ -157,7 +157,7 @@ export default class ProjectObserver {
     // reset to `undefined` if env was removed from conf
     this.resetCache();
     // rebuildIndex
-    this.switchProjectEnv(this._activeEnvName, { delayedRebuildIndex: true });
+    this.switchProjectEnv(this._selectedEnv, { delayedRebuildIndex: true });
     this.requestUpdateDirWatchers();
     if ((this.options.api || {}).onDidChangeProjectConfig) {
       if (this._apiConfigChangedTimeout) {

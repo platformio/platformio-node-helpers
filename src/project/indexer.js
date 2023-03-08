@@ -99,8 +99,8 @@ export default class ProjectIndexer {
 
     try {
       const args = ['project', 'init', '--ide', this.options.ide];
-      if (this.observer.getActiveEnvName()) {
-        args.push('--environment', this.observer.getActiveEnvName());
+      if (this.observer.getSelectedEnv()) {
+        args.push('--environment', this.observer.getSelectedEnv());
       }
       await getPIOCommandOutput(args, {
         projectDir: this.projectDir,
