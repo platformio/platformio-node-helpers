@@ -48,7 +48,6 @@
   },
   "homepage": "https://platformio.org",
   "dependencies": {
-    "glob": "~8.1.0",
     "global-agent": "^3.0.0",
     "got": "^11.8.6",
     "jsonrpc-lite": "~2.1.1",

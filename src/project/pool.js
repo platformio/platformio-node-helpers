@@ -40,14 +40,14 @@ export default class ProjectPool {
     return observer;
   }
 
-  switch(projectDir) {
+  async switch(projectDir) {
     this._activeProjectDir = projectDir;
     console.info('Switching project to', projectDir);
     this._observers
       .filter((observer) => observer.projectDir !== projectDir)
       .forEach((observer) => observer.deactivate());
     const observer = this.getObserver(projectDir);
-    observer.activate();
+    await observer.activate();
     return observer;
   }
 
