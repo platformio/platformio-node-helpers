@@ -43,9 +43,9 @@ export class ProjectTasks {
       multienv: true,
     },
     {
-      name: 'Clean All',
+      name: 'Full Clean',
       description: 'Clean a build environment and installed library dependencies',
-      args: ['run', '--target', 'cleanall'],
+      args: ['run', '--target', 'fullclean'],
       multienv: true,
     },
     {
