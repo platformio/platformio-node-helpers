@@ -70,13 +70,17 @@ export function getErrorReportUrl(title, description) {
   const errorToUrls = [
     ['Multiple requests to rebuild the project', 'https://bit.ly/3mMTOgB'],
     ['WindowsError: [Error 5]', 'https://bit.ly/3GTAtlG'],
+    ['[WinError 5]', 'https://bit.ly/3GTAtlG'],
+    ['[WinError 225]', 'https://bit.ly/3GTAtlG'],
     ['Could not start PIO Home server: Error: timeout', 'https://bit.ly/2Yfl65C'],
-    ['Could not find distutils module', 'https://bit.ly/3bK6zlH'],
+    ['`venv` module', 'https://bit.ly/3bK6zlH'],
     ['after connection broken by', 'https://bit.ly/3q6StTV'],
     ['subprocess.CalledProcessError', 'https://bit.ly/3EFlxWq'],
     ['Can not find Python Interpreter', 'https://bit.ly/3wkz0Qv'],
     ['platformio-ide.useBuiltinPIOCore', 'https://bit.ly/3AhJHHe'],
     ['Could not start PIO Home server: Timeout error', 'https://bit.ly/3m2Tbl9'],
+    ['Could not create PIO Core Virtual Environment', 'https://bit.ly/43hNh04'],
+    ['Compatible PlatformIO Core not found', 'https://bit.ly/43tNj4C'],
   ];
   for (const item of errorToUrls) {
     if (description.includes(item[0])) {
