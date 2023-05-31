@@ -1,6 +1,5 @@
 module.exports = {
   "env": {
-    "browser": false,
     "es6": true,
     "node": true
   },
@@ -21,10 +20,9 @@ module.exports = {
     "plugin:import/errors",
     "plugin:import/warnings"
   ],
-  "parser": "@babel/eslint-parser",
   "parserOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
+    "sourceType": "module",
+    "ecmaVersion": 13
   },
   "settings": {
     "import/resolver": {

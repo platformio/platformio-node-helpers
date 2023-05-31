@@ -25,15 +25,6 @@ module.exports = {
   devtool: 'source-map',
   target: 'node',
   externals: Object.keys(packageConfig.dependencies),
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/
-      }
-    ]
-  },
   plugins: [
     new webpack.DefinePlugin({
       PACKAGE_VERSION: JSON.stringify(packageConfig.version)
