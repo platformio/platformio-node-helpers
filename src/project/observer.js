@@ -51,7 +51,7 @@ export default class ProjectObserver {
 
   activate() {
     console.info('Activating project', this.projectDir);
-    this.requestRebuild();
+    this.rebuildIndex();
   }
 
   deactivate() {
