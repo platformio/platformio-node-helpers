@@ -29,7 +29,6 @@ export default class ProjectObserver {
     this._indexer = undefined;
     this._projectTasks = new ProjectTasks(this.projectDir, this.options.ide);
     this._updateDirWatchersTimeout = undefined;
-    this._previousSelectedEnv = Object.create(null);
     this._selectedEnv = undefined;
     this._apiConfigChangedTimeout = undefined;
 
@@ -52,6 +51,7 @@ export default class ProjectObserver {
 
   activate() {
     console.info('Activating project', this.projectDir);
+    this.requestRebuild();
   }
 
   deactivate() {
@@ -84,16 +84,12 @@ export default class ProjectObserver {
     return delayed ? this._indexer.requestRebuild() : this._indexer.rebuild();
   }
 
-  async switchProjectEnv(name, { delayedRebuildIndex = false } = {}) {
+  async switchProjectEnv(name) {
     const validNames = (await this.getConfig()).envs();
     if (!validNames.includes(name)) {
       name = undefined;
     }
     this._selectedEnv = name;
-    if (this._previousSelectedEnv !== this._selectedEnv || delayedRebuildIndex) {
-      this._previousSelectedEnv = this._selectedEnv;
-      this.rebuildIndex({ delayed: delayedRebuildIndex });
-    }
   }
 
   getSelectedEnv() {
@@ -147,17 +143,10 @@ export default class ProjectObserver {
     this._config = undefined;
     // reset to `undefined` if env was removed from conf
     this.resetCache();
-    // rebuildIndex
-    this.switchProjectEnv(this._selectedEnv, { delayedRebuildIndex: true });
     this.requestUpdateDirWatchers();
     if ((this.options.api || {}).onDidChangeProjectConfig) {
-      if (this._apiConfigChangedTimeout) {
-        clearTimeout(this._apiConfigChangedTimeout);
-        this._apiConfigChangedTimeout = undefined;
-      }
-      this._apiConfigChangedTimeout = setTimeout(
-        () => this.options.api.onDidChangeProjectConfig(this.projectDir),
-        (ProjectIndexer.AUTO_REBUILD_DELAY + 1) * 1000
+      this.options.api.onDidChangeProjectConfig(
+        path.join(this.projectDir, 'platformio.ini')
       );
     }
   }
