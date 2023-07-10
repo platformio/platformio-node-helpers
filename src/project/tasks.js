@@ -18,19 +18,19 @@ export class ProjectTasks {
     {
       name: 'Upload',
       args: ['run', '--target', 'upload'],
-      optionalPortArgs: ['--upload-port'],
+      optionalArgs: ['--upload-port'],
       multienv: true,
     },
     {
       name: 'Monitor',
       args: ['device', 'monitor'],
-      optionalPortArgs: ['--port'],
+      optionalArgs: ['--port'],
       multienv: true,
     },
     {
       name: 'Upload and Monitor',
       args: ['run', '--target', 'upload', '--target', 'monitor'],
-      optionalPortArgs: ['--upload-port', '--monitor-port'],
+      optionalArgs: ['--upload-port', '--monitor-port'],
       multienv: true,
     },
     {
@@ -69,7 +69,7 @@ export class ProjectTasks {
     {
       name: 'Test',
       args: ['test'],
-      optionalPortArgs: ['--upload-port', '--test-port'],
+      optionalArgs: ['--upload-port', '--test-port'],
       group: 'Advanced',
       multienv: true,
     },
@@ -95,7 +95,7 @@ export class ProjectTasks {
     {
       name: 'Verbose Upload',
       args: ['run', '--verbose', '--target', 'upload'],
-      optionalPortArgs: ['--upload-port'],
+      optionalArgs: ['--upload-port'],
       group: 'Advanced',
       multienv: true,
     },
@@ -121,24 +121,29 @@ export class ProjectTasks {
     {
       name: 'Remote Upload',
       args: ['remote', 'run', '--target', 'upload'],
-      group: 'Remote Development',
+      group: 'Remote',
       multienv: true,
     },
     {
       name: 'Remote Monitor',
       args: ['remote', 'device', 'monitor'],
-      group: 'Remote Development',
+      group: 'Remote',
     },
     {
       name: 'Remote Devices',
       args: ['remote', 'device', 'list'],
-      group: 'Remote Development',
+      group: 'Remote',
     },
     {
       name: 'Remote Test',
       args: ['remote', 'test'],
-      group: 'Remote Development',
+      group: 'Remote',
       multienv: true,
+    },
+    {
+      name: 'Upgrade PlatformIO Core',
+      args: ['upgrade'],
+      group: 'Miscellaneous',
     },
   ];
 
@@ -153,18 +158,9 @@ export class ProjectTasks {
       const item = new TaskItem(task.name, task.args.slice(0), task.group);
       item.description = task.description;
       item.multienv = !!task.multienv;
-      item.optionalPortArgs = task.optionalPortArgs;
+      item.optionalArgs = task.optionalArgs;
       return item;
     });
-    // Miscellaneous tasks
-    result.push(
-      new TaskItem(
-        'Rebuild IntelliSense Index',
-        ['project', 'init', '--ide', this.ide],
-        'Miscellaneous'
-      ),
-      new TaskItem('Upgrade PlatformIO Core', ['upgrade'], 'Miscellaneous')
-    );
     return result;
   }
 
@@ -183,9 +179,19 @@ export class ProjectTasks {
       );
       item.description = task.description;
       item.multienv = true;
-      item.optionalPortArgs = task.optionalPortArgs;
+      item.optionalArgs = task.optionalArgs;
       result.push(item);
     }
+
+    // Miscellaneous tasks
+    const initTask = new TaskItem(
+      'Rebuild IntelliSense Index',
+      ['project', 'init', '--ide', this.ide, '--environment', name],
+      'Miscellaneous'
+    );
+    initTask.multienv = true;
+    result.push(initTask);
+
     // dev-platform targets
     try {
       for (const target of await this.fetchEnvTargets(name)) {
@@ -232,7 +238,7 @@ export class TaskItem {
     this.group = group;
     this.description = undefined;
     this.multienv = false;
-    this.optionalPortArgs = undefined;
+    this.optionalArgs = undefined;
   }
 
   isBuild() {
@@ -273,11 +279,13 @@ export class TaskItem {
 
   getCoreArgs(options = {}) {
     const args = this.args.slice(0);
-    if (this.optionalPortArgs && options.port) {
-      this.optionalPortArgs.forEach((arg) => {
-        args.push(arg);
-        args.push(options.port);
-      });
+    if (this.optionalArgs && options.port) {
+      this.optionalArgs
+        .filter((arg) => arg.endsWith('-port'))
+        .forEach((arg) => {
+          args.push(arg);
+          args.push(options.port);
+        });
     }
     return args;
   }
