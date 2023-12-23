@@ -82,7 +82,7 @@ export function patchOSEnviron({ caller, extraPath, extraVars }) {
   // Configure NO_PROXY for PIO Home
   process.env.NO_PROXY =
     '127.0.0.1' + (process.env.NO_PROXY ? `,${process.env.NO_PROXY}` : '');
-  if (process.env.HTTP_PROXY || process.env.HTTPS_PROXY) {
+  if (process.env.HTTP_PROXY || process.env.HTTPS_PROXY || process.env.ALL_PROXY) {
     process.env.GLOBAL_AGENT_ENVIRONMENT_VARIABLE_NAMESPACE = '';
     bootstrap();
   }
