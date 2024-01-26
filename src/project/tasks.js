@@ -175,7 +175,7 @@ export class ProjectTasks {
       const item = new TaskItem(
         task.name,
         [...task.args.slice(0), '--environment', name],
-        task.group
+        task.group,
       );
       item.description = task.description;
       item.multienv = true;
@@ -187,7 +187,7 @@ export class ProjectTasks {
     const initTask = new TaskItem(
       'Rebuild IntelliSense Index',
       ['project', 'init', '--ide', this.ide, '--environment', name],
-      'Miscellaneous'
+      'Miscellaneous',
     );
     initTask.multienv = true;
     result.push(initTask);
@@ -201,7 +201,7 @@ export class ProjectTasks {
         const item = new TaskItem(
           target.title || target.name,
           ['run', '--target', target.name, '--environment', name],
-          target.group
+          target.group,
         );
         item.description = target.description;
         item.multienv = true;
@@ -209,7 +209,7 @@ export class ProjectTasks {
       }
     } catch (err) {
       console.error(
-        `Could not fetch project targets for '${name}' environment => ${err}`
+        `Could not fetch project targets for '${name}' environment => ${err}`,
       );
     }
     return result;

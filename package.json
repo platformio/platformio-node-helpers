@@ -64,8 +64,8 @@
     "eslint": "~8.56.0",
     "eslint-import-resolver-webpack": "~0.13.8",
     "eslint-plugin-import": "~2.29.1",
-    "prettier": "~3.1.1",
     "webpack": "~5.89.0",
+    "prettier": "~3.2.4",
     "webpack-cli": "~5.1.4"
   }
 }

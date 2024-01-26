@@ -81,7 +81,10 @@ export function getErrorReportUrl(title, description) {
     ['Could not start PIO Home server: Timeout error', 'https://bit.ly/3m2Tbl9'],
     ['Could not create PIO Core Virtual Environment', 'https://bit.ly/43hNh04'],
     ['Compatible PlatformIO Core not found', 'https://bit.ly/43tNj4C'],
-    ['Could not find a version that satisfies the requirement', 'https://bit.ly/3TOcnBK'],
+    [
+      'Could not find a version that satisfies the requirement',
+      'https://bit.ly/3TOcnBK',
+    ],
     ['PIO IDE: v2.', 'https://bit.ly/3H70AHl'],
   ];
   for (const item of errorToUrls) {

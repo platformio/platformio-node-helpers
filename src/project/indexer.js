@@ -51,7 +51,7 @@ export default class ProjectIndexer {
       ) {
         const msg =
           `Multiple requests to rebuild the project "${path.basename(
-            this.projectDir
+            this.projectDir,
           )}" index have been received!\n` +
           `Automatic index rebuilding process has been terminated for ${
             ProjectIndexer.FLOOD_TIME_WINDOW / 60
@@ -63,7 +63,7 @@ export default class ProjectIndexer {
 
     this._rebuildTimeout = setTimeout(
       this.rebuild.bind(this),
-      ProjectIndexer.AUTO_REBUILD_DELAY * 1000
+      ProjectIndexer.AUTO_REBUILD_DELAY * 1000,
     );
   }
 
@@ -72,7 +72,7 @@ export default class ProjectIndexer {
       return;
     }
     return this.options.api.withIndexRebuildingProgress(
-      this._rebuildWithProgress.bind(this)
+      this._rebuildWithProgress.bind(this),
     );
   }
 

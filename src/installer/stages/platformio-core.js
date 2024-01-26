@@ -57,7 +57,7 @@ export default class PlatformIOCoreStage extends BaseStage {
   async loadCoreState() {
     const stateJSONPath = path.join(
       core.getTmpDir(),
-      `core-dump-${Math.round(Math.random() * 100000)}.json`
+      `core-dump-${Math.round(Math.random() * 100000)}.json`,
     );
     const scriptArgs = [];
     if (this.useDevCore()) {
@@ -70,7 +70,7 @@ export default class PlatformIOCoreStage extends BaseStage {
         this.params.disableAutoUpdates || !this.params.useBuiltinPIOCore
           ? '--no-auto-upgrade'
           : '--auto-upgrade',
-      ]
+      ],
     );
     if (this.params.pioCoreVersionSpec) {
       scriptArgs.push(...['--version-spec', this.params.pioCoreVersionSpec]);
@@ -133,7 +133,7 @@ export default class PlatformIOCoreStage extends BaseStage {
 
     this.status = BaseStage.STATUS_FAILED;
     throw new Error(
-      'Can not find Python Interpreter. Please install Python 3.6 or above manually'
+      'Can not find Python Interpreter. Please install Python 3.6 or above manually',
     );
   }
 
@@ -144,7 +144,7 @@ export default class PlatformIOCoreStage extends BaseStage {
     if (!this.params.useBuiltinPIOCore) {
       this.status = BaseStage.STATUS_FAILED;
       throw new Error(
-        'Could not find compatible PlatformIO Core. Please enable `platformio-ide.useBuiltinPIOCore` setting and restart IDE.'
+        'Could not find compatible PlatformIO Core. Please enable `platformio-ide.useBuiltinPIOCore` setting and restart IDE.',
       );
     }
     this.status = BaseStage.STATUS_INSTALLING;
@@ -179,8 +179,8 @@ export default class PlatformIOCoreStage extends BaseStage {
       console.info(
         await callInstallerScript(
           await this.whereIsPython({ prompt: true }),
-          scriptArgs
-        )
+          scriptArgs,
+        ),
       );
 
       // check that PIO Core is installed and load its state an patch OS environ

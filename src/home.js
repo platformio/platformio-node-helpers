@@ -94,15 +94,15 @@ async function listenIDECommands(callback) {
       if (msg.type === 'success' && msg.payload.result.method) {
         const result = await callback(
           msg.payload.result.method,
-          msg.payload.result.params
+          msg.payload.result.params,
         );
         ws.send(
           JSON.stringify(
             jsonrpc.request(Math.random().toString(), 'ide.on_command_result', [
               msg.payload.result.id,
               result,
-            ])
-          )
+            ]),
+          ),
         );
       } else if (msg.type === 'error') {
         console.error('Errored WS result: ', msg.payload);
@@ -111,7 +111,7 @@ async function listenIDECommands(callback) {
       console.error('Invalid RPC message: ', err);
     }
     ws.send(
-      JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands'))
+      JSON.stringify(jsonrpc.request(Math.random().toString(), 'ide.listen_commands')),
     );
   });
 }
@@ -124,7 +124,7 @@ async function isPortUsed(port, host) {
       },
       () => {
         return resolve(false);
-      }
+      },
     );
   });
 }
@@ -133,7 +133,7 @@ async function findFreePort() {
   let attemptNums = 0;
   while (attemptNums < 13) {
     const port = Math.floor(
-      Math.random() * (HTTP_PORT_MAX - HTTP_PORT_MIN) + HTTP_PORT_MIN
+      Math.random() * (HTTP_PORT_MAX - HTTP_PORT_MIN) + HTTP_PORT_MIN,
     );
     if (!(await isPortUsed(port, _HTTP_HOST))) {
       return port;
@@ -179,7 +179,7 @@ async function _ensureServerStarted(options = {}) {
     await new Promise((resolve, reject) => {
       const timeoutID = setTimeout(
         () => reject(new Error('Could not start PIO Home server: Timeout error')),
-        SERVER_LAUNCH_TIMEOUT * 1000
+        SERVER_LAUNCH_TIMEOUT * 1000,
       );
       let output = '';
       runPIOCommand(
@@ -209,7 +209,7 @@ async function _ensureServerStarted(options = {}) {
               resolve(true);
             }
           },
-        }
+        },
       );
     });
   }
@@ -240,10 +240,10 @@ export async function shutdownAllServers() {
     try {
       got(
         constructServerUrl({ port, includeSID: false, query: { __shutdown__: '1' } }),
-        { timeout: 1000, throwHttpErrors: false }
+        { timeout: 1000, throwHttpErrors: false },
       ).then(
         () => {},
-        () => {}
+        () => {},
       );
     } catch (err) {}
     port++;
@@ -254,7 +254,7 @@ export async function shutdownAllServers() {
 function loadState() {
   try {
     return JSON.parse(
-      fs.readFileSync(path.join(getCoreDir(), 'homestate.json'), { encoding: 'utf-8' })
+      fs.readFileSync(path.join(getCoreDir(), 'homestate.json'), { encoding: 'utf-8' }),
     );
   } catch (err) {}
 }

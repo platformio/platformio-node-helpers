@@ -133,8 +133,8 @@ export default class ProjectObserver {
     this._cache.set(
       cacheKey,
       await this.options.api.withTasksLoadingProgress(
-        async () => await this._projectTasks.fetchEnvTasks(name)
-      )
+        async () => await this._projectTasks.fetchEnvTasks(name),
+      ),
     );
     return this._cache.get(cacheKey);
   }
@@ -146,7 +146,7 @@ export default class ProjectObserver {
     this.requestUpdateDirWatchers();
     if ((this.options.api || {}).onDidChangeProjectConfig) {
       this.options.api.onDidChangeProjectConfig(
-        path.join(this.projectDir, 'platformio.ini')
+        path.join(this.projectDir, 'platformio.ini'),
       );
     }
   }
@@ -157,12 +157,12 @@ export default class ProjectObserver {
 
   setupFSWatchers() {
     const watcher = this.options.api.createFileSystemWatcher(
-      path.join(this.projectDir, 'platformio.ini')
+      path.join(this.projectDir, 'platformio.ini'),
     );
     this.subscriptions.push(
       watcher,
       watcher.onDidCreate(() => this.onDidChangeProjectConfig()),
-      watcher.onDidChange(() => this.onDidChangeProjectConfig())
+      watcher.onDidChange(() => this.onDidChangeProjectConfig()),
       // watcher.onDidDelete(() => undefined)
     );
     this.requestUpdateDirWatchers();
@@ -174,7 +174,7 @@ export default class ProjectObserver {
     }
     this._updateDirWatchersTimeout = setTimeout(
       this.updateDirWatchers.bind(this),
-      ProjectObserver.WATCH_DIRS_UPDATE_DELAY
+      ProjectObserver.WATCH_DIRS_UPDATE_DELAY,
     );
   }
 
@@ -187,7 +187,7 @@ export default class ProjectObserver {
           watcher,
           watcher.onDidCreate(() => this.onDidChangeLibDirs()),
           watcher.onDidChange(() => this.onDidChangeLibDirs()),
-          watcher.onDidDelete(() => this.onDidChangeLibDirs())
+          watcher.onDidDelete(() => this.onDidChangeLibDirs()),
         );
       });
     } catch (err) {

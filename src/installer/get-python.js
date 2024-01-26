@@ -151,7 +151,7 @@ export async function installPortablePython(destinationDir, options = undefined)
   const archivePath = await downloadRegistryFile(
     registryFile,
     core.getTmpDir(),
-    options
+    options,
   );
   if (!archivePath) {
     throw new Error('Could not download portable Python');
@@ -178,10 +178,10 @@ async function getRegistryFile() {
       https: {
         certificateAuthority: HTTPS_CA_CERTIFICATES,
       },
-    }
+    },
   ).json();
   const versions = data.versions.filter((version) =>
-    isVersionSystemCompatible(version, systype)
+    isVersionSystemCompatible(version, systype),
   );
   let bestVersion = undefined;
   for (const version of versions) {
@@ -233,7 +233,7 @@ async function downloadRegistryFile(regfile, destinationDir, options = undefined
   }
 
   for await (const { url, checksum } of registryFileMirrorIterator(
-    regfile.download_url
+    regfile.download_url,
   )) {
     archivePath = path.join(destinationDir, regfile.name);
     // if already downloaded
@@ -248,7 +248,7 @@ async function downloadRegistryFile(regfile, destinationDir, options = undefined
             certificateAuthority: HTTPS_CA_CERTIFICATES,
           },
         }),
-        fs.createWriteStream(archivePath)
+        fs.createWriteStream(archivePath),
       );
       if (await fileExistsAndChecksumMatches(archivePath, checksum)) {
         return archivePath;
@@ -325,7 +325,7 @@ async function extractTarGz(source, destination) {
       .pipe(
         tar.extract({
           cwd: destination,
-        })
+        }),
       )
       .on('error', (err) => reject(err))
       .on('close', () => resolve(destination));

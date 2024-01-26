@@ -75,7 +75,7 @@ export function patchOSEnviron({ caller, extraPath, extraVars }) {
     expandedEnvVars.push(matchedEnvVar[1]);
     process.env.PLATFORMIO_PATH = process.env.PLATFORMIO_PATH.replace(
       matchedEnvVar[0],
-      process.env[matchedEnvVar[1]] || ''
+      process.env[matchedEnvVar[1]] || '',
     );
   }
 
@@ -226,7 +226,7 @@ export function getCommandOutput(cmd, args, options = {}) {
           return reject(err);
         }
       },
-      options
+      options,
     );
   });
 }

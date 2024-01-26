@@ -90,7 +90,7 @@ if __name__ == "__main__":
 export async function getInstallerScript() {
   const scriptPath = path.join(
     core.getTmpDir(),
-    `get-platformio-${INSTALLER_SCRIPT_VERSION}.py`
+    `get-platformio-${INSTALLER_SCRIPT_VERSION}.py`,
   );
   try {
     await fs.access(scriptPath);
@@ -115,6 +115,6 @@ export async function callInstallerScript(pythonExecutable, args) {
         cwd: core.getCacheDir(),
         env: envClone,
       },
-    }
+    },
   );
 }

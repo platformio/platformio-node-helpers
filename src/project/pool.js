@@ -31,7 +31,7 @@ export default class ProjectPool {
       return undefined;
     }
     let observer = this._observers.find(
-      (observer) => observer.projectDir === projectDir
+      (observer) => observer.projectDir === projectDir,
     );
     if (!observer) {
       observer = new ProjectObserver(projectDir, this.options);
