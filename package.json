@@ -52,7 +52,7 @@
   "homepage": "https://platformio.org",
   "dependencies": {
     "global-agent": "^3.0.0",
-    "got": "^14.4.5",
+    "got": "^11.8.6",
     "jsonrpc-lite": "~2.1.1",
     "semver": "^7.6.3",
     "tar": "~7.4.3",
