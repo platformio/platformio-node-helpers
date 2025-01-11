@@ -198,8 +198,9 @@ export default class PlatformIOCoreStage extends BaseStage {
           console.warn(err);
           // cleanup
           try {
-            await fs.rmdir(PlatformIOCoreStage.getBuiltInPythonDir(), {
+            await fs.rm(PlatformIOCoreStage.getBuiltInPythonDir(), {
               recursive: true,
+              force: true,
             });
           } catch (err) {}
         }

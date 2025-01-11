@@ -157,9 +157,7 @@ export async function installPortablePython(destinationDir, options = undefined)
     throw new Error('Could not download portable Python');
   }
   try {
-    await fs.promises.rmdir(destinationDir, {
-      recursive: true,
-    });
+    await fs.promises.rm(destinationDir, { recursive: true, force: true });
   } catch (err) {
     console.warn(err);
   }
