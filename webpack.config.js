@@ -6,17 +6,17 @@
  * the root directory of this source tree.
  */
 
-import fs from 'fs';
-import path from 'path';
-import webpack from 'webpack';
+const fs = require('fs');
+const path = require('path');
+const webpack = require('webpack');
 
-const packageConfig = JSON.parse(fs.readFileSync('./package.json'), 'utf8');
+const packageConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
 
-export default {
+module.exports = {
   mode: 'production',
-  entry: './src/index.js',
+  entry: __dirname + '/src/index.js',
   output: {
-    path: path.resolve('./dist'),
+    path: path.join(__dirname, 'dist'),
     filename: 'index.js',
     library: 'platformio-node-helpers',
     libraryTarget: 'umd',

@@ -8,6 +8,7 @@
 
 import * as core from '../core';
 import * as proc from '../proc';
+import * as tar from 'tar';
 
 import { callInstallerScript } from './get-platformio';
 import crypto from 'crypto';
@@ -18,7 +19,6 @@ import path from 'path';
 import { promisify } from 'util';
 import semver from 'semver';
 import stream from 'stream';
-import tar from 'tar';
 import zlib from 'zlib';
 
 const HTTPS_CA_CERTIFICATES = `
